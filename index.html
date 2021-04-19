@@ -1,7 +1,242 @@
 <!DOCTYPE html>
 <html>
+<style>
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+        text-align: right;
+        max-width: 80%;
+    }
+
+    .max {
+        max-width: max-content;
+    }
+
+    .flex {
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .mw-5 {
+        max-width: 5rem;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    label {
+        white-space: nowrap;
+        line-height: 2rem;
+    }
+
+    .fit {
+        max-width: fit-content;
+        min-height: max-content;
+    }
+
+    .text-line {
+        line-height: 2rem;
+    }
+
+    .myGap {
+        height: 2rem;
+    }
+
+    .myBlank {
+        height: 1rem;
+    }
+
+</style>
 <body>
-<h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
+<h1>ウマ娘 トレーニングパラメータ 計算機</h1>
+<p>
+    Please Enter the training parameter to compare the two training outcomes.
+</p>
+<br>
+
+<div class="text-line">トレーニング 1 :</div>
+<div class="myBlank"></div>
+<div class=" " id="id_calculation_area_1">
+    <div class="training_gain_1 max flex" style=" ">
+        <div class="training_gain_1_1 mw-5 text-center">
+            <label for="id_para_1_1">スピード</label>
+            <input type="number" id="id_para_1_1"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_1_2 mw-5 text-center">
+            <label for="id_para_1_2">スタミナ</label>
+            <input type="number" id="id_para_1_2"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_1_3 mw-5 text-center">
+            <label for="id_para_1_3">パワー</label>
+            <input type="number" id="id_para_1_3"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_1_4 mw-5 text-center">
+            <label for="id_para_1_4">根性</label>
+            <input type="number" id="id_para_1_4"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_1_5 mw-5 text-center">
+            <label for="id_para_1_5">賢さ</label>
+            <input type="number" id="id_para_1_5"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_1_6 mw-5 text-center">
+            <label for="id_para_1_6">スキルpt</label>
+            <input type="number" id="id_para_1_6"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_1_7 fit text-center">
+            <label for="id_para_1_7">絆(緑以下のみ)</label>
+            <input type="number" id="id_para_1_7"
+                   tabindex="1"
+                   value=0>人
+        </div>
+        ==>
+        <div class="training_gain_1_total fit text-center">
+            <label for="id_para_1_total">総合評価</label>
+            <input type="number" id="id_para_1_total"
+                   tabindex="-1"
+                   value="0" disabled>
+        </div>
+    </div>
+</div>
+<div class="myGap"></div>
+
+<div class="text-line">トレーニング 2 :</div>
+<div class="myBlank"></div>
+<div class=" " id="id_calculation_area_2">
+    <div class="training_gain_2 max flex" style=" ">
+        <div class="training_gain_2_1 mw-5 text-center">
+            <label for="id_para_2_1">スピード</label>
+            <input type="number" id="id_para_2_1"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_2_2 mw-5 text-center">
+            <label for="id_para_2_2">スタミナ</label>
+            <input type="number" id="id_para_2_2"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_2_3 mw-5 text-center">
+            <label for="id_para_2_3">パワー</label>
+            <input type="number" id="id_para_2_3"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_2_4 mw-5 text-center">
+            <label for="id_para_2_4">根性</label>
+            <input type="number" id="id_para_2_4"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_2_5 mw-5 text-center">
+            <label for="id_para_2_5">賢さ</label>
+            <input type="number" id="id_para_2_5"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_2_6 mw-5 text-center">
+            <label for="id_para_2_6">スキルpt</label>
+            <input type="number" id="id_para_2_6"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="training_gain_2_7 fit text-center">
+            <label for="id_para_2_7">絆(緑以下のみ)</label>
+            <input type="number" id="id_para_2_7"
+                   tabindex="1"
+                   value=0>人
+        </div>
+        ==>
+        <div class="training_gain_2_total fit text-center">
+            <label for="id_para_2_total">総合評価</label>
+            <input type="number" id="id_para_2_total"
+                   tabindex="-1"
+                   value="0" disabled>
+        </div>
+    </div>
+</div>
+
+<div class="myGap"></div>
+<div class="text-line">
+    The calculation of the 総合評価 is still a simple one.
+    <br>The coefficient used is skillPt: <a id="id_skillPt_coef_dis"></a> per pt,
+    kizuna: <a id="id_kizuna_coef_dis"></a> per support,
+    <br>and the 5 parameters (スピード スタミナ パワー 根性 賢さ) with coefficient of 1.
+    <br>And the coefficient used is highly referenced but not directly equals to
+    <a tabindex="-1" href="https://twitter.com/chokudai/status/1370022643152293898" target="_blank">chokudai(高橋 直大)🍆
+        @chokudai 's tweet
+    </a>
+    <br><br>PS.This calculator is just for simple calculation of total parameter outcome and not guarantee the best result
+</div>
+</p>
 </body>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>
+    var coef_skillPt = 0.4;
+    var coef_kizunaPt = 8.0;
+
+    $("input").focus(function () {
+        $(this).select();
+    });
+
+    $("input").on("change", function () {
+        calculate_the_efficiency();
+    })
+
+    $("input").keyup(function () {
+        calculate_the_efficiency();
+    })
+
+    function calculate_the_efficiency() {
+        const para_1_spd = document.getElementById("id_para_1_1").value * 1.0;
+        const para_1_sta = document.getElementById("id_para_1_2").value * 1.0;
+        const para_1_pow = document.getElementById("id_para_1_3").value * 1.0;
+        const para_1_gut = document.getElementById("id_para_1_4").value * 1.0;
+        const para_1_wis = document.getElementById("id_para_1_5").value * 1.0;
+        const para_1_skillPt = document.getElementById("id_para_1_6").value * 1.0;
+        const para_1_kizunaPt = document.getElementById("id_para_1_7").value * 1.0;
+
+        const para_2_spd = document.getElementById("id_para_2_1").value * 1.0;
+        const para_2_sta = document.getElementById("id_para_2_2").value * 1.0;
+        const para_2_pow = document.getElementById("id_para_2_3").value * 1.0;
+        const para_2_gut = document.getElementById("id_para_2_4").value * 1.0;
+        const para_2_wis = document.getElementById("id_para_2_5").value * 1.0;
+        const para_2_skillPt = document.getElementById("id_para_2_6").value * 1.0;
+        const para_2_kizunaPt = document.getElementById("id_para_2_7").value * 1.0;
+
+        let para_1_total = 0.0;
+        let para_2_total = 0.0;
+
+        para_1_total = para_1_spd + para_1_sta + para_1_pow + para_1_gut + para_1_wis +
+            para_1_skillPt * coef_skillPt + para_1_kizunaPt * coef_kizunaPt
+        $("#id_para_1_total").val(para_1_total);
+        para_2_total = para_2_spd + para_2_sta + para_2_pow + para_2_gut + para_2_wis +
+            para_2_skillPt * coef_skillPt + para_2_kizunaPt * coef_kizunaPt
+        $("#id_para_2_total").val(para_2_total);
+    }
+
+    window.onload = function () {
+        document.getElementById("id_skillPt_coef_dis").innerText = coef_skillPt;
+        document.getElementById("id_kizuna_coef_dis").innerText = coef_kizunaPt;
+    }
+</script>
 </html>
