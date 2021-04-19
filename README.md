@@ -1,2 +1,2 @@
 # samzx1125.github.io
-some test website
+self-use website for UMAMUSUME (Kari)
