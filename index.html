@@ -64,15 +64,101 @@
         margin: auto;
     }
 
+    .red {
+        border-color: red;
+        color: red;
+    }
+
+    .yellow {
+        border-color: yellow;
+    }
 </style>
 <body>
-<h1>ウマ娘 トレーニングパラメータ 計算機</h1>
+<h1>ウマ娘 トレーニング評価 計算機 ver 0.3</h1>
 <p>
-    Please Enter the training parameter to compare the two training outcomes.
+    Please Enter the training parameter to compare training outcomes.
+    And track the current status.
 </p>
 <br>
+<div class="text-line">現在のステータス</div>
+<div class="myBlank"></div>
+<div class=" " id="id_status_area">
+    <div class="status max flex" style=" ">
+        <div class="mw-5 text-center">
+            <label for="id_para_cur_spd">スピード</label>
+            <input type="number" id="id_para_cur_spd"
+                   tabindex="1"
+                   value=100>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_cur_sta">スタミナ</label>
+            <input type="number" id="id_para_cur_sta"
+                   tabindex="1"
+                   value=100>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_cur_pow">パワー</label>
+            <input type="number" id="id_para_cur_pow"
+                   tabindex="1"
+                   value=100>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_cur_gut">根性</label>
+            <input type="number" id="id_para_cur_gut"
+                   tabindex="1"
+                   value=100>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_cur_wis">賢さ</label>
+            <input type="number" id="id_para_cur_wis"
+                   tabindex="1"
+                   value=100>
+        </div>
+    </div>
+</div>
+<div class="myGap"></div>
 
-<div class="text-line">トレーニング 1 :</div>
+<div class="text-line">
+    トレーニング 1 :
+    <select id="id_para_type_1" class="type_preset">
+        <option value="">--------</option>
+        <optgroup label="スピード">
+            <option value="spd5">スピードLv.5</option>
+            <option value="spd4">スピードLv.4</option>
+            <option value="spd3">スピードLv.3</option>
+            <option value="spd2">スピードLv.2</option>
+            <option value="spd1" selected>スピードLv.1</option>
+        </optgroup>
+        <optgroup label="スタミナ">
+            <option value="sta5">スタミナLv.5</option>
+            <option value="sta4">スタミナLv.4</option>
+            <option value="sta3">スタミナLv.3</option>
+            <option value="sta2">スタミナLv.2</option>
+            <option value="sta1">スタミナLv.1</option>
+        </optgroup>
+        <optgroup label="パワー">
+            <option value="pow5">パワーLv.5</option>
+            <option value="pow4">パワーLv.4</option>
+            <option value="pow3">パワーLv.3</option>
+            <option value="pow2">パワーLv.2</option>
+            <option value="pow1">パワーLv.1</option>
+        </optgroup>
+        <optgroup label="根性">
+            <option value="gut5">根性Lv.5</option>
+            <option value="gut4">根性Lv.5</option>
+            <option value="gut3">根性Lv.5</option>
+            <option value="gut2">根性Lv.5</option>
+            <option value="gut1">根性Lv.5</option>
+        </optgroup>
+        <optgroup label="賢さ">
+            <option value="wis5">賢さLv.5</option>
+            <option value="wis4">賢さLv.4</option>
+            <option value="wis3">賢さLv.3</option>
+            <option value="wis2">賢さLv.2</option>
+            <option value="wis1">賢さLv.1</option>
+        </optgroup>
+    </select>
+</div>
 <div class="myBlank"></div>
 <div class=" " id="id_calculation_area_1">
     <div class="training_gain_1 max flex" style=" ">
@@ -95,7 +181,7 @@
             <input type="number" id="id_para_1_pow"
                    class="training_para"
                    tabindex="1"
-                   value=0>
+                   value=5>
         </div>
         <div class="training_gain_1_4 mw-5 text-center">
             <label for="id_para_1_gut">根性</label>
@@ -116,7 +202,7 @@
             <input type="number" id="id_para_1_skillPt"
                    class="training_para"
                    tabindex="1"
-                   value=0>
+                   value=2>
         </div>
         <div class="training_gain_1_7 fit text-center">
             <label for="id_para_1_kizunaPt">絆(緑以下のみ)</label>
@@ -137,28 +223,38 @@
             <select id="id_para_1_HPRed"
                     class="training_para"
                     tabindex="1">
-                <option value="0" selected>0 比較しない/Not comparing</option>
-                <option value="-27" >-27 スピードLv.5</option>
-                <option value="-25" >-25 スピードLv.4</option>
-                <option value="-23" >-23 スピードLv.3</option>
-                <option value="-22" >-22 スピードLv.2</option>
-                <option value="-21" >-21 スピードLv.1</option>
-                <option value="-25" >-25 スタミナLv.5</option>
-                <option value="-23" >-23 スタミナLv.4</option>
-                <option value="-21" >-21 スタミナLv.3</option>
-                <option value="-20" >-20 スタミナLv.2</option>
-                <option value="-19" >-19 スタミナLv.1</option>
-                <option value="-26" >-26 パワーLv.5</option>
-                <option value="-24" >-24 パワーLv.4</option>
-                <option value="-22" >-22 パワーLv.3</option>
-                <option value="-21" >-21 パワーLv.2</option>
-                <option value="-20" >-20 パワーLv.1</option>
-                <option value="-28" >-28 根性Lv.5</option>
-                <option value="-26" >-26 根性Lv.5</option>
-                <option value="-24" >-24 根性Lv.5</option>
-                <option value="-23" >-23 根性Lv.5</option>
-                <option value="-22" >-22 根性Lv.5</option>
-                <option value="5" >+5 賢さLv.1-5</option>
+                <option value="0">0 比較しない/Not comparing</option>
+                <optgroup label="スピード">
+                    <option value="-27">-27 スピードLv.5</option>
+                    <option value="-25">-25 スピードLv.4</option>
+                    <option value="-23">-23 スピードLv.3</option>
+                    <option value="-22">-22 スピードLv.2</option>
+                    <option value="-21" selected>-21 スピードLv.1</option>
+                </optgroup>
+                <optgroup label="スタミナ">
+                    <option value="-25">-25 スタミナLv.5</option>
+                    <option value="-23">-23 スタミナLv.4</option>
+                    <option value="-21">-21 スタミナLv.3</option>
+                    <option value="-20">-20 スタミナLv.2</option>
+                    <option value="-19">-19 スタミナLv.1</option>
+                </optgroup>
+                <optgroup label="パワー">
+                    <option value="-26">-26 パワーLv.5</option>
+                    <option value="-24">-24 パワーLv.4</option>
+                    <option value="-22">-22 パワーLv.3</option>
+                    <option value="-21">-21 パワーLv.2</option>
+                    <option value="-20">-20 パワーLv.1</option>
+                </optgroup>
+                <optgroup label="根性">
+                    <option value="-28">-28 根性Lv.5</option>
+                    <option value="-26">-26 根性Lv.5</option>
+                    <option value="-24">-24 根性Lv.5</option>
+                    <option value="-23">-23 根性Lv.5</option>
+                    <option value="-22">-22 根性Lv.5</option>
+                </optgroup>
+                <optgroup label="賢さ">
+                    <option value="5">+5 賢さLv.1-5</option>
+                </optgroup>
             </select>
         </div>
     </div>
@@ -167,17 +263,58 @@
             ==>
         </div>
         <div class="training_gain_1_total fit text-center">
-            <label for="id_para_1_total">総合評価</label>
+            <label for="id_para_1_total">トレーニング評価</label>
             <input type="number" id="id_para_1_total"
                    class="training_para"
                    tabindex="-1"
                    value="0" disabled>
         </div>
+        <button id="id_para_1_select" onclick="add_para_to_cur(1)">これだ！</button>
     </div>
 </div>
 <div class="myGap"></div>
 
-<div class="text-line">トレーニング 2 :</div>
+<div class="text-line">
+    トレーニング 2 :
+    <select id="id_para_type_2" class="type_preset">
+        <option value="">--------</option>
+        <optgroup label="スピード">
+            <option value="spd5">スピードLv.5</option>
+            <option value="spd4">スピードLv.4</option>
+            <option value="spd3">スピードLv.3</option>
+            <option value="spd2">スピードLv.2</option>
+            <option value="spd1">スピードLv.1</option>
+        </optgroup>
+        <optgroup label="スタミナ">
+            <option value="sta5">スタミナLv.5</option>
+            <option value="sta4">スタミナLv.4</option>
+            <option value="sta3">スタミナLv.3</option>
+            <option value="sta2">スタミナLv.2</option>
+            <option value="sta1" selected>スタミナLv.1</option>
+        </optgroup>
+        <optgroup label="パワー">
+            <option value="pow5">パワーLv.5</option>
+            <option value="pow4">パワーLv.4</option>
+            <option value="pow3">パワーLv.3</option>
+            <option value="pow2">パワーLv.2</option>
+            <option value="pow1">パワーLv.1</option>
+        </optgroup>
+        <optgroup label="根性">
+            <option value="gut5">根性Lv.5</option>
+            <option value="gut4">根性Lv.5</option>
+            <option value="gut3">根性Lv.5</option>
+            <option value="gut2">根性Lv.5</option>
+            <option value="gut1">根性Lv.5</option>
+        </optgroup>
+        <optgroup label="賢さ">
+            <option value="wis5">賢さLv.5</option>
+            <option value="wis4">賢さLv.4</option>
+            <option value="wis3">賢さLv.3</option>
+            <option value="wis2">賢さLv.2</option>
+            <option value="wis1">賢さLv.1</option>
+        </optgroup>
+    </select>
+</div>
 <div class="myBlank"></div>
 <div class=" " id="id_calculation_area_2">
     <div class="training_gain_2 max flex" style=" ">
@@ -193,7 +330,7 @@
             <input type="number" id="id_para_2_sta"
                    class="training_para"
                    tabindex="1"
-                   value=0>
+                   value=9>
         </div>
         <div class="training_gain_2_3 mw-5 text-center">
             <label for="id_para_2_pow">パワー</label>
@@ -207,7 +344,7 @@
             <input type="number" id="id_para_2_gut"
                    class="training_para"
                    tabindex="1"
-                   value=0>
+                   value=4>
         </div>
         <div class="training_gain_2_5 mw-5 text-center">
             <label for="id_para_2_wis">賢さ</label>
@@ -221,7 +358,7 @@
             <input type="number" id="id_para_2_skillPt"
                    class="training_para"
                    tabindex="1"
-                   value=0>
+                   value=2>
         </div>
         <div class="training_gain_2_7 fit text-center">
             <label for="id_para_2_kizunaPt">絆(緑以下のみ)</label>
@@ -242,28 +379,38 @@
             <select id="id_para_2_HPRed"
                     class="training_para"
                     tabindex="1">
-                <option value="0" selected>0 比較しない/Not comparing</option>
-                <option value="-27" >-27 スピードLv.5</option>
-                <option value="-25" >-25 スピードLv.4</option>
-                <option value="-23" >-23 スピードLv.3</option>
-                <option value="-22" >-22 スピードLv.2</option>
-                <option value="-21" >-21 スピードLv.1</option>
-                <option value="-25" >-25 スタミナLv.5</option>
-                <option value="-23" >-23 スタミナLv.4</option>
-                <option value="-21" >-21 スタミナLv.3</option>
-                <option value="-20" >-20 スタミナLv.2</option>
-                <option value="-19" >-19 スタミナLv.1</option>
-                <option value="-26" >-26 パワーLv.5</option>
-                <option value="-24" >-24 パワーLv.4</option>
-                <option value="-22" >-22 パワーLv.3</option>
-                <option value="-21" >-21 パワーLv.2</option>
-                <option value="-20" >-20 パワーLv.1</option>
-                <option value="-28" >-28 根性Lv.5</option>
-                <option value="-26" >-26 根性Lv.5</option>
-                <option value="-24" >-24 根性Lv.5</option>
-                <option value="-23" >-23 根性Lv.5</option>
-                <option value="-22" >-22 根性Lv.5</option>
-                <option value="5" >+5 賢さLv.1-5</option>
+                <option value="0">0 比較しない/Not comparing</option>
+                <optgroup label="スピード">
+                    <option value="-27">-27 スピードLv.5</option>
+                    <option value="-25">-25 スピードLv.4</option>
+                    <option value="-23">-23 スピードLv.3</option>
+                    <option value="-22">-22 スピードLv.2</option>
+                    <option value="-21">-21 スピードLv.1</option>
+                </optgroup>
+                <optgroup label="スタミナ">
+                    <option value="-25">-25 スタミナLv.5</option>
+                    <option value="-23">-23 スタミナLv.4</option>
+                    <option value="-21">-21 スタミナLv.3</option>
+                    <option value="-20">-20 スタミナLv.2</option>
+                    <option value="-19" selected>-19 スタミナLv.1</option>
+                </optgroup>
+                <optgroup label="パワー">
+                    <option value="-26">-26 パワーLv.5</option>
+                    <option value="-24">-24 パワーLv.4</option>
+                    <option value="-22">-22 パワーLv.3</option>
+                    <option value="-21">-21 パワーLv.2</option>
+                    <option value="-20">-20 パワーLv.1</option>
+                </optgroup>
+                <optgroup label="根性">
+                    <option value="-28">-28 根性Lv.5</option>
+                    <option value="-26">-26 根性Lv.5</option>
+                    <option value="-24">-24 根性Lv.5</option>
+                    <option value="-23">-23 根性Lv.5</option>
+                    <option value="-22">-22 根性Lv.5</option>
+                </optgroup>
+                <optgroup label="賢さ">
+                    <option value="5">+5 賢さLv.1-5</option>
+                </optgroup>
             </select>
         </div>
     </div>
@@ -272,19 +419,483 @@
             ==>
         </div>
         <div class="training_gain_2_total fit text-center">
-            <label for="id_para_2_total">総合評価</label>
+            <label for="id_para_2_total">トレーニング評価</label>
             <input type="number" id="id_para_2_total"
                    class="training_para"
                    tabindex="-1"
                    value="0" disabled>
         </div>
+        <button id="id_para_2_select" onclick="add_para_to_cur(2)">これだ！</button>
     </div>
 </div>
 <div class="myGap"></div>
 
-<button id="id_soft_reset_button" onclick="reset_training()"
-        style="width: fit-content">return the training parameter to zero</button>
+<div class="text-line">
+    トレーニング 3 :
+<select id="id_para_type_3" class="type_preset">
+        <option value="">--------</option>
+        <optgroup label="スピード">
+            <option value="spd5">スピードLv.5</option>
+            <option value="spd4">スピードLv.4</option>
+            <option value="spd3">スピードLv.3</option>
+            <option value="spd2">スピードLv.2</option>
+            <option value="spd1">スピードLv.1</option>
+        </optgroup>
+        <optgroup label="スタミナ">
+            <option value="sta5">スタミナLv.5</option>
+            <option value="sta4">スタミナLv.4</option>
+            <option value="sta3">スタミナLv.3</option>
+            <option value="sta2">スタミナLv.2</option>
+            <option value="sta1">スタミナLv.1</option>
+        </optgroup>
+        <optgroup label="パワー">
+            <option value="pow5">パワーLv.5</option>
+            <option value="pow4">パワーLv.4</option>
+            <option value="pow3">パワーLv.3</option>
+            <option value="pow2">パワーLv.2</option>
+            <option value="pow1" selected>パワーLv.1</option>
+        </optgroup>
+        <optgroup label="根性">
+            <option value="gut5">根性Lv.5</option>
+            <option value="gut4">根性Lv.5</option>
+            <option value="gut3">根性Lv.5</option>
+            <option value="gut2">根性Lv.5</option>
+            <option value="gut1">根性Lv.5</option>
+        </optgroup>
+        <optgroup label="賢さ">
+            <option value="wis5">賢さLv.5</option>
+            <option value="wis4">賢さLv.4</option>
+            <option value="wis3">賢さLv.3</option>
+            <option value="wis2">賢さLv.2</option>
+            <option value="wis1">賢さLv.1</option>
+        </optgroup>
+    </select></div>
 <div class="myBlank"></div>
+<div class=" " id="id_calculation_area_3">
+    <div class="max flex" style=" ">
+        <div class="training_gain_3_1 mw-5 text-center">
+            <label for="id_para_3_spd">スピード</label>
+            <input type="number" id="id_para_3_spd"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_3_sta">スタミナ</label>
+            <input type="number" id="id_para_3_sta"
+                   class="training_para"
+                   tabindex="1"
+                   value=5>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_3_pow">パワー</label>
+            <input type="number" id="id_para_3_pow"
+                   class="training_para"
+                   tabindex="1"
+                   value=8>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_3_gut">根性</label>
+            <input type="number" id="id_para_3_gut"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_3_wis">賢さ</label>
+            <input type="number" id="id_para_3_wis"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_3_skillPt">スキルpt</label>
+            <input type="number" id="id_para_3_skillPt"
+                   class="training_para"
+                   tabindex="1"
+                   value=2>
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_3_kizunaPt">絆(緑以下のみ)</label>
+            <input type="number" id="id_para_3_kizunaPt"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>人
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_3_failPer">失敗率</label>
+            <input type="number" id="id_para_3_failPer"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>%
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_3_HPRed">体力消耗</label>
+            <select id="id_para_3_HPRed"
+                    class="training_para"
+                    tabindex="1">
+                <option value="0">0 比較しない/Not comparing</option>
+                <optgroup label="スピード">
+                    <option value="-27">-27 スピードLv.5</option>
+                    <option value="-25">-25 スピードLv.4</option>
+                    <option value="-23">-23 スピードLv.3</option>
+                    <option value="-22">-22 スピードLv.2</option>
+                    <option value="-21">-21 スピードLv.1</option>
+                </optgroup>
+                <optgroup label="スタミナ">
+                    <option value="-25">-25 スタミナLv.5</option>
+                    <option value="-23">-23 スタミナLv.4</option>
+                    <option value="-21">-21 スタミナLv.3</option>
+                    <option value="-20">-20 スタミナLv.2</option>
+                    <option value="-19">-19 スタミナLv.1</option>
+                </optgroup>
+                <optgroup label="パワー">
+                    <option value="-26">-26 パワーLv.5</option>
+                    <option value="-24">-24 パワーLv.4</option>
+                    <option value="-22">-22 パワーLv.3</option>
+                    <option value="-21">-21 パワーLv.2</option>
+                    <option value="-20" selected>-20 パワーLv.1</option>
+                </optgroup>
+                <optgroup label="根性">
+                    <option value="-28">-28 根性Lv.5</option>
+                    <option value="-26">-26 根性Lv.5</option>
+                    <option value="-24">-24 根性Lv.5</option>
+                    <option value="-23">-23 根性Lv.5</option>
+                    <option value="-22">-22 根性Lv.5</option>
+                </optgroup>
+                <optgroup label="賢さ">
+                    <option value="5">+5 賢さLv.1-5</option>
+                </optgroup>
+            </select>
+        </div>
+    </div>
+    <div class="max flex">
+        <div class="m-auto">
+            ==>
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_3_total">トレーニング評価</label>
+            <input type="number" id="id_para_3_total"
+                   class="training_para"
+                   tabindex="-1"
+                   value="0" disabled>
+        </div>
+        <button id="id_para_3_select" onclick="add_para_to_cur(3)">これだ！</button>
+    </div>
+</div>
+<div class="myGap"></div>
+
+<div class="text-line">
+    トレーニング 4 :
+    <select id="id_para_type_4" class="type_preset">
+        <option value="">--------</option>
+        <optgroup label="スピード">
+            <option value="spd5">スピードLv.5</option>
+            <option value="spd4">スピードLv.4</option>
+            <option value="spd3">スピードLv.3</option>
+            <option value="spd2">スピードLv.2</option>
+            <option value="spd1">スピードLv.1</option>
+        </optgroup>
+        <optgroup label="スタミナ">
+            <option value="sta5">スタミナLv.5</option>
+            <option value="sta4">スタミナLv.4</option>
+            <option value="sta3">スタミナLv.3</option>
+            <option value="sta2">スタミナLv.2</option>
+            <option value="sta1">スタミナLv.1</option>
+        </optgroup>
+        <optgroup label="パワー">
+            <option value="pow5">パワーLv.5</option>
+            <option value="pow4">パワーLv.4</option>
+            <option value="pow3">パワーLv.3</option>
+            <option value="pow2">パワーLv.2</option>
+            <option value="pow1">パワーLv.1</option>
+        </optgroup>
+        <optgroup label="根性">
+            <option value="gut5">根性Lv.5</option>
+            <option value="gut4">根性Lv.5</option>
+            <option value="gut3">根性Lv.5</option>
+            <option value="gut2">根性Lv.5</option>
+            <option value="gut1" selected>根性Lv.5</option>
+        </optgroup>
+        <optgroup label="賢さ">
+            <option value="wis5">賢さLv.5</option>
+            <option value="wis4">賢さLv.4</option>
+            <option value="wis3">賢さLv.3</option>
+            <option value="wis2">賢さLv.2</option>
+            <option value="wis1">賢さLv.1</option>
+        </optgroup>
+    </select>
+</div>
+<div class="myBlank"></div>
+<div class=" " id="id_calculation_area_4">
+    <div class="max flex" style=" ">
+        <div class=" mw-5 text-center">
+            <label for="id_para_4_spd">スピード</label>
+            <input type="number" id="id_para_4_spd"
+                   class="training_para"
+                   tabindex="1"
+                   value=4>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_4_sta">スタミナ</label>
+            <input type="number" id="id_para_4_sta"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_4_pow">パワー</label>
+            <input type="number" id="id_para_4_pow"
+                   class="training_para"
+                   tabindex="1"
+                   value=4>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_4_gut">根性</label>
+            <input type="number" id="id_para_4_gut"
+                   class="training_para"
+                   tabindex="1"
+                   value=8>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_4_wis">賢さ</label>
+            <input type="number" id="id_para_4_wis"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_4_skillPt">スキルpt</label>
+            <input type="number" id="id_para_4_skillPt"
+                   class="training_para"
+                   tabindex="1"
+                   value=2>
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_4_kizunaPt">絆(緑以下のみ)</label>
+            <input type="number" id="id_para_4_kizunaPt"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>人
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_4_failPer">失敗率</label>
+            <input type="number" id="id_para_4_failPer"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>%
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_4_HPRed">体力消耗</label>
+            <select id="id_para_4_HPRed"
+                    class="training_para"
+                    tabindex="1">
+                <option value="0">0 比較しない/Not comparing</option>
+                <optgroup label="スピード">
+                    <option value="-27">-27 スピードLv.5</option>
+                    <option value="-25">-25 スピードLv.4</option>
+                    <option value="-23">-23 スピードLv.3</option>
+                    <option value="-22">-22 スピードLv.2</option>
+                    <option value="-21">-21 スピードLv.1</option>
+                </optgroup>
+                <optgroup label="スタミナ">
+                    <option value="-25">-25 スタミナLv.5</option>
+                    <option value="-23">-23 スタミナLv.4</option>
+                    <option value="-21">-21 スタミナLv.3</option>
+                    <option value="-20">-20 スタミナLv.2</option>
+                    <option value="-19">-19 スタミナLv.1</option>
+                </optgroup>
+                <optgroup label="パワー">
+                    <option value="-26">-26 パワーLv.5</option>
+                    <option value="-24">-24 パワーLv.4</option>
+                    <option value="-22">-22 パワーLv.3</option>
+                    <option value="-21">-21 パワーLv.2</option>
+                    <option value="-20">-20 パワーLv.1</option>
+                </optgroup>
+                <optgroup label="根性">
+                    <option value="-28">-28 根性Lv.5</option>
+                    <option value="-26">-26 根性Lv.5</option>
+                    <option value="-24">-24 根性Lv.5</option>
+                    <option value="-23">-23 根性Lv.5</option>
+                    <option value="-22" selected>-22 根性Lv.5</option>
+                </optgroup>
+                <optgroup label="賢さ">
+                    <option value="5">+5 賢さLv.1-5</option>
+                </optgroup>
+            </select>
+        </div>
+    </div>
+    <div class="max flex">
+        <div class="m-auto">
+            ==>
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_4_total">トレーニング評価</label>
+            <input type="number" id="id_para_4_total"
+                   class="training_para"
+                   tabindex="-1"
+                   value="0" disabled>
+        </div>
+        <button id="id_para_4_select" onclick="add_para_to_cur(4)">これだ！</button>
+    </div>
+</div>
+<div class="myGap"></div>
+
+<div class="text-line">
+    トレーニング 5 :
+    <select id="id_para_type_5" class="type_preset">
+        <option value="">--------</option>
+        <optgroup label="スピード">
+            <option value="spd5">スピードLv.5</option>
+            <option value="spd4">スピードLv.4</option>
+            <option value="spd3">スピードLv.3</option>
+            <option value="spd2">スピードLv.2</option>
+            <option value="spd1">スピードLv.1</option>
+        </optgroup>
+        <optgroup label="スタミナ">
+            <option value="sta5">スタミナLv.5</option>
+            <option value="sta4">スタミナLv.4</option>
+            <option value="sta3">スタミナLv.3</option>
+            <option value="sta2">スタミナLv.2</option>
+            <option value="sta1">スタミナLv.1</option>
+        </optgroup>
+        <optgroup label="パワー">
+            <option value="pow5">パワーLv.5</option>
+            <option value="pow4">パワーLv.4</option>
+            <option value="pow3">パワーLv.3</option>
+            <option value="pow2">パワーLv.2</option>
+            <option value="pow1">パワーLv.1</option>
+        </optgroup>
+        <optgroup label="根性">
+            <option value="gut5">根性Lv.5</option>
+            <option value="gut4">根性Lv.5</option>
+            <option value="gut3">根性Lv.5</option>
+            <option value="gut2">根性Lv.5</option>
+            <option value="gut1">根性Lv.5</option>
+        </optgroup>
+        <optgroup label="賢さ">
+            <option value="wis5">賢さLv.5</option>
+            <option value="wis4">賢さLv.4</option>
+            <option value="wis3">賢さLv.3</option>
+            <option value="wis2">賢さLv.2</option>
+            <option value="wis1" selected>賢さLv.1</option>
+        </optgroup>
+    </select>
+</div>
+<div class="myBlank"></div>
+<div class=" " id="id_calculation_area_5">
+    <div class="max flex" style=" ">
+        <div class="mw-5 text-center">
+            <label for="id_para_5_spd">スピード</label>
+            <input type="number" id="id_para_5_spd"
+                   class="training_para"
+                   tabindex="1"
+                   value=2>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_5_sta">スタミナ</label>
+            <input type="number" id="id_para_5_sta"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_5_pow">パワー</label>
+            <input type="number" id="id_para_5_pow"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_5_gut">根性</label>
+            <input type="number" id="id_para_5_gut"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_5_wis">賢さ</label>
+            <input type="number" id="id_para_5_wis"
+                   class="training_para"
+                   tabindex="1"
+                   value=9>
+        </div>
+        <div class="mw-5 text-center">
+            <label for="id_para_5_skillPt">スキルpt</label>
+            <input type="number" id="id_para_5_skillPt"
+                   class="training_para"
+                   tabindex="1"
+                   value=4>
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_5_kizunaPt">絆(緑以下のみ)</label>
+            <input type="number" id="id_para_5_kizunaPt"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>人
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_5_failPer">失敗率</label>
+            <input type="number" id="id_para_5_failPer"
+                   class="training_para"
+                   tabindex="1"
+                   value=0>%
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_5_HPRed">体力消耗</label>
+            <select id="id_para_5_HPRed"
+                    class="training_para"
+                    tabindex="1">
+                <option value="0">0 比較しない/Not comparing</option>
+                <optgroup label="スピード">
+                    <option value="-27">-27 スピードLv.5</option>
+                    <option value="-25">-25 スピードLv.4</option>
+                    <option value="-23">-23 スピードLv.3</option>
+                    <option value="-22">-22 スピードLv.2</option>
+                    <option value="-21">-21 スピードLv.1</option>
+                </optgroup>
+                <optgroup label="スタミナ">
+                    <option value="-25">-25 スタミナLv.5</option>
+                    <option value="-23">-23 スタミナLv.4</option>
+                    <option value="-21">-21 スタミナLv.3</option>
+                    <option value="-20">-20 スタミナLv.2</option>
+                    <option value="-19">-19 スタミナLv.1</option>
+                </optgroup>
+                <optgroup label="パワー">
+                    <option value="-26">-26 パワーLv.5</option>
+                    <option value="-24">-24 パワーLv.4</option>
+                    <option value="-22">-22 パワーLv.3</option>
+                    <option value="-21">-21 パワーLv.2</option>
+                    <option value="-20">-20 パワーLv.1</option>
+                </optgroup>
+                <optgroup label="根性">
+                    <option value="-28">-28 根性Lv.5</option>
+                    <option value="-26">-26 根性Lv.5</option>
+                    <option value="-24">-24 根性Lv.5</option>
+                    <option value="-23">-23 根性Lv.5</option>
+                    <option value="-22">-22 根性Lv.5</option>
+                </optgroup>
+                <optgroup label="賢さ">
+                    <option value="5" selected>+5 賢さLv.1-5</option>
+                </optgroup>
+            </select>
+        </div>
+    </div>
+    <div class="max flex">
+        <div class="m-auto">
+            ==>
+        </div>
+        <div class="fit text-center">
+            <label for="id_para_5_total">トレーニング評価</label>
+            <input type="number" id="id_para_5_total"
+                   class="training_para"
+                   tabindex="-1"
+                   value="0" disabled>
+        </div>
+        <button id="id_para_5_select" onclick="add_para_to_cur(5)">これだ！</button>
+    </div>
+</div>
+<div class="myGap"></div>
 
 <div class="text-line">
     The calculation of the 総合評価 is still a simple one.
@@ -292,29 +903,64 @@
     kizuna: <a id="id_kizuna_coef_dis"></a> per support, <a id="id_HPRed_coef_dis"></a> per 体力消耗,
     <br>and the 5 parameters (スピード スタミナ パワー 根性 賢さ) with coefficient of 1.
     <br>And the coefficient used is highly referenced but not directly equals to
-    <a tabindex="-1" href="https://twitter.com/chokudai/status/1370022643152293898" target="_blank">chokudai(高橋 直大)🍆
-        @chokudai 's tweet
+    <a tabindex="-1" href="https://twitter.com/chokudai/status/1370022643152293898" target="_blank">
+        chokudai(高橋 直大)🍆 @chokudai 's tweet
+    </a>
+    <br>And more reference:
+    <a tabindex="-1" href="https://umamusume.wikiru.jp/index.php?SandBox%2F%A5%C8%A5%EC%A1%BC%A5%CB%A5%F3%A5%B0" target="_blank">
+        ウマ娘 プリティダービー 攻略 Wiki
     </a>
     <br><br>PS.This calculator is just for simple calculation of total parameter outcome and not guarantee the best
     result
 </div>
-</p>
 </body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script>
-    var coef_skillPt = 0.4;
-    var coef_kizunaPt = 8.0;
-    var coef_HP_to_Pt = 2/3;
+    const coef_skillPt = 0.4;
+    const coef_kizunaPt = 8.0;
+    const coef_HP_to_Pt = 2 / 3;
+    let no_of_row = 0;
+    var URA_training_para = [];
+{
+    URA_training_para["spd1"] = [10,0,5,0,0,2,5];
+    URA_training_para["spd2"] = [11,0,5,0,0,2,4];
+    URA_training_para["spd3"] = [12,0,5,0,0,2,3];
+    URA_training_para["spd4"] = [13,0,6,0,0,2,2];
+    URA_training_para["spd5"] = [14,0,7,0,0,2,1];
+    URA_training_para["sta1"] = [0,9,0,4,0,2,10];
+    URA_training_para["sta2"] = [0,10,0,4,0,2,9];
+    URA_training_para["sta3"] = [0,11,0,4,0,2,8];
+    URA_training_para["sta4"] = [0,12,0,5,0,2,7];
+    URA_training_para["sta5"] = [0,13,0,6,0,2,6];
+    URA_training_para["pow1"] = [0,5,8,0,0,2,15];
+    URA_training_para["pow2"] = [0,5,9,0,0,2,14];
+    URA_training_para["pow3"] = [0,5,10,0,0,2,13];
+    URA_training_para["pow4"] = [0,6,11,0,0,2,12];
+    URA_training_para["pow5"] = [0,7,12,0,0,2,11];
+    URA_training_para["gut1"] = [4,0,4,8,0,2,20];
+    URA_training_para["gut2"] = [4,0,4,9,0,2,19];
+    URA_training_para["gut3"] = [4,0,4,10,0,2,18];
+    URA_training_para["gut4"] = [5,0,4,11,0,2,17];
+    URA_training_para["gut5"] = [5,0,5,12,0,2,16];
+    URA_training_para["wis1"] = [2,0,0,0,9,4,21];
+    URA_training_para["wis2"] = [2,0,0,0,10,4,21];
+    URA_training_para["wis3"] = [2,0,0,0,11,4,21];
+    URA_training_para["wis4"] = [3,0,0,0,12,4,21];
+    URA_training_para["wis5"] = [4,0,0,0,13,4,21];
+} // URA training parameter
 
-    $("input").focus(function () {
+    let input = $("input");
+    let type_preset = $(".type_preset");
+
+    input.focus(function () {
         $(this).select();
     });
 
-    $("input").on("change", function () {
+    input.on("change", function () {
         calculate_the_efficiency();
     });
 
-    $("input").keyup(function () {
+    input.keyup(function () {
         calculate_the_efficiency();
     });
 
@@ -322,44 +968,104 @@
         calculate_the_efficiency();
     });
 
+    type_preset.on("change", function () {
+        set_HP_reduction(this);
+        set_parameter(this);
+    });
+
+    $("#id_para_1_failPer, #id_para_2_failPer").on("change", function () {
+        if (this.value > 40) {
+            this.classList.remove("yellow");
+            this.classList.add("red");
+        } else if (this.value > 20) {
+            this.classList.remove("red");
+            this.classList.add("yellow");
+        } else {
+            this.classList.remove("red");
+            this.classList.remove("yellow");
+        }
+    })
+
     function calculate_the_efficiency() {
-        const para_1_spd = document.getElementById("id_para_1_spd").value * 1.0;
-        const para_1_sta = document.getElementById("id_para_1_sta").value * 1.0;
-        const para_1_pow = document.getElementById("id_para_1_pow").value * 1.0;
-        const para_1_gut = document.getElementById("id_para_1_gut").value * 1.0;
-        const para_1_wis = document.getElementById("id_para_1_wis").value * 1.0;
-        const para_1_skillPt = document.getElementById("id_para_1_skillPt").value * 1.0;
-        const para_1_kizunaPt = document.getElementById("id_para_1_kizunaPt").value * 1.0;
-        const para_1_failPer = document.getElementById("id_para_1_failPer").value * 1.0;
-        const para_1_HPRed = document.getElementById("id_para_1_HPRed").value * 1.0;
+        for (let i = 1; i <= no_of_row; i++) {
+            let para_spd = document.getElementById(`id_para_${i}_spd`).value * 1.0;
+            let para_sta = document.getElementById(`id_para_${i}_sta`).value * 1.0;
+            let para_pow = document.getElementById(`id_para_${i}_pow`).value * 1.0;
+            let para_gut = document.getElementById(`id_para_${i}_gut`).value * 1.0;
+            let para_wis = document.getElementById(`id_para_${i}_wis`).value * 1.0;
+            let para_skillPt = document.getElementById(`id_para_${i}_skillPt`).value * 1.0;
+            let para_kizunaPt = document.getElementById(`id_para_${i}_kizunaPt`).value * 1.0;
+            let para_failPer = document.getElementById(`id_para_${i}_failPer`).value * 1.0;
+            let para_HPRed = document.getElementById(`id_para_${i}_HPRed`).value * 1.0;
 
-        const para_2_spd = document.getElementById("id_para_2_spd").value * 1.0;
-        const para_2_sta = document.getElementById("id_para_2_sta").value * 1.0;
-        const para_2_pow = document.getElementById("id_para_2_pow").value * 1.0;
-        const para_2_gut = document.getElementById("id_para_2_gut").value * 1.0;
-        const para_2_wis = document.getElementById("id_para_2_wis").value * 1.0;
-        const para_2_skillPt = document.getElementById("id_para_2_skillPt").value * 1.0;
-        const para_2_kizunaPt = document.getElementById("id_para_2_kizunaPt").value * 1.0;
-        const para_2_failPer = document.getElementById("id_para_2_failPer").value * 1.0;
-        const para_2_HPRed = document.getElementById("id_para_2_HPRed").value * 1.0;
+            let para_total = 0.0;
 
-        let para_1_total = 0.0;
-        let para_2_total = 0.0;
-
-        para_1_total = para_1_spd + para_1_sta + para_1_pow + para_1_gut + para_1_wis +
-            para_1_skillPt * coef_skillPt + para_1_kizunaPt * coef_kizunaPt;
-        para_1_total = para_1_total * (1 - para_1_failPer / 100) + para_1_HPRed * coef_HP_to_Pt;
-        $("#id_para_1_total").val(para_1_total);
-        para_2_total = para_2_spd + para_2_sta + para_2_pow + para_2_gut + para_2_wis +
-            para_2_skillPt * coef_skillPt + para_2_kizunaPt * coef_kizunaPt;
-        para_2_total = para_2_total * (1 - para_2_failPer / 100) + para_2_HPRed * coef_HP_to_Pt;
-        $("#id_para_2_total").val(para_2_total);
+            para_total = para_spd + para_sta + para_pow + para_gut + para_wis +
+                para_skillPt * coef_skillPt + para_kizunaPt * coef_kizunaPt;
+            para_total = para_total * (1 - para_failPer / 100) + para_HPRed * coef_HP_to_Pt;
+            $(`#id_para_${i}_total`).val(para_total.toFixed(3));
+        }
     }
 
     function reset_training() {
         var training_paras = $("input.training_para");
-        for (let i = 0; i < training_paras.length; i++){
+        for (let i = 0; i < training_paras.length; i++) {
             training_paras[i].value = 0.0;
+            training_paras[i].classList.remove("red");
+            training_paras[i].classList.remove("yellow");
+        }
+        pre_set();
+    }
+
+    function add_para_to_cur(selected) {
+        var para_cur_spd = document.getElementById("id_para_cur_spd");
+        var para_cur_sta = document.getElementById("id_para_cur_sta");
+        var para_cur_pow = document.getElementById("id_para_cur_pow");
+        var para_cur_gut = document.getElementById("id_para_cur_gut");
+        var para_cur_wis = document.getElementById("id_para_cur_wis");
+        if (selected <= no_of_row && selected > 0) {
+            var para_select_spd = document.getElementById(`id_para_${selected}_spd`);
+            var para_select_sta = document.getElementById(`id_para_${selected}_sta`);
+            var para_select_pow = document.getElementById(`id_para_${selected}_pow`);
+            var para_select_gut = document.getElementById(`id_para_${selected}_gut`);
+            var para_select_wis = document.getElementById(`id_para_${selected}_wis`);
+            para_cur_spd.value = para_cur_spd.value * 1.0 + para_select_spd.value * 1.0;
+            para_cur_sta.value = para_cur_sta.value * 1.0 + para_select_sta.value * 1.0;
+            para_cur_pow.value = para_cur_pow.value * 1.0 + para_select_pow.value * 1.0;
+            para_cur_gut.value = para_cur_gut.value * 1.0 + para_select_gut.value * 1.0;
+            para_cur_wis.value = para_cur_wis.value * 1.0 + para_select_wis.value * 1.0;
+            console.log("new stats, ", para_cur_spd.value, para_cur_sta.value,
+                para_cur_pow.value, para_cur_gut.value, para_cur_wis.value);
+
+            reset_training();
+
+        }
+    }
+
+    function set_HP_reduction(select) {
+        let id = select.id.split("_")[3];
+        let value = select.value;
+        document.getElementById(`id_para_${id}_HPRed`).selectedIndex = URA_training_para[value][6];
+    }
+
+    function set_parameter(select) {
+        let id = select.id.split("_")[3];
+        console.log("id = ", id);
+        let value = select.value;
+        console.log("value = ", value);
+        document.getElementById(`id_para_${id}_spd`).value = URA_training_para[value][0];
+        document.getElementById(`id_para_${id}_sta`).value = URA_training_para[value][1];
+        document.getElementById(`id_para_${id}_pow`).value = URA_training_para[value][2];
+        document.getElementById(`id_para_${id}_gut`).value = URA_training_para[value][3];
+        document.getElementById(`id_para_${id}_wis`).value = URA_training_para[value][4];
+        document.getElementById(`id_para_${id}_skillPt`).value = URA_training_para[value][5];
+    }
+
+    function pre_set() {
+        var type_preset = document.getElementsByClassName("type_preset");
+        for (let i = 0; i < type_preset.length; i++) {
+            set_HP_reduction(type_preset[i]);
+            set_parameter(type_preset[i]);
         }
     }
 
@@ -367,6 +1073,10 @@
         document.getElementById("id_skillPt_coef_dis").innerText = coef_skillPt;
         document.getElementById("id_kizuna_coef_dis").innerText = coef_kizunaPt;
         document.getElementById("id_HPRed_coef_dis").innerText = coef_HP_to_Pt.toFixed(2);
+        pre_set();
+        calculate_the_efficiency();
+        no_of_row = document.getElementsByClassName("type_preset").length;
+        console.log("no of row = ",no_of_row);
     }
 </script>
 </html>
