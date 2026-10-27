@@ -1,18 +1,18 @@
 :root {
-  --bg: #0a0a0a;
-  --panel: #1a1a1a;
-  --ink: #ffffff;
-  --muted: #b0b0b0;
-  --accent: #e0e0e0;
-  --rail: #666666;
-  --rail-active: #ffffff;
-  --ok: #d0d0d0;
-  --node: #222222;
-  --node-cur: #ffffff;
-  --locked: #141414;
-  --border: #555555;
-  --btn: #2a2a2a;
-  --btn-hover: #3a3a3a;
+  --bg: #e8e8e8;
+  --panel: #f2f2f2;
+  --ink: #000000;
+  --muted: #555555;
+  --accent: #111111;
+  --rail: #888888;
+  --rail-active: #000000;
+  --ok: #222222;
+  --node: #fafafa;
+  --node-cur: #000000;
+  --locked: #d0d0d0;
+  --border: #999999;
+  --btn: #ececec;
+  --btn-hover: #d8d8d8;
 }
 
 * { box-sizing: border-box; }
@@ -105,7 +105,7 @@ main {
 .node {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 170px;
+  width: 140px;
   padding: 0.45rem 0.35rem;
   border: 2px solid var(--border);
   border-radius: 8px;
@@ -118,19 +118,19 @@ main {
 .node:hover:not(:disabled) { border-color: var(--accent); }
 .node.current {
   border-color: var(--node-cur);
-  box-shadow: 0 0 0 2px #ffffff55;
+  box-shadow: 0 0 0 2px #00000033;
 }
-.node.selected:not(.current) { border-color: #aaaaaa; }
+.node.selected:not(.current) { border-color: #444444; }
 .node.locked {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: not-allowed;
   background: var(--locked);
 }
 .node-name {
   display: block;
   font-weight: 600;
-  font-size: 0.58rem;
-  word-break: break-all;
+  font-size: 0.78rem;
+  word-break: normal;
 }
 
 #train-marker {
@@ -139,9 +139,9 @@ main {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #ffffff;
-  border: 2px solid #000000;
-  box-shadow: 0 0 0 1px #ffffff;
+  background: #000000;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px #000000;
   pointer-events: none;
   z-index: 5;
 }
@@ -160,7 +160,7 @@ aside {
 aside h2 {
   margin: 0 0 0.5rem;
   font-size: 0.95rem;
-  word-break: break-all;
+  word-break: normal;
 }
 
 table {
@@ -190,7 +190,7 @@ th:nth-child(4), td:nth-child(4) { width: 40%; }
 }
 .qty {
   width: 3rem;
-  background: var(--bg);
+  background: #ffffff;
   border: 1px solid var(--border);
   color: var(--ink);
   border-radius: 4px;
@@ -208,9 +208,9 @@ button {
 button:hover:not(:disabled) { background: var(--btn-hover); }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
 button.primary {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
   font-weight: 600;
 }
 
