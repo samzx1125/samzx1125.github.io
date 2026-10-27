@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028a';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028a';
-import { getLastSavedAt } from './saving.js?v=z1-20261028a';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028a';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028b';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028b';
+import { getLastSavedAt } from './saving.js?v=z1-20261028b';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028b';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
