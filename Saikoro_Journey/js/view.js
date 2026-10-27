@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028e';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028e';
-import { getLastSavedAt } from './saving.js?v=z1-20261028e';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028e';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028f';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028f';
+import { getLastSavedAt } from './saving.js?v=z1-20261028f';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028f';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -85,6 +85,11 @@ export function mountView() {
       btn.style.left = loc.x + 'px';
       btn.style.top = loc.y + 'px';
       btn.title = loc.id;
+      // Default out of tab order until first render sets unlocked state
+      btn.tabIndex = -1;
+      btn.disabled = true;
+      btn.setAttribute('aria-disabled', 'true');
+      btn.classList.add('locked');
       btn.innerHTML = `<span class="node-name">${loc.name}</span>`;
       nodesEl.appendChild(btn);
     }
@@ -247,9 +252,11 @@ export function render(s, ui = {}) {
     el.classList.toggle('current', !s.travel && id === s.locationId);
     el.classList.toggle('selected', id === s.selectedLocId);
     el.classList.toggle('dest', !!s.travel && id === s.travel.to);
-    el.disabled = false;
+    // Locked: disabled + tabindex=-1 so Tab skips (aria-disabled alone is not enough)
+    el.disabled = !unlocked;
     el.tabIndex = unlocked ? 0 : -1;
-    el.setAttribute("aria-disabled", unlocked ? "false" : "true");
+    el.setAttribute('tabindex', unlocked ? '0' : '-1');
+    el.setAttribute('aria-disabled', unlocked ? 'false' : 'true');
   });
 
   document.querySelectorAll('.rail').forEach((line) => {
@@ -292,7 +299,8 @@ export function render(s, ui = {}) {
     const el = document.querySelector(`input.qty[data-qty="${pendingFocusGood}"]`);
     pendingFocusGood = null;
     if (el && !el.disabled) {
-      el.focus();
+      // Programmatic focus after Buy/Sell — avoid looking like keyboard focus-visible
+      el.focus({ preventScroll: true, focusVisible: false });
       el.select();
     }
   }

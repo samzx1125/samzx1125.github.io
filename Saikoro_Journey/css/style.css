@@ -125,7 +125,8 @@ main {
   box-shadow: 0 0 0 2px #00000022;
 }
 .node.locked,
-.node[aria-disabled="true"] {
+.node[aria-disabled="true"],
+.node:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   background: var(--locked);
@@ -144,8 +145,10 @@ main {
 /* Locked: muted; no unlocked-style hover/press */
 .node.locked:hover,
 .node[aria-disabled="true"]:hover,
+.node:disabled:hover,
 .node.locked:active,
-.node[aria-disabled="true"]:active {
+.node[aria-disabled="true"]:active,
+.node:disabled:active {
   border-color: var(--border);
   background: var(--locked);
   box-shadow: none;
@@ -259,7 +262,8 @@ input.qty:focus-visible,
 }
 /* Locked map nodes: muted ring if somehow focused (normally tabIndex=-1) */
 .node.locked:focus-visible,
-.node[aria-disabled="true"]:focus-visible {
+.node[aria-disabled="true"]:focus-visible,
+.node:disabled:focus-visible {
   outline: 1px solid #888888;
   outline-offset: 2px;
 }

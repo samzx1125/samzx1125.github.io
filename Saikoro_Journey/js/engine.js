@@ -1,4 +1,4 @@
-import { cargoUsed } from './state.js?v=z1-20261028e';
+import { cargoUsed } from './state.js?v=z1-20261028f';
 
 /**
  * @param {import('./state.js').GameState} s
