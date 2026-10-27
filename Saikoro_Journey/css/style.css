@@ -259,6 +259,7 @@ aside code {
   overflow: hidden;
 }
 .bar-fill {
+  display: block;
   height: 100%;
   width: 0%;
   background: #000000;
