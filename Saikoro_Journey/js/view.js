@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027s';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027s';
-import { getLastSavedAt } from './saving.js?v=z1-20261027s';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027s';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027t';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027t';
+import { getLastSavedAt } from './saving.js?v=z1-20261027t';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261027t';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -182,7 +182,11 @@ export function render(s, ui = {}) {
   }
   const here = LOCATIONS.find((l) => l.id === s.locationId);
   const travelLabel = s.travel
-    ? `moving → ${locName(s.travel.to)} (${Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100))}%)`
+    ? (() => {
+        const pct = Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100));
+        const leftSec = (Math.max(0, s.travel.durationMs - s.travel.elapsedMs) / 1000).toFixed(1);
+        return `moving → ${locName(s.travel.to)} (${pct}% · ${leftSec}s)`;
+      })()
     : here
       ? here.name
       : s.locationId;
