@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027y';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027y';
-import { getLastSavedAt } from './saving.js?v=z1-20261027y';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027y';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027z';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027z';
+import { getLastSavedAt } from './saving.js?v=z1-20261027z';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261027z';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -17,9 +17,16 @@ let toastTimer = null;
 let lastToastText = '';
 /** @type {string | null} */
 let pendingFocusGood = null;
+/** @type {string | null} */
+let pendingTradeFlash = null;
 
 export function focusQtyAfterTrade(goodId) {
   pendingFocusGood = goodId;
+}
+
+/** Brief quote-row flash after a successful buy/sell. */
+export function flashTradedRow(goodId) {
+  pendingTradeFlash = goodId;
 }
 
 /** Brief map flash when a location unlocks. */
@@ -119,6 +126,7 @@ function renderQuotes(s) {
     if (price == null) continue;
     const qtyVal = qtyByGood[g.id] != null ? qtyByGood[g.id] : '1';
     const tr = document.createElement('tr');
+    tr.dataset.good = g.id;
     const herePrice = s.prices[s.locationId]?.[g.id];
     let deltaHtml = '—';
     if (quoteLoc !== s.locationId && herePrice != null) {
@@ -256,6 +264,17 @@ export function render(s, ui = {}) {
     if (el && !el.disabled) {
       el.focus();
       el.select();
+    }
+  }
+  if (pendingTradeFlash) {
+    const good = pendingTradeFlash;
+    pendingTradeFlash = null;
+    const row = document.querySelector(`#quote-body tr[data-good="${good}"]`);
+    if (row) {
+      row.classList.remove('just-traded');
+      void row.offsetWidth;
+      row.classList.add('just-traded');
+      setTimeout(() => row.classList.remove('just-traded'), 600);
     }
   }
 
