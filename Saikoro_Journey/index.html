@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Saikoro Journey — Z1 map/train</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Saikoro Journey · Z1 map</h1>
+    <div class="hud">
+      <span>loc <strong id="hud-loc">—</strong></span>
+    </div>
+  </header>
+  <main class="map-only">
+    <div id="map-wrap">
+      <svg id="rails" viewBox="0 0 680 400" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="nodes"></div>
+      <div id="train-marker" hidden></div>
+    </div>
+    <p id="toast" class="map-toast"></p>
+  </main>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
