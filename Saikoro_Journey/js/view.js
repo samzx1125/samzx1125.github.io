@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027v';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027v';
-import { getLastSavedAt } from './saving.js?v=z1-20261027v';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027v';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027w';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027w';
+import { getLastSavedAt } from './saving.js?v=z1-20261027w';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261027w';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -20,6 +20,17 @@ let pendingFocusGood = null;
 
 export function focusQtyAfterTrade(goodId) {
   pendingFocusGood = goodId;
+}
+
+/** Brief map flash when a location unlocks. */
+export function flashUnlockedNode(locId) {
+  const el = document.querySelector(`.node[data-loc-id="${locId}"]`);
+  if (!el) return;
+  el.classList.remove('just-unlocked');
+  // reflow so animation retriggers
+  void el.offsetWidth;
+  el.classList.add('just-unlocked');
+  setTimeout(() => el.classList.remove('just-unlocked'), 1000);
 }
 
 export function mountView() {

@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027v';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027v';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027v';
-import { cargoUsed } from './state.js?v=z1-20261027v';
-import { saveGame, clearSave } from './saving.js?v=z1-20261027v';
-import { render, invalidateQuotes, focusQtyAfterTrade } from './view.js?v=z1-20261027v';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027w';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027w';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027w';
+import { cargoUsed } from './state.js?v=z1-20261027w';
+import { saveGame, clearSave } from './saving.js?v=z1-20261027w';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashUnlockedNode } from './view.js?v=z1-20261027w';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -154,7 +154,7 @@ export function bindEvents(s) {
     if (!btn || !state) return;
     const r = tryUnlock(state, UNLOCK_LOC3);
     ui.lastMsg = r.ok ? `unlocked ${locName(UNLOCK_LOC3.target)}` : `unlock failed (${r.reason})`;
-    if (r.ok) { saveGame(state); invalidateQuotes(); }
+    if (r.ok) { saveGame(state); invalidateQuotes(); flashUnlockedNode(UNLOCK_LOC3.target); }
     render(state, ui);
   });
 

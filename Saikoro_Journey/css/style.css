@@ -333,3 +333,12 @@ aside code {
 .rail.active {
   animation: rail-pulse 1s ease-in-out infinite;
 }
+
+@keyframes node-unlock-flash {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  30% { box-shadow: 0 0 0 6px #00000033; }
+  60% { box-shadow: 0 0 0 2px #00000055; }
+}
+.node.just-unlocked {
+  animation: node-unlock-flash 0.9s ease-out 1;
+}
