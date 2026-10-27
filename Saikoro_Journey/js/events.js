@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027i';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027i';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027i';
-import { cargoUsed } from './state.js?v=z1-20261027i';
-import { saveGame, clearSave } from './saving.js?v=z1-20261027i';
-import { render, invalidateQuotes } from './view.js?v=z1-20261027i';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027j';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027j';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027j';
+import { cargoUsed } from './state.js?v=z1-20261027j';
+import { saveGame, clearSave } from './saving.js?v=z1-20261027j';
+import { render, invalidateQuotes } from './view.js?v=z1-20261027j';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -28,6 +28,18 @@ export function bindEvents(s) {
     const el = ev.target.closest('input.qty[data-qty]');
     if (!el) return;
     // value kept in DOM; view captures before any rebuild
+  });
+
+
+  document.getElementById('quote-panel')?.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter' || !state) return;
+    const input = ev.target.closest('input.qty[data-qty]');
+    if (!input) return;
+    ev.preventDefault();
+    const good = input.getAttribute('data-qty');
+    const row = input.closest('tr');
+    const buyBtn = row?.querySelector('button[data-act="buy"]');
+    if (buyBtn && !buyBtn.disabled) buyBtn.click();
   });
 
   document.getElementById('nodes')?.addEventListener('click', (ev) => {
