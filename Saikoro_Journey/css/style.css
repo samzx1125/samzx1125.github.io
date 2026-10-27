@@ -306,3 +306,11 @@ aside code {
   display: inline-block;
   vertical-align: middle;
 }
+
+.controls-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.controls-list li { margin: 0.2rem 0; }
