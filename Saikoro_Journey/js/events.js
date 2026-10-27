@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027m';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027m';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027m';
-import { cargoUsed } from './state.js?v=z1-20261027m';
-import { saveGame, clearSave } from './saving.js?v=z1-20261027m';
-import { render, invalidateQuotes } from './view.js?v=z1-20261027m';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027n';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027n';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027n';
+import { cargoUsed } from './state.js?v=z1-20261027n';
+import { saveGame, clearSave } from './saving.js?v=z1-20261027n';
+import { render, invalidateQuotes, focusQtyAfterTrade } from './view.js?v=z1-20261027n';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -122,13 +122,13 @@ export function bindEvents(s) {
       }
       const r = tryBuy(state, loc, good, n);
       ui.lastMsg = r.ok ? `bought ${goodName(good)} ×${n}` : `buy failed (${r.reason})`;
-      if (r.ok) { saveGame(state); invalidateQuotes(); }
+      if (r.ok) { saveGame(state); invalidateQuotes(); focusQtyAfterTrade(good); }
     } else if (act === 'sell' || act === 'sell-all') {
       let n = qty;
       if (act === 'sell-all') n = state.cargo[good] || 0;
       const r = trySell(state, loc, good, n);
       ui.lastMsg = r.ok ? `sold ${goodName(good)} ×${n}` : `sell failed (${r.reason})`;
-      if (r.ok) { saveGame(state); invalidateQuotes(); }
+      if (r.ok) { saveGame(state); invalidateQuotes(); focusQtyAfterTrade(good); }
     }
     render(state, ui);
   });

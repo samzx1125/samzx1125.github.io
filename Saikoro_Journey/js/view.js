@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027m';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027m';
-import { getLastSavedAt } from './saving.js?v=z1-20261027m';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027m';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027n';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027n';
+import { getLastSavedAt } from './saving.js?v=z1-20261027n';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261027n';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -15,6 +15,12 @@ let lastQuoteSig = '';
 /** @type {ReturnType<typeof setTimeout> | null} */
 let toastTimer = null;
 let lastToastText = '';
+/** @type {string | null} */
+let pendingFocusGood = null;
+
+export function focusQtyAfterTrade(goodId) {
+  pendingFocusGood = goodId;
+}
 
 export function mountView() {
   document.addEventListener('sj-toast-clear', () => {
@@ -227,6 +233,14 @@ export function render(s, ui = {}) {
   if (sig !== lastQuoteSig) {
     lastQuoteSig = sig;
     renderQuotes(s);
+  }
+  if (pendingFocusGood) {
+    const el = document.querySelector(`input.qty[data-qty="${pendingFocusGood}"]`);
+    pendingFocusGood = null;
+    if (el && !el.disabled) {
+      el.focus();
+      el.select();
+    }
   }
 
   const destList = document.getElementById('dest-list');
