@@ -204,6 +204,17 @@ export function render(s, ui = {}) {
     renderQuotes(s);
   }
 
+  const cargoList = document.getElementById('cargo-list');
+  const cargoEmpty = document.getElementById('cargo-empty');
+  if (cargoList) {
+    const rows = GOODS.map((g) => {
+      const n = s.cargo[g.id] || 0;
+      return n > 0 ? `<li title="${g.id}">${g.name} ×${n}</li>` : '';
+    }).filter(Boolean);
+    cargoList.innerHTML = rows.join('');
+    if (cargoEmpty) cargoEmpty.hidden = rows.length > 0;
+  }
+
   const travelPanel = document.getElementById('travel-panel');
   if (travelPanel) {
     if (s.travel) {

@@ -260,3 +260,10 @@ aside code {
   transition: width 0.05s linear;
 }
 #travel-panel .muted { margin: 0.35rem 0 0; font-size: 0.8rem; }
+
+.cargo-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+.cargo-list li { margin: 0.15rem 0; }
