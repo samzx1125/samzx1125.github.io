@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027o';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027o';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027o';
-import { cargoUsed } from './state.js?v=z1-20261027o';
-import { saveGame, clearSave } from './saving.js?v=z1-20261027o';
-import { render, invalidateQuotes, focusQtyAfterTrade } from './view.js?v=z1-20261027o';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027p';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027p';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027p';
+import { cargoUsed } from './state.js?v=z1-20261027p';
+import { saveGame, clearSave } from './saving.js?v=z1-20261027p';
+import { render, invalidateQuotes, focusQtyAfterTrade } from './view.js?v=z1-20261027p';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -75,6 +75,19 @@ export function bindEvents(s) {
       ui.lastMsg = locName(locId);
     }
     render(state, ui);
+  });
+
+
+  const destPanel = document.getElementById('dest-panel');
+  destPanel?.addEventListener('pointerover', (ev) => {
+    const btn = ev.target.closest('button[data-act="go"]');
+    document.querySelectorAll('.node.hover-dest').forEach((n) => n.classList.remove('hover-dest'));
+    if (!btn) return;
+    const node = document.querySelector(`.node[data-loc-id="${btn.dataset.loc}"]`);
+    node?.classList.add('hover-dest');
+  });
+  destPanel?.addEventListener('pointerleave', () => {
+    document.querySelectorAll('.node.hover-dest').forEach((n) => n.classList.remove('hover-dest'));
   });
 
   document.getElementById('dest-panel')?.addEventListener('click', (ev) => {

@@ -121,6 +121,10 @@ main {
   box-shadow: 0 0 0 2px #00000033;
 }
 .node.selected:not(.current) { border-color: #444444; }
+.node.hover-dest:not(.current) {
+  border-color: #000000;
+  box-shadow: 0 0 0 2px #00000022;
+}
 .node.locked,
 .node[aria-disabled="true"] {
   opacity: 0.45;
