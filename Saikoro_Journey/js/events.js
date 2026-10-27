@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween } from './map-data.js';
-import { UNLOCK_LOC3 } from './economy-data.js';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js';
+import { UNLOCK_LOC3, goodName } from './economy-data.js';
 import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js';
 import { cargoUsed } from './state.js';
 import { saveGame, clearSave } from './saving.js';
@@ -42,7 +42,7 @@ export function bindEvents(s) {
       if (neigh.includes(locId)) {
         const ms = travelMsBetween(state.locationId, locId);
         const r = tryTravel(state, locId, ms);
-        ui.lastMsg = r.ok ? `departing → ${locId}` : `cannot travel (${r.reason})`;
+        ui.lastMsg = r.ok ? `departing → ${locName(locId)}` : `cannot travel (${r.reason})`;
         if (r.ok) { saveGame(state); invalidateQuotes(); }
       } else {
         ui.lastMsg = 'only adjacent locations';
@@ -72,13 +72,13 @@ export function bindEvents(s) {
         n = Math.max(0, Math.min(byGold, byCap));
       }
       const r = tryBuy(state, loc, good, n);
-      ui.lastMsg = r.ok ? `bought ${good} ×${n}` : `buy failed (${r.reason})`;
+      ui.lastMsg = r.ok ? `bought ${goodName(good)} ×${n}` : `buy failed (${r.reason})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
     } else if (act === 'sell' || act === 'sell-all') {
       let n = qty;
       if (act === 'sell-all') n = state.cargo[good] || 0;
       const r = trySell(state, loc, good, n);
-      ui.lastMsg = r.ok ? `sold ${good} ×${n}` : `sell failed (${r.reason})`;
+      ui.lastMsg = r.ok ? `sold ${goodName(good)} ×${n}` : `sell failed (${r.reason})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
     }
     render(state, ui);
@@ -88,7 +88,7 @@ export function bindEvents(s) {
     const btn = ev.target.closest('[data-act="unlock"]');
     if (!btn || !state) return;
     const r = tryUnlock(state, UNLOCK_LOC3);
-    ui.lastMsg = r.ok ? `unlocked ${UNLOCK_LOC3.target}` : `unlock failed (${r.reason})`;
+    ui.lastMsg = r.ok ? `unlocked ${locName(UNLOCK_LOC3.target)}` : `unlock failed (${r.reason})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
   });

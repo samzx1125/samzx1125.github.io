@@ -1,12 +1,12 @@
 /** @typedef {{ id: string, name: string, x: number, y: number }} LocDef */
 /** @typedef {{ a: string, b: string, travelMs: number }} EdgeDef */
 
-/** Naming v2: loc_aAAzZZlLLL_slug — display = id for now. */
+/** Naming v2: loc_aAAzZZlLLL_slug — name is display label. */
 /** @type {LocDef[]} */
 export const LOCATIONS = [
-  { id: 'loc_a01z01l001_broken_lamp', name: 'loc_a01z01l001_broken_lamp', x: 120, y: 220 },
-  { id: 'loc_a01z01l002_drywind_depot', name: 'loc_a01z01l002_drywind_depot', x: 340, y: 160 },
-  { id: 'loc_a01z01l003_star_ash', name: 'loc_a01z01l003_star_ash', x: 560, y: 240 },
+  { id: 'loc_a01z01l001_broken_lamp', name: 'Broken Lamp', x: 120, y: 220 },
+  { id: 'loc_a01z01l002_drywind_depot', name: 'Drywind Depot', x: 340, y: 160 },
+  { id: 'loc_a01z01l003_star_ash', name: 'Star Ash', x: 560, y: 240 },
 ];
 
 /** @type {EdgeDef[]} */
@@ -39,4 +39,9 @@ export function neighborsOf(locId) {
     if (e.b === locId) out.push(e.a);
   }
   return out;
+}
+
+/** @param {string} id */
+export function locName(id) {
+  return LOCATIONS.find((l) => l.id === id)?.name || id;
 }

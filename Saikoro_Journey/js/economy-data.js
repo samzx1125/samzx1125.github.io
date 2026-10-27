@@ -1,11 +1,11 @@
 /** @typedef {{ id: string, name: string, tags: string[] }} GoodDef */
 
-/** Naming v2 goods_aAAzZZiIII_slug — display = id for now. Prices static. */
+/** Naming v2 goods_aAAzZZiIII_slug — name is display label. Prices static. */
 /** @type {GoodDef[]} */
 export const GOODS = [
-  { id: 'goods_a01z01i001_dry_food', name: 'goods_a01z01i001_dry_food', tags: [] },
-  { id: 'goods_a01z01i002_oil_speciality', name: 'goods_a01z01i002_oil_speciality', tags: ['volatile'] },
-  { id: 'goods_a01z01i003_water_speciality', name: 'goods_a01z01i003_water_speciality', tags: ['liquid'] },
+  { id: 'goods_a01z01i001_dry_food', name: 'Dry Food', tags: [] },
+  { id: 'goods_a01z01i002_oil_speciality', name: 'Oil Speciality', tags: ['volatile'] },
+  { id: 'goods_a01z01i003_water_speciality', name: 'Water Speciality', tags: ['liquid'] },
 ];
 
 export const BASE_PRICES = {
@@ -37,3 +37,8 @@ export const UNLOCK_LOC3 = {
     { goodId: 'goods_a01z01i001_dry_food', qty: 10 },
   ],
 };
+
+/** @param {string} id */
+export function goodName(id) {
+  return GOODS.find((g) => g.id === id)?.name || id;
+}

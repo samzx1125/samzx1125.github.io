@@ -1,4 +1,4 @@
-import { LOCATIONS, EDGES } from './map-data.js';
+import { LOCATIONS, EDGES, locName } from './map-data.js';
 import { GOODS, UNLOCK_LOC3 } from './economy-data.js';
 import { cargoUsed, isTraveling } from './state.js';
 
@@ -44,6 +44,7 @@ export function mountView() {
       btn.dataset.locId = loc.id;
       btn.style.left = loc.x + 'px';
       btn.style.top = loc.y + 'px';
+      btn.title = loc.id;
       btn.innerHTML = `<span class="node-name">${loc.name}</span>`;
       nodesEl.appendChild(btn);
     }
@@ -90,7 +91,7 @@ function renderQuotes(s) {
     const qtyVal = qtyByGood[g.id] != null ? qtyByGood[g.id] : '1';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><code>${g.name}</code></td>
+      <td title="${g.id}">${g.name}</td>
       <td class="num">${price}</td>
       <td class="num">${s.cargo[g.id] || 0}</td>
       <td class="actions">
@@ -114,7 +115,7 @@ function renderQuotes(s) {
           const g = GOODS.find((x) => x.id === c.goodId);
           const have = s.cargo[c.goodId] || 0;
           const ok = have >= c.qty;
-          return `<li class="${ok ? 'ok' : ''}"><code>${g?.name || c.goodId}</code> ${have}/${c.qty}</li>`;
+          return `<li class="${ok ? 'ok' : ''}" title="${c.goodId}">${g?.name || c.goodId} ${have}/${c.qty}</li>`;
         })
         .join('');
     }
@@ -138,7 +139,7 @@ export function render(s, ui = {}) {
   setText('hud-cargo', `${cargoUsed(s)} / ${s.capacity}`);
   const here = LOCATIONS.find((l) => l.id === s.locationId);
   const travelLabel = s.travel
-    ? `moving → ${s.travel.to} (${Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100))}%)`
+    ? `moving → ${locName(s.travel.to)} (${Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100))}%)`
     : here
       ? here.name
       : s.locationId;
