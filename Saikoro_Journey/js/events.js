@@ -3,7 +3,7 @@ import { UNLOCK_LOC3 } from './economy-data.js';
 import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js';
 import { cargoUsed } from './state.js';
 import { saveGame, clearSave } from './saving.js';
-import { render } from './view.js';
+import { render, invalidateQuotes } from './view.js';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -14,6 +14,12 @@ const ui = { lastMsg: '' };
 export function bindEvents(s) {
   state = s;
 
+  document.getElementById('quote-panel')?.addEventListener('input', (ev) => {
+    const el = ev.target.closest('input.qty[data-qty]');
+    if (!el) return;
+    // value kept in DOM; view captures before any rebuild
+  });
+
   document.getElementById('nodes')?.addEventListener('click', (ev) => {
     const btn = ev.target.closest('.node');
     if (!btn || !state) return;
@@ -23,13 +29,13 @@ export function bindEvents(s) {
       render(state, ui);
       return;
     }
-    state.selectedLocId = locId;
 
     if (state.travel) {
       ui.lastMsg = 'already traveling';
       render(state, ui);
       return;
     }
+    state.selectedLocId = locId;
 
     if (locId !== state.locationId) {
       const neigh = neighborsOf(state.locationId);
@@ -37,7 +43,7 @@ export function bindEvents(s) {
         const ms = travelMsBetween(state.locationId, locId);
         const r = tryTravel(state, locId, ms);
         ui.lastMsg = r.ok ? `departing → ${locId}` : `cannot travel (${r.reason})`;
-        if (r.ok) saveGame(state);
+        if (r.ok) { saveGame(state); invalidateQuotes(); }
       } else {
         ui.lastMsg = 'only adjacent locations';
       }
@@ -67,13 +73,13 @@ export function bindEvents(s) {
       }
       const r = tryBuy(state, loc, good, n);
       ui.lastMsg = r.ok ? `bought ${good} ×${n}` : `buy failed (${r.reason})`;
-      if (r.ok) saveGame(state);
+      if (r.ok) { saveGame(state); invalidateQuotes(); }
     } else if (act === 'sell' || act === 'sell-all') {
       let n = qty;
       if (act === 'sell-all') n = state.cargo[good] || 0;
       const r = trySell(state, loc, good, n);
       ui.lastMsg = r.ok ? `sold ${good} ×${n}` : `sell failed (${r.reason})`;
-      if (r.ok) saveGame(state);
+      if (r.ok) { saveGame(state); invalidateQuotes(); }
     }
     render(state, ui);
   });
@@ -83,7 +89,7 @@ export function bindEvents(s) {
     if (!btn || !state) return;
     const r = tryUnlock(state, UNLOCK_LOC3);
     ui.lastMsg = r.ok ? `unlocked ${UNLOCK_LOC3.target}` : `unlock failed (${r.reason})`;
-    if (r.ok) saveGame(state);
+    if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
   });
 

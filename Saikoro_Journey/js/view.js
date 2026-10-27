@@ -5,6 +5,13 @@ import { cargoUsed, isTraveling } from './state.js';
 /** @type {HTMLElement | null} */
 let trainEl = null;
 
+/** Persist qty across quote rebuilds. */
+/** @type {Record<string, string>} */
+const qtyByGood = {};
+
+/** Last quote table signature — skip rebuild when unchanged. */
+let lastQuoteSig = '';
+
 export function mountView() {
   const railsEl = document.getElementById('rails');
   const nodesEl = document.getElementById('nodes');
@@ -39,6 +46,85 @@ export function mountView() {
       btn.style.top = loc.y + 'px';
       btn.innerHTML = `<span class="node-name">${loc.name}</span>`;
       nodesEl.appendChild(btn);
+    }
+  }
+}
+
+function captureQtyInputs() {
+  document.querySelectorAll('input.qty[data-qty]').forEach((el) => {
+    const id = el.getAttribute('data-qty');
+    if (id) qtyByGood[id] = el.value;
+  });
+}
+
+/**
+ * @param {import('./state.js').GameState} s
+ */
+function quoteSignature(s) {
+  const quoteLoc = s.selectedLocId || s.locationId;
+  const atStation = !isTraveling(s) && s.locationId === quoteLoc && s.unlocked.includes(quoteLoc);
+  const parts = [quoteLoc, atStation ? '1' : '0', s.gold];
+  for (const g of GOODS) {
+    parts.push(g.id, String(s.prices[quoteLoc]?.[g.id] ?? ''), String(s.cargo[g.id] || 0));
+  }
+  parts.push(s.unlocked.join(','));
+  return parts.join('|');
+}
+
+/**
+ * @param {import('./state.js').GameState} s
+ */
+function renderQuotes(s) {
+  const quoteLoc = s.selectedLocId || s.locationId;
+  const quoteLocDef = LOCATIONS.find((l) => l.id === quoteLoc);
+  setText('quote-title', quoteLocDef ? quoteLocDef.name : 'quotes');
+  const tbody = document.getElementById('quote-body');
+  if (!tbody) return;
+
+  captureQtyInputs();
+  tbody.innerHTML = '';
+  const atStation = !isTraveling(s) && s.locationId === quoteLoc && s.unlocked.includes(quoteLoc);
+  for (const g of GOODS) {
+    const price = s.prices[quoteLoc]?.[g.id];
+    if (price == null) continue;
+    const qtyVal = qtyByGood[g.id] != null ? qtyByGood[g.id] : '1';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${g.name}</code></td>
+      <td class="num">${price}</td>
+      <td class="num">${s.cargo[g.id] || 0}</td>
+      <td class="actions">
+        <button type="button" data-act="buy" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>buy</button>
+        <button type="button" data-act="buy-max" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>max</button>
+        <input type="number" min="1" value="${qtyVal}" data-qty="${g.id}" class="qty" ${atStation ? '' : 'disabled'} />
+        <button type="button" data-act="sell" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>sell</button>
+        <button type="button" data-act="sell-all" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>all</button>
+      </td>`;
+    tbody.appendChild(tr);
+  }
+
+  const unlocked3 = s.unlocked.includes(UNLOCK_LOC3.target);
+  const unlockPanel = document.getElementById('unlock-panel');
+  if (unlockPanel) {
+    unlockPanel.hidden = unlocked3;
+    const list = unlockPanel.querySelector('.unlock-list');
+    if (list) {
+      list.innerHTML = UNLOCK_LOC3.costs
+        .map((c) => {
+          const g = GOODS.find((x) => x.id === c.goodId);
+          const have = s.cargo[c.goodId] || 0;
+          const ok = have >= c.qty;
+          return `<li class="${ok ? 'ok' : ''}"><code>${g?.name || c.goodId}</code> ${have}/${c.qty}</li>`;
+        })
+        .join('');
+    }
+    const btn = unlockPanel.querySelector('[data-act="unlock"]');
+    if (btn) {
+      const can =
+        !isTraveling(s) &&
+        !unlocked3 &&
+        UNLOCK_LOC3.costs.every((c) => (s.cargo[c.goodId] || 0) >= c.qty);
+      btn.disabled = !can;
     }
   }
 }
@@ -98,58 +184,18 @@ export function render(s, ui = {}) {
     trainEl.hidden = false;
   }
 
-  const quoteLoc = s.selectedLocId || s.locationId;
-  const quoteLocDef = LOCATIONS.find((l) => l.id === quoteLoc);
-  setText('quote-title', quoteLocDef ? quoteLocDef.name : 'quotes');
-  const tbody = document.getElementById('quote-body');
-  if (tbody) {
-    tbody.innerHTML = '';
-    const atStation = !isTraveling(s) && s.locationId === quoteLoc && s.unlocked.includes(quoteLoc);
-    for (const g of GOODS) {
-      const price = s.prices[quoteLoc]?.[g.id];
-      if (price == null) continue;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><code>${g.name}</code></td>
-        <td class="num">${price}</td>
-        <td class="num">${s.cargo[g.id] || 0}</td>
-        <td class="actions">
-          <button type="button" data-act="buy" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>buy</button>
-          <button type="button" data-act="buy-max" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>max</button>
-          <input type="number" min="1" value="1" data-qty="${g.id}" class="qty" ${atStation ? '' : 'disabled'} />
-          <button type="button" data-act="sell" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>sell</button>
-          <button type="button" data-act="sell-all" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>all</button>
-        </td>`;
-      tbody.appendChild(tr);
-    }
-  }
-
-  const unlocked3 = s.unlocked.includes(UNLOCK_LOC3.target);
-  const unlockPanel = document.getElementById('unlock-panel');
-  if (unlockPanel) {
-    unlockPanel.hidden = unlocked3;
-    const list = unlockPanel.querySelector('.unlock-list');
-    if (list) {
-      list.innerHTML = UNLOCK_LOC3.costs
-        .map((c) => {
-          const g = GOODS.find((x) => x.id === c.goodId);
-          const have = s.cargo[c.goodId] || 0;
-          const ok = have >= c.qty;
-          return `<li class="${ok ? 'ok' : ''}"><code>${g?.name || c.goodId}</code> ${have}/${c.qty}</li>`;
-        })
-        .join('');
-    }
-    const btn = unlockPanel.querySelector('[data-act="unlock"]');
-    if (btn) {
-      const can =
-        !isTraveling(s) &&
-        !unlocked3 &&
-        UNLOCK_LOC3.costs.every((c) => (s.cargo[c.goodId] || 0) >= c.qty);
-      btn.disabled = !can;
-    }
+  const sig = quoteSignature(s);
+  if (sig !== lastQuoteSig) {
+    lastQuoteSig = sig;
+    renderQuotes(s);
   }
 
   if (ui.lastMsg) setText('toast', ui.lastMsg);
+}
+
+/** Force quote rebuild next render (after external qty-affecting actions). */
+export function invalidateQuotes() {
+  lastQuoteSig = '';
 }
 
 function setText(id, text) {
