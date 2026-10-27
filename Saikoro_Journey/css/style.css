@@ -115,7 +115,6 @@ main {
   text-align: center;
   line-height: 1.25;
 }
-.node:hover:not(:disabled) { border-color: var(--accent); }
 .node.current {
   border-color: var(--node-cur);
   box-shadow: 0 0 0 2px #00000033;
@@ -130,6 +129,26 @@ main {
   opacity: 0.45;
   cursor: not-allowed;
   background: var(--locked);
+}
+
+/* Map node press — unlocked only; mono deepen. Nodes mount once (no per-frame rebuild). */
+.node:hover:not(.locked):not(.dest):not(.just-unlocked):not(:disabled) {
+  border-color: #000000;
+  background: #e4e4e4;
+}
+.node:active:not(.locked):not(.dest):not(.just-unlocked):not(:disabled) {
+  border-color: #000000;
+  background: #c8c8c8;
+  box-shadow: inset 0 2px 3px #00000044;
+}
+/* Locked: muted; no unlocked-style hover/press */
+.node.locked:hover,
+.node[aria-disabled="true"]:hover,
+.node.locked:active,
+.node[aria-disabled="true"]:active {
+  border-color: var(--border);
+  background: var(--locked);
+  box-shadow: none;
 }
 .node-name {
   display: block;
