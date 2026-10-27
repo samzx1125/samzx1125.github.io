@@ -267,3 +267,18 @@ aside code {
   font-size: 0.85rem;
 }
 .cargo-list li { margin: 0.15rem 0; }
+
+.dest-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.dest-list button {
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+}
+.dest-list .eta { color: var(--muted); font-size: 0.75rem; }

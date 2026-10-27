@@ -53,6 +53,33 @@ export function bindEvents(s) {
     render(state, ui);
   });
 
+  document.getElementById('dest-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="go"]');
+    if (!btn || !state) return;
+    if (state.travel) {
+      ui.lastMsg = 'already traveling';
+      render(state, ui);
+      return;
+    }
+    const locId = btn.dataset.loc;
+    if (!state.unlocked.includes(locId)) {
+      ui.lastMsg = 'location locked';
+      render(state, ui);
+      return;
+    }
+    const ms = travelMsBetween(state.locationId, locId);
+    if (ms == null) {
+      ui.lastMsg = 'only adjacent locations';
+      render(state, ui);
+      return;
+    }
+    state.selectedLocId = locId;
+    const r = tryTravel(state, locId, ms);
+    ui.lastMsg = r.ok ? `departing → ${locName(locId)}` : `cannot travel (${r.reason})`;
+    if (r.ok) { saveGame(state); invalidateQuotes(); }
+    render(state, ui);
+  });
+
   document.getElementById('quote-panel')?.addEventListener('click', (ev) => {
     const btn = ev.target.closest('button[data-act]');
     if (!btn || !state) return;

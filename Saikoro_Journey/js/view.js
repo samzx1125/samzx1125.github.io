@@ -1,4 +1,4 @@
-import { LOCATIONS, EDGES, locName } from './map-data.js';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js';
 import { GOODS, UNLOCK_LOC3 } from './economy-data.js';
 import { getLastSavedAt } from './saving.js';
 import { cargoUsed, isTraveling } from './state.js';
@@ -203,6 +203,26 @@ export function render(s, ui = {}) {
   if (sig !== lastQuoteSig) {
     lastQuoteSig = sig;
     renderQuotes(s);
+  }
+
+  const destList = document.getElementById('dest-list');
+  const destEmpty = document.getElementById('dest-empty');
+  const destPanel = document.getElementById('dest-panel');
+  if (destList && destPanel) {
+    if (s.travel) {
+      destPanel.hidden = true;
+    } else {
+      destPanel.hidden = false;
+      const neigh = neighborsOf(s.locationId).filter((id) => s.unlocked.includes(id));
+      destList.innerHTML = neigh
+        .map((id) => {
+          const ms = travelMsBetween(s.locationId, id) || 0;
+          const sec = Math.round(ms / 1000);
+          return `<li><button type="button" data-act="go" data-loc="${id}">${locName(id)} <span class="eta">${sec}s</span></button></li>`;
+        })
+        .join('');
+      if (destEmpty) destEmpty.hidden = neigh.length > 0;
+    }
   }
 
   const stamp = document.getElementById('save-stamp');
