@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027z';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027z';
-import { getLastSavedAt } from './saving.js?v=z1-20261027z';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027z';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028a';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028a';
+import { getLastSavedAt } from './saving.js?v=z1-20261028a';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028a';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -19,6 +19,8 @@ let lastToastText = '';
 let pendingFocusGood = null;
 /** @type {string | null} */
 let pendingTradeFlash = null;
+/** @type {number | null} */
+let lastRenderedGold = null;
 
 export function focusQtyAfterTrade(goodId) {
   pendingFocusGood = goodId;
@@ -192,7 +194,17 @@ function renderQuotes(s) {
  * @param {{ lastMsg?: string }} ui
  */
 export function render(s, ui = {}) {
-  setText('hud-gold', String(s.gold));
+  const goldEl = document.getElementById('hud-gold');
+  if (goldEl) {
+    if (lastRenderedGold != null && lastRenderedGold !== s.gold) {
+      goldEl.classList.remove('gold-tick');
+      void goldEl.offsetWidth;
+      goldEl.classList.add('gold-tick');
+      setTimeout(() => goldEl.classList.remove('gold-tick'), 500);
+    }
+    lastRenderedGold = s.gold;
+    goldEl.textContent = String(s.gold);
+  }
   setText('hud-cargo', `${cargoUsed(s)} / ${s.capacity}`);
   const cargoBar = document.getElementById('hud-cargo-bar');
   if (cargoBar) {
