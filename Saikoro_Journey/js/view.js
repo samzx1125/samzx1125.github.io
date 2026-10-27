@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027k';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027k';
-import { getLastSavedAt } from './saving.js?v=z1-20261027k';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027k';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027l';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027l';
+import { getLastSavedAt } from './saving.js?v=z1-20261027l';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261027l';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -76,7 +76,7 @@ function captureQtyInputs() {
 function quoteSignature(s) {
   const quoteLoc = s.selectedLocId || s.locationId;
   const atStation = !isTraveling(s) && s.locationId === quoteLoc && s.unlocked.includes(quoteLoc);
-  const parts = [quoteLoc, atStation ? '1' : '0', s.gold];
+  const parts = [quoteLoc, s.locationId, atStation ? '1' : '0', s.gold];
   for (const g of GOODS) {
     parts.push(g.id, String(s.prices[quoteLoc]?.[g.id] ?? ''), String(s.cargo[g.id] || 0));
   }
@@ -102,9 +102,17 @@ function renderQuotes(s) {
     if (price == null) continue;
     const qtyVal = qtyByGood[g.id] != null ? qtyByGood[g.id] : '1';
     const tr = document.createElement('tr');
+    const herePrice = s.prices[s.locationId]?.[g.id];
+    let deltaHtml = '—';
+    if (quoteLoc !== s.locationId && herePrice != null) {
+      const d = price - herePrice;
+      const sign = d > 0 ? '+' : '';
+      deltaHtml = `${sign}${d}`;
+    }
     tr.innerHTML = `
       <td title="${g.id}">${g.name}</td>
       <td class="num">${price}</td>
+      <td class="num delta">${deltaHtml}</td>
       <td class="num">${s.cargo[g.id] || 0}</td>
       <td class="actions">
         <button type="button" data-act="buy" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>buy</button>

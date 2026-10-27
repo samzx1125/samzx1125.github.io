@@ -177,10 +177,12 @@ th, td {
   vertical-align: top;
 }
 th { color: var(--muted); font-weight: 500; text-align: left; }
-th:nth-child(1), td:nth-child(1) { width: 36%; }
-th:nth-child(2), td:nth-child(2) { width: 12%; }
-th:nth-child(3), td:nth-child(3) { width: 12%; }
-th:nth-child(4), td:nth-child(4) { width: 40%; }
+th:nth-child(1), td:nth-child(1) { width: 28%; }
+th:nth-child(2), td:nth-child(2) { width: 10%; }
+th:nth-child(3), td:nth-child(3) { width: 10%; }
+th:nth-child(4), td:nth-child(4) { width: 10%; }
+th:nth-child(5), td:nth-child(5) { width: 42%; }
+td.delta { color: var(--muted); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
 .actions {
