@@ -1,14 +1,14 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028f';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028f';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028f';
-import { cargoUsed } from './state.js?v=z1-20261028f';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028f';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028f';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028g';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028g';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028g';
+import { cargoUsed } from './state.js?v=z1-20261028g';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028g';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028g';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
-/** @type {{ lastMsg: string }} */
-const ui = { lastMsg: '' };
+/** @type {{ lastMsg: string, panelOpen: boolean }} */
+const ui = { lastMsg: '', panelOpen: true };
 
 /** @param {import('./state.js').GameState} s */
 export function bindEvents(s) {
@@ -16,12 +16,20 @@ export function bindEvents(s) {
 
   document.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Escape') return;
+    // Close station panels (quotes + unlock); also clear toast
+    let closed = false;
+    if (ui.panelOpen) {
+      ui.panelOpen = false;
+      closed = true;
+    }
     const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = '';
-    toast.classList.add('fade');
+    if (toast) {
+      toast.textContent = '';
+      toast.classList.add('fade');
+    }
     ui.lastMsg = '';
     document.dispatchEvent(new Event('sj-toast-clear'));
+    if (closed && state) render(state, ui);
   });
 
   document.getElementById('quote-panel')?.addEventListener('input', (ev) => {
@@ -61,6 +69,7 @@ export function bindEvents(s) {
       return;
     }
     state.selectedLocId = locId;
+    ui.panelOpen = true;
 
     if (locId !== state.locationId) {
       const neigh = neighborsOf(state.locationId);

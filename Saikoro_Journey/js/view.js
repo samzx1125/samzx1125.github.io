@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028f';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028f';
-import { getLastSavedAt } from './saving.js?v=z1-20261028f';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028f';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028g';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028g';
+import { getLastSavedAt } from './saving.js?v=z1-20261028g';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028g';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -381,6 +381,18 @@ export function render(s, ui = {}) {
       travelPanel.hidden = true;
       const fill = document.getElementById('travel-bar-fill');
       if (fill) fill.style.width = '0%';
+    }
+  }
+
+  // Station panels (quotes + unlock): Esc closes; map node click reopens
+  {
+    const panelOpen = ui.panelOpen !== false;
+    const quotePanel = document.getElementById('quote-panel');
+    if (quotePanel) quotePanel.hidden = !panelOpen;
+    const unlockPanel = document.getElementById('unlock-panel');
+    if (unlockPanel) {
+      const unlocked3 = s.unlocked.includes(UNLOCK_LOC3.target);
+      unlockPanel.hidden = unlocked3 || !panelOpen;
     }
   }
 
