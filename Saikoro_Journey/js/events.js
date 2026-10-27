@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027j';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027j';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027j';
-import { cargoUsed } from './state.js?v=z1-20261027j';
-import { saveGame, clearSave } from './saving.js?v=z1-20261027j';
-import { render, invalidateQuotes } from './view.js?v=z1-20261027j';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027k';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027k';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027k';
+import { cargoUsed } from './state.js?v=z1-20261027k';
+import { saveGame, clearSave } from './saving.js?v=z1-20261027k';
+import { render, invalidateQuotes } from './view.js?v=z1-20261027k';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -36,10 +36,10 @@ export function bindEvents(s) {
     const input = ev.target.closest('input.qty[data-qty]');
     if (!input) return;
     ev.preventDefault();
-    const good = input.getAttribute('data-qty');
     const row = input.closest('tr');
-    const buyBtn = row?.querySelector('button[data-act="buy"]');
-    if (buyBtn && !buyBtn.disabled) buyBtn.click();
+    const act = ev.shiftKey ? 'sell' : 'buy';
+    const btn = row?.querySelector(`button[data-act="${act}"]`);
+    if (btn && !btn.disabled) btn.click();
   });
 
   document.getElementById('nodes')?.addEventListener('click', (ev) => {
