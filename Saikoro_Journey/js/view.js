@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028b';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028b';
-import { getLastSavedAt } from './saving.js?v=z1-20261028b';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028b';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028c';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028c';
+import { getLastSavedAt } from './saving.js?v=z1-20261028c';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028c';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -12,6 +12,8 @@ const qtyByGood = {};
 
 /** Last quote table signature — skip rebuild when unchanged. */
 let lastQuoteSig = '';
+/** Last dest-list signature — skip rebuild so :active can stick on go buttons. */
+let lastDestSig = '';
 /** @type {ReturnType<typeof setTimeout> | null} */
 let toastTimer = null;
 let lastToastText = '';
@@ -107,6 +109,21 @@ function quoteSignature(s) {
     parts.push(g.id, String(s.prices[quoteLoc]?.[g.id] ?? ''), String(s.cargo[g.id] || 0));
   }
   parts.push(s.unlocked.join(','));
+  return parts.join('|');
+}
+
+/**
+ * Dest list content signature — location, travel flag, neighbor ids + etas.
+ * @param {import('./state.js').GameState} s
+ */
+function destSignature(s) {
+  if (s.travel) return 'traveling|' + s.travel.from + '>' + s.travel.to;
+  const neigh = neighborsOf(s.locationId).filter((id) => s.unlocked.includes(id));
+  const parts = [s.locationId, 'docked'];
+  for (const id of neigh) {
+    const ms = travelMsBetween(s.locationId, id) || 0;
+    parts.push(id, String(Math.round(ms / 1000)));
+  }
   return parts.join('|');
 }
 
@@ -294,19 +311,28 @@ export function render(s, ui = {}) {
   const destEmpty = document.getElementById('dest-empty');
   const destPanel = document.getElementById('dest-panel');
   if (destList && destPanel) {
+    const dsig = destSignature(s);
     if (s.travel) {
       destPanel.hidden = true;
+      if (dsig !== lastDestSig) {
+        lastDestSig = dsig;
+        destList.innerHTML = '';
+        if (destEmpty) destEmpty.hidden = true;
+      }
     } else {
       destPanel.hidden = false;
-      const neigh = neighborsOf(s.locationId).filter((id) => s.unlocked.includes(id));
-      destList.innerHTML = neigh
-        .map((id) => {
-          const ms = travelMsBetween(s.locationId, id) || 0;
-          const sec = Math.round(ms / 1000);
-          return `<li><button type="button" data-act="go" data-loc="${id}">${locName(id)} <span class="eta">${sec}s</span></button></li>`;
-        })
-        .join('');
-      if (destEmpty) destEmpty.hidden = neigh.length > 0;
+      if (dsig !== lastDestSig) {
+        lastDestSig = dsig;
+        const neigh = neighborsOf(s.locationId).filter((id) => s.unlocked.includes(id));
+        destList.innerHTML = neigh
+          .map((id) => {
+            const ms = travelMsBetween(s.locationId, id) || 0;
+            const sec = Math.round(ms / 1000);
+            return `<li><button type="button" data-act="go" data-loc="${id}">${locName(id)} <span class="eta">${sec}s</span></button></li>`;
+          })
+          .join('');
+        if (destEmpty) destEmpty.hidden = neigh.length > 0;
+      }
     }
   }
 
