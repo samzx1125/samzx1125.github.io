@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027p';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027p';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027p';
-import { cargoUsed } from './state.js?v=z1-20261027p';
-import { saveGame, clearSave } from './saving.js?v=z1-20261027p';
-import { render, invalidateQuotes, focusQtyAfterTrade } from './view.js?v=z1-20261027p';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027q';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027q';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027q';
+import { cargoUsed } from './state.js?v=z1-20261027q';
+import { saveGame, clearSave } from './saving.js?v=z1-20261027q';
+import { render, invalidateQuotes, focusQtyAfterTrade } from './view.js?v=z1-20261027q';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -38,7 +38,8 @@ export function bindEvents(s) {
     ev.preventDefault();
     const row = input.closest('tr');
     let act = 'buy';
-    if (ev.shiftKey) act = 'sell';
+    if (ev.shiftKey && ev.altKey) act = 'sell-all';
+    else if (ev.shiftKey) act = 'sell';
     else if (ev.altKey) act = 'buy-max';
     const btn = row?.querySelector(`button[data-act="${act}"]`);
     if (btn && !btn.disabled) btn.click();
