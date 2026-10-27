@@ -119,6 +119,18 @@ function renderQuotes(s) {
         })
         .join('');
     }
+    {
+      let need = 0;
+      let haveUnits = 0;
+      for (const c of UNLOCK_LOC3.costs) {
+        need += c.qty;
+        haveUnits += Math.min(s.cargo[c.goodId] || 0, c.qty);
+      }
+      const pct = need ? Math.round((haveUnits / need) * 100) : 0;
+      const fill = document.getElementById('unlock-bar-fill');
+      if (fill) fill.style.width = (unlocked3 ? 100 : pct) + '%';
+      setText('unlock-pct', unlocked3 ? 'done' : `${haveUnits} / ${need}`);
+    }
     const btn = unlockPanel.querySelector('[data-act="unlock"]');
     if (btn) {
       const can =
