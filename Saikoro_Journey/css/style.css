@@ -133,18 +133,18 @@ main {
   word-break: normal;
 }
 
-#train-marker {
+#train-marker.pawn {
   position: absolute;
-  transform: translate(-50%, -50%);
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #000000;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px #000000;
+  transform: translate(-50%, -85%);
+  width: 22px;
+  height: 34px;
+  color: #000000;
+  filter: drop-shadow(0 0 0 1px #fff) drop-shadow(0 1px 2px #00000055);
   pointer-events: none;
   z-index: 5;
+  line-height: 0;
 }
+#train-marker.pawn svg { display: block; }
 
 aside {
   background: var(--panel);

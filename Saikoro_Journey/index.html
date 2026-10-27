@@ -20,7 +20,13 @@
       <div id="map-plane">
         <svg id="rails" viewBox="0 0 680 400" width="680" height="400" preserveAspectRatio="xMinYMin meet"></svg>
         <div id="nodes"></div>
-        <div id="train-marker" hidden></div>
+        <div id="train-marker" class="pawn" hidden title="you" aria-label="player pawn">
+          <svg viewBox="0 0 24 36" width="22" height="34" aria-hidden="true">
+            <circle cx="12" cy="7" r="5.5" fill="currentColor"/>
+            <path fill="currentColor" d="M7 14c0-1.2 2.2-2.2 5-2.2s5 1 5 2.2v2.2c0 1.6-1.3 3-3.2 3.8L15.5 28H8.5l1.7-7.8C8.3 19.2 7 17.8 7 16.2V14z"/>
+            <ellipse cx="12" cy="31" rx="8" ry="3.2" fill="currentColor"/>
+          </svg>
+        </div>
       </div>
     </div>
     <aside>
@@ -35,10 +41,10 @@
         </table>
       </section>
       <section id="unlock-panel">
-        <h2>Unlock loc_a01z01l003_star_ash</h2>
+        <h2>Unlock Star Ash</h2>
         <p class="hint">Hand in at any unlocked location:</p>
         <ul class="unlock-list"></ul>
-        <button type="button" class="primary" data-act="unlock">Unlock loc3</button>
+        <button type="button" class="primary" data-act="unlock">Unlock Star Ash</button>
       </section>
       <section id="save-panel">
         <h2>Save</h2>
