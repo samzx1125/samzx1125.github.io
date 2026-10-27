@@ -48,7 +48,7 @@ export function bindEvents(s) {
         ui.lastMsg = 'only adjacent locations';
       }
     } else {
-      ui.lastMsg = locId;
+      ui.lastMsg = locName(locId);
     }
     render(state, ui);
   });

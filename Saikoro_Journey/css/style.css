@@ -139,12 +139,13 @@ main {
   width: 22px;
   height: 34px;
   color: #000000;
-  filter: drop-shadow(0 0 0 1px #fff) drop-shadow(0 1px 2px #00000055);
+  filter: drop-shadow(0 1px 2px #00000040);
   pointer-events: none;
   z-index: 5;
   line-height: 0;
 }
 #train-marker.pawn svg { display: block; }
+#train-marker.pawn svg * { stroke: #ffffff; stroke-width: 1.25; paint-order: stroke fill; }
 
 aside {
   background: var(--panel);
