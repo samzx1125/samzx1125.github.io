@@ -2,6 +2,13 @@
 export const SAVE_VERSION = 1;
 const KEY = 'saikoro_journey_z1_v1';
 
+/** @type {number | null} */
+let lastSavedAt = null;
+
+export function getLastSavedAt() {
+  return lastSavedAt;
+}
+
 /**
  * @param {import('./state.js').GameState} s
  */
@@ -12,6 +19,7 @@ export function serialize(s) {
     cargo: { ...s.cargo },
     locationId: s.locationId,
     unlocked: [...s.unlocked],
+    savedAt: Date.now(),
     // prices are static — reload from BASE_PRICES on load
   };
 }
@@ -28,13 +36,16 @@ export function applySave(s, data) {
   s.unlocked = [...data.unlocked];
   s.selectedLocId = data.locationId;
   s.travel = null;
+  lastSavedAt = typeof data.savedAt === 'number' ? data.savedAt : Date.now();
   return true;
 }
 
 /** @param {import('./state.js').GameState} s */
 export function saveGame(s) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(serialize(s)));
+    const payload = serialize(s);
+    localStorage.setItem(KEY, JSON.stringify(payload));
+    lastSavedAt = payload.savedAt;
     return true;
   } catch {
     return false;
@@ -55,6 +66,7 @@ export function loadGame(s) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+    lastSavedAt = null;
   } catch {
     /* ignore */
   }

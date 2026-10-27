@@ -1,5 +1,6 @@
 import { LOCATIONS, EDGES, locName } from './map-data.js';
 import { GOODS, UNLOCK_LOC3 } from './economy-data.js';
+import { getLastSavedAt } from './saving.js';
 import { cargoUsed, isTraveling } from './state.js';
 
 /** @type {HTMLElement | null} */
@@ -202,6 +203,16 @@ export function render(s, ui = {}) {
   if (sig !== lastQuoteSig) {
     lastQuoteSig = sig;
     renderQuotes(s);
+  }
+
+  const stamp = document.getElementById('save-stamp');
+  if (stamp) {
+    const t = getLastSavedAt();
+    if (t == null) stamp.textContent = 'never saved';
+    else {
+      const d = new Date(t);
+      stamp.textContent = 'last saved ' + d.toLocaleString();
+    }
   }
 
   const cargoList = document.getElementById('cargo-list');
