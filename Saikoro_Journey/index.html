@@ -3,23 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Saikoro Journey — Z1 map/train</title>
+  <title>Saikoro Journey — Z1</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <header>
-    <h1>Saikoro Journey · Z1 map</h1>
+    <h1>Saikoro Journey · Z1</h1>
     <div class="hud">
+      <span>gold <strong id="hud-gold">0</strong></span>
+      <span>cargo <strong id="hud-cargo">0 / 20</strong></span>
       <span>loc <strong id="hud-loc">—</strong></span>
     </div>
   </header>
-  <main class="map-only">
+  <main>
     <div id="map-wrap">
       <svg id="rails" viewBox="0 0 680 400" preserveAspectRatio="xMidYMid meet"></svg>
       <div id="nodes"></div>
       <div id="train-marker" hidden></div>
     </div>
-    <p id="toast" class="map-toast"></p>
+    <aside>
+      <section id="quote-panel">
+        <h2 id="quote-title">quotes</h2>
+        <p class="hint">Click adjacent unlocked location to travel. Trade only when docked. Prices are static.</p>
+        <table>
+          <thead>
+            <tr><th>goods</th><th>price</th><th>cargo</th><th></th></tr>
+          </thead>
+          <tbody id="quote-body"></tbody>
+        </table>
+      </section>
+      <section id="unlock-panel">
+        <h2>Unlock loc_a01z01l003_star_ash</h2>
+        <p class="hint">Hand in at any unlocked location:</p>
+        <ul class="unlock-list"></ul>
+        <button type="button" class="primary" data-act="unlock">Unlock loc3</button>
+      </section>
+      <p id="toast"></p>
+    </aside>
   </main>
   <script type="module" src="js/main.js"></script>
 </body>

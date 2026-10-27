@@ -1,5 +1,6 @@
 import { neighborsOf, travelMsBetween } from './map-data.js';
-import { tryTravel } from './engine.js';
+import { UNLOCK_LOC3 } from './economy-data.js';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js';
 import { render } from './view.js';
 
 /** @type {import('./state.js').GameState | null} */
@@ -40,6 +41,34 @@ export function bindEvents(s) {
     } else {
       ui.lastMsg = locId;
     }
+    render(state, ui);
+  });
+
+  document.getElementById('quote-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act]');
+    if (!btn || !state) return;
+    const act = btn.dataset.act;
+    const good = btn.dataset.good;
+    const loc = btn.dataset.loc;
+    const row = btn.closest('tr');
+    const qtyInput = row?.querySelector(`input[data-qty="${good}"]`);
+    const qty = Number(qtyInput?.value || 1);
+
+    if (act === 'buy') {
+      const r = tryBuy(state, loc, good, qty);
+      ui.lastMsg = r.ok ? `bought ${good} ×${qty}` : `buy failed (${r.reason})`;
+    } else if (act === 'sell') {
+      const r = trySell(state, loc, good, qty);
+      ui.lastMsg = r.ok ? `sold ${good} ×${qty}` : `sell failed (${r.reason})`;
+    }
+    render(state, ui);
+  });
+
+  document.getElementById('unlock-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-act="unlock"]');
+    if (!btn || !state) return;
+    const r = tryUnlock(state, UNLOCK_LOC3);
+    ui.lastMsg = r.ok ? `unlocked ${UNLOCK_LOC3.target}` : `unlock failed (${r.reason})`;
     render(state, ui);
   });
 }

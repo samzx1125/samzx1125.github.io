@@ -1,4 +1,6 @@
 import { LOCATIONS, EDGES } from './map-data.js';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js';
+import { cargoUsed, isTraveling } from './state.js';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -46,6 +48,8 @@ export function mountView() {
  * @param {{ lastMsg?: string }} ui
  */
 export function render(s, ui = {}) {
+  setText('hud-gold', String(s.gold));
+  setText('hud-cargo', `${cargoUsed(s)} / ${s.capacity}`);
   const here = LOCATIONS.find((l) => l.id === s.locationId);
   const travelLabel = s.travel
     ? `moving → ${s.travel.to} (${Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100))}%)`
@@ -92,6 +96,55 @@ export function render(s, ui = {}) {
     trainEl.style.left = x + 'px';
     trainEl.style.top = y + 'px';
     trainEl.hidden = false;
+  }
+
+  const quoteLoc = s.selectedLocId || s.locationId;
+  const quoteLocDef = LOCATIONS.find((l) => l.id === quoteLoc);
+  setText('quote-title', quoteLocDef ? quoteLocDef.name : 'quotes');
+  const tbody = document.getElementById('quote-body');
+  if (tbody) {
+    tbody.innerHTML = '';
+    const atStation = !isTraveling(s) && s.locationId === quoteLoc && s.unlocked.includes(quoteLoc);
+    for (const g of GOODS) {
+      const price = s.prices[quoteLoc]?.[g.id];
+      if (price == null) continue;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><code>${g.name}</code></td>
+        <td class="num">${price}</td>
+        <td class="num">${s.cargo[g.id] || 0}</td>
+        <td class="actions">
+          <button type="button" data-act="buy" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>buy</button>
+          <input type="number" min="1" value="1" data-qty="${g.id}" class="qty" ${atStation ? '' : 'disabled'} />
+          <button type="button" data-act="sell" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>sell</button>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  const unlocked3 = s.unlocked.includes(UNLOCK_LOC3.target);
+  const unlockPanel = document.getElementById('unlock-panel');
+  if (unlockPanel) {
+    unlockPanel.hidden = unlocked3;
+    const list = unlockPanel.querySelector('.unlock-list');
+    if (list) {
+      list.innerHTML = UNLOCK_LOC3.costs
+        .map((c) => {
+          const g = GOODS.find((x) => x.id === c.goodId);
+          const have = s.cargo[c.goodId] || 0;
+          const ok = have >= c.qty;
+          return `<li class="${ok ? 'ok' : ''}"><code>${g?.name || c.goodId}</code> ${have}/${c.qty}</li>`;
+        })
+        .join('');
+    }
+    const btn = unlockPanel.querySelector('[data-act="unlock"]');
+    if (btn) {
+      const can =
+        !isTraveling(s) &&
+        !unlocked3 &&
+        UNLOCK_LOC3.costs.every((c) => (s.cargo[c.goodId] || 0) >= c.qty);
+      btn.disabled = !can;
+    }
   }
 
   if (ui.lastMsg) setText('toast', ui.lastMsg);

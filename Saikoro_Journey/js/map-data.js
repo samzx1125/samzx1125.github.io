@@ -1,25 +1,24 @@
 /** @typedef {{ id: string, name: string, x: number, y: number }} LocDef */
 /** @typedef {{ a: string, b: string, travelMs: number }} EdgeDef */
 
-/** Display name = id (obvious placeholders). */
+/** Naming v2: loc_aAAzZZlLLL_slug — display = id for now. */
 /** @type {LocDef[]} */
 export const LOCATIONS = [
-  { id: 'area_1_zone_1_location_1', name: 'area_1_zone_1_location_1', x: 120, y: 220 },
-  { id: 'area_1_zone_1_location_2', name: 'area_1_zone_1_location_2', x: 340, y: 160 },
-  { id: 'area_1_zone_1_location_3', name: 'area_1_zone_1_location_3', x: 560, y: 240 },
+  { id: 'loc_a01z01l001_broken_lamp', name: 'loc_a01z01l001_broken_lamp', x: 120, y: 220 },
+  { id: 'loc_a01z01l002_drywind_depot', name: 'loc_a01z01l002_drywind_depot', x: 340, y: 160 },
+  { id: 'loc_a01z01l003_star_ash', name: 'loc_a01z01l003_star_ash', x: 560, y: 240 },
 ];
 
 /** @type {EdgeDef[]} */
 export const EDGES = [
-  { a: 'area_1_zone_1_location_1', b: 'area_1_zone_1_location_2', travelMs: 8000 },
-  { a: 'area_1_zone_1_location_2', b: 'area_1_zone_1_location_3', travelMs: 10000 },
+  { a: 'loc_a01z01l001_broken_lamp', b: 'loc_a01z01l002_drywind_depot', travelMs: 8000 },
+  { a: 'loc_a01z01l002_drywind_depot', b: 'loc_a01z01l003_star_ash', travelMs: 10000 },
 ];
 
-export const START_LOC = 'area_1_zone_1_location_1';
+export const START_LOC = 'loc_a01z01l001_broken_lamp';
 export const INITIALLY_UNLOCKED = [
-  'area_1_zone_1_location_1',
-  'area_1_zone_1_location_2',
-  'area_1_zone_1_location_3', // UI slice: all unlocked for movement testing
+  'loc_a01z01l001_broken_lamp',
+  'loc_a01z01l002_drywind_depot',
 ];
 
 /** @returns {number|null} */
