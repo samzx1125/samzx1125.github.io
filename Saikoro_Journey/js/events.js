@@ -36,6 +36,7 @@ export function bindEvents(s) {
         const ms = travelMsBetween(state.locationId, locId);
         const r = tryTravel(state, locId, ms);
         ui.lastMsg = r.ok ? `departing → ${locId}` : `cannot travel (${r.reason})`;
+        if (r.ok) saveGame(state);
       } else {
         ui.lastMsg = 'only adjacent locations';
       }
@@ -58,9 +59,11 @@ export function bindEvents(s) {
     if (act === 'buy') {
       const r = tryBuy(state, loc, good, qty);
       ui.lastMsg = r.ok ? `bought ${good} ×${qty}` : `buy failed (${r.reason})`;
+      if (r.ok) saveGame(state);
     } else if (act === 'sell') {
       const r = trySell(state, loc, good, qty);
       ui.lastMsg = r.ok ? `sold ${good} ×${qty}` : `sell failed (${r.reason})`;
+      if (r.ok) saveGame(state);
     }
     render(state, ui);
   });
@@ -70,6 +73,7 @@ export function bindEvents(s) {
     if (!btn || !state) return;
     const r = tryUnlock(state, UNLOCK_LOC3);
     ui.lastMsg = r.ok ? `unlocked ${UNLOCK_LOC3.target}` : `unlock failed (${r.reason})`;
+    if (r.ok) saveGame(state);
     render(state, ui);
   });
 
