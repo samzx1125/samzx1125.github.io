@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027r';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027r';
-import { getLastSavedAt } from './saving.js?v=z1-20261027r';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027r';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027s';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027s';
+import { getLastSavedAt } from './saving.js?v=z1-20261027s';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261027s';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -289,10 +289,12 @@ export function render(s, ui = {}) {
     if (s.travel) {
       travelPanel.hidden = false;
       const pct = Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100));
+      const leftMs = Math.max(0, s.travel.durationMs - s.travel.elapsedMs);
+      const leftSec = (leftMs / 1000).toFixed(1);
       setText('travel-route', `${locName(s.travel.from)} → ${locName(s.travel.to)}`);
       const fill = document.getElementById('travel-bar-fill');
       if (fill) fill.style.width = pct + '%';
-      setText('travel-pct', pct + '%');
+      setText('travel-pct', `${pct}% · ${leftSec}s left`);
     } else {
       travelPanel.hidden = true;
       const fill = document.getElementById('travel-bar-fill');
