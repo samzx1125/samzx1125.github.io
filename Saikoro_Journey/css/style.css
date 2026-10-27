@@ -287,3 +287,15 @@ aside code {
   padding: 0.4rem 0.5rem;
 }
 .dest-list .eta { color: var(--muted); font-size: 0.75rem; }
+
+.hud-cargo-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.hud-bar {
+  width: 72px;
+  height: 8px;
+  display: inline-block;
+  vertical-align: middle;
+}

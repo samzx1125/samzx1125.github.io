@@ -4,15 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261027f" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261027f" />
+  <link rel="icon" href="favicon.svg?v=z1-20261027g" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261027g" />
 </head>
 <body>
   <header>
     <h1>Saikoro Journey · Z1</h1>
     <div class="hud">
       <span>gold <strong id="hud-gold">0</strong></span>
-      <span>cargo <strong id="hud-cargo">0 / 20</strong></span>
+      <span class="hud-cargo-wrap">cargo <strong id="hud-cargo">0 / 20</strong>
+        <span class="bar hud-bar" aria-hidden="true"><span id="hud-cargo-bar" class="bar-fill"></span></span>
+      </span>
       <span>loc <strong id="hud-loc">—</strong></span>
     </div>
   </header>
@@ -75,6 +77,6 @@
       <p id="toast"></p>
     </aside>
   </main>
-  <script type="module" src="js/main.js?v=z1-20261027f"></script>
+  <script type="module" src="js/main.js?v=z1-20261027g"></script>
 </body>
 </html>

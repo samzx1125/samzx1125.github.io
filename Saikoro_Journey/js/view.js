@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027f';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027f';
-import { getLastSavedAt } from './saving.js?v=z1-20261027f';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027f';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027g';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027g';
+import { getLastSavedAt } from './saving.js?v=z1-20261027g';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261027g';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -153,6 +153,11 @@ function renderQuotes(s) {
 export function render(s, ui = {}) {
   setText('hud-gold', String(s.gold));
   setText('hud-cargo', `${cargoUsed(s)} / ${s.capacity}`);
+  const cargoBar = document.getElementById('hud-cargo-bar');
+  if (cargoBar) {
+    const pct = s.capacity ? Math.min(100, Math.round((cargoUsed(s) / s.capacity) * 100)) : 0;
+    cargoBar.style.width = pct + '%';
+  }
   const here = LOCATIONS.find((l) => l.id === s.locationId);
   const travelLabel = s.travel
     ? `moving → ${locName(s.travel.to)} (${Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100))}%)`
