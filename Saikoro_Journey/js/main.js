@@ -6,6 +6,7 @@ import { tick } from './engine.js';
 import { mountView, render } from './view.js';
 import { bindEvents, getUi } from './events.js';
 import { loadGame, saveGame } from './saving.js';
+import { locName } from './map-data.js';
 
 const state = createInitialState();
 const loaded = loadGame(state);
@@ -20,7 +21,7 @@ function loop(now) {
   tick(state, now);
   if (wasTraveling && !state.travel) {
     saveGame(state);
-    ui.lastMsg = `arrived ${state.locationId}`;
+    ui.lastMsg = `arrived ${locName(state.locationId)}`;
   }
   wasTraveling = !!state.travel;
   render(state, getUi());
