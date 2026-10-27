@@ -342,3 +342,12 @@ aside code {
 .node.just-unlocked {
   animation: node-unlock-flash 0.9s ease-out 1;
 }
+
+@keyframes node-dest-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px #00000028; border-color: #000000; }
+  50% { box-shadow: 0 0 0 7px #00000018; border-color: #000000; }
+}
+.node.dest {
+  border-color: #000000;
+  animation: node-dest-pulse 1.1s ease-in-out infinite;
+}
