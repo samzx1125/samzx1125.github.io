@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028g';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028g';
-import { getLastSavedAt } from './saving.js?v=z1-20261028g';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028g';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028h';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028h';
+import { getLastSavedAt } from './saving.js?v=z1-20261028h';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028h';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -384,7 +384,7 @@ export function render(s, ui = {}) {
     }
   }
 
-  // Station panels (quotes + unlock): Esc closes; map node click reopens
+  // Station panels (quotes + unlock): Esc / blank map closes; node click reopens
   {
     const panelOpen = ui.panelOpen !== false;
     const quotePanel = document.getElementById('quote-panel');

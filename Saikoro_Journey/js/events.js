@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028g';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028g';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028g';
-import { cargoUsed } from './state.js?v=z1-20261028g';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028g';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028g';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028h';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028h';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028h';
+import { cargoUsed } from './state.js?v=z1-20261028h';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028h';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028h';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -14,9 +14,8 @@ const ui = { lastMsg: '', panelOpen: true };
 export function bindEvents(s) {
   state = s;
 
-  document.addEventListener('keydown', (ev) => {
-    if (ev.key !== 'Escape') return;
-    // Close station panels (quotes + unlock); also clear toast
+  /** Close location/unlock panels + clear toast (Esc / blank map). */
+  function closePanelsAndToast() {
     let closed = false;
     if (ui.panelOpen) {
       ui.panelOpen = false;
@@ -30,6 +29,17 @@ export function bindEvents(s) {
     ui.lastMsg = '';
     document.dispatchEvent(new Event('sj-toast-clear'));
     if (closed && state) render(state, ui);
+  }
+
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Escape') return;
+    closePanelsAndToast();
+  });
+
+  // Blank map click closes panels (same as Esc); node clicks handled above keep panel open
+  document.getElementById('map-wrap')?.addEventListener('click', (ev) => {
+    if (ev.target.closest('.node')) return;
+    closePanelsAndToast();
   });
 
   document.getElementById('quote-panel')?.addEventListener('input', (ev) => {
