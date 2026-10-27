@@ -12,6 +12,9 @@ const qtyByGood = {};
 
 /** Last quote table signature — skip rebuild when unchanged. */
 let lastQuoteSig = '';
+/** @type {ReturnType<typeof setTimeout> | null} */
+let toastTimer = null;
+let lastToastText = '';
 
 export function mountView() {
   const railsEl = document.getElementById('rails');
@@ -262,7 +265,18 @@ export function render(s, ui = {}) {
     }
   }
 
-  if (ui.lastMsg) setText('toast', ui.lastMsg);
+  if (ui.lastMsg && ui.lastMsg !== lastToastText) {
+    lastToastText = ui.lastMsg;
+    const toast = document.getElementById('toast');
+    if (toast) {
+      toast.textContent = ui.lastMsg;
+      toast.classList.remove('fade');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('fade');
+      }, 3500);
+    }
+  }
 }
 
 /** Force quote rebuild next render (after external qty-affecting actions). */
