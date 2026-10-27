@@ -115,8 +115,10 @@ export function render(s, ui = {}) {
         <td class="num">${s.cargo[g.id] || 0}</td>
         <td class="actions">
           <button type="button" data-act="buy" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>buy</button>
+          <button type="button" data-act="buy-max" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>max</button>
           <input type="number" min="1" value="1" data-qty="${g.id}" class="qty" ${atStation ? '' : 'disabled'} />
           <button type="button" data-act="sell" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>sell</button>
+          <button type="button" data-act="sell-all" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>all</button>
         </td>`;
       tbody.appendChild(tr);
     }

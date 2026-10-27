@@ -1,6 +1,7 @@
 import { neighborsOf, travelMsBetween } from './map-data.js';
 import { UNLOCK_LOC3 } from './economy-data.js';
 import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js';
+import { cargoUsed } from './state.js';
 import { saveGame, clearSave } from './saving.js';
 import { render } from './view.js';
 
@@ -56,13 +57,22 @@ export function bindEvents(s) {
     const qtyInput = row?.querySelector(`input[data-qty="${good}"]`);
     const qty = Number(qtyInput?.value || 1);
 
-    if (act === 'buy') {
-      const r = tryBuy(state, loc, good, qty);
-      ui.lastMsg = r.ok ? `bought ${good} ×${qty}` : `buy failed (${r.reason})`;
+    if (act === 'buy' || act === 'buy-max') {
+      let n = qty;
+      if (act === 'buy-max') {
+        const price = state.prices[loc]?.[good] || 1;
+        const byGold = Math.floor(state.gold / price);
+        const byCap = state.capacity - cargoUsed(state);
+        n = Math.max(0, Math.min(byGold, byCap));
+      }
+      const r = tryBuy(state, loc, good, n);
+      ui.lastMsg = r.ok ? `bought ${good} ×${n}` : `buy failed (${r.reason})`;
       if (r.ok) saveGame(state);
-    } else if (act === 'sell') {
-      const r = trySell(state, loc, good, qty);
-      ui.lastMsg = r.ok ? `sold ${good} ×${qty}` : `sell failed (${r.reason})`;
+    } else if (act === 'sell' || act === 'sell-all') {
+      let n = qty;
+      if (act === 'sell-all') n = state.cargo[good] || 0;
+      const r = trySell(state, loc, good, n);
+      ui.lastMsg = r.ok ? `sold ${good} ×${n}` : `sell failed (${r.reason})`;
       if (r.ok) saveGame(state);
     }
     render(state, ui);
