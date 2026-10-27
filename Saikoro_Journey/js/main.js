@@ -1,16 +1,19 @@
 /**
- * SaikoroJourney — Zone1 prototype boot
- * TODO(saving.js): localStorage save/load — next slice, not this PR
+ * SaikoroJourney — Zone1 boot
  */
 import { createInitialState } from './state.js';
 import { tick } from './engine.js';
 import { mountView, render } from './view.js';
 import { bindEvents, getUi } from './events.js';
+import { loadGame } from './saving.js';
 
 const state = createInitialState();
+const loaded = loadGame(state);
 mountView();
 bindEvents(state);
-render(state, getUi());
+const ui = getUi();
+if (loaded) ui.lastMsg = 'save loaded';
+render(state, ui);
 
 function loop(now) {
   tick(state, now);

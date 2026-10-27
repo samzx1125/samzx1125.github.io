@@ -1,6 +1,7 @@
 import { neighborsOf, travelMsBetween } from './map-data.js';
 import { UNLOCK_LOC3 } from './economy-data.js';
 import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js';
+import { saveGame, clearSave } from './saving.js';
 import { render } from './view.js';
 
 /** @type {import('./state.js').GameState | null} */
@@ -69,6 +70,18 @@ export function bindEvents(s) {
     if (!btn || !state) return;
     const r = tryUnlock(state, UNLOCK_LOC3);
     ui.lastMsg = r.ok ? `unlocked ${UNLOCK_LOC3.target}` : `unlock failed (${r.reason})`;
+    render(state, ui);
+  });
+
+  document.getElementById('save-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act]');
+    if (!btn || !state) return;
+    if (btn.dataset.act === 'save') {
+      ui.lastMsg = saveGame(state) ? 'saved' : 'save failed';
+    } else if (btn.dataset.act === 'reset-save') {
+      clearSave();
+      ui.lastMsg = 'save cleared — reload page for fresh start';
+    }
     render(state, ui);
   });
 }
