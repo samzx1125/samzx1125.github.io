@@ -149,6 +149,9 @@ main {
   z-index: 5;
   line-height: 0;
 }
+#train-marker.pawn:not(.traveling) {
+  filter: drop-shadow(0 2px 3px #00000055);
+}
 #train-marker.pawn svg { display: block; }
 #train-marker.pawn svg * { stroke: #ffffff; stroke-width: 1.25; paint-order: stroke fill; }
 
@@ -321,4 +324,12 @@ aside code {
 }
 #train-marker.pawn.traveling {
   animation: pawn-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes rail-pulse {
+  0%, 100% { stroke-opacity: 1; stroke-width: 5; }
+  50% { stroke-opacity: 0.55; stroke-width: 6; }
+}
+.rail.active {
+  animation: rail-pulse 1s ease-in-out infinite;
 }
