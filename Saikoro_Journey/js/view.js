@@ -164,7 +164,8 @@ export function render(s, ui = {}) {
     el.classList.toggle('current', !s.travel && id === s.locationId);
     el.classList.toggle('selected', id === s.selectedLocId);
     el.classList.toggle('dest', !!s.travel && id === s.travel.to);
-    el.disabled = !unlocked;
+    el.disabled = false;
+    el.setAttribute("aria-disabled", unlocked ? "false" : "true");
   });
 
   document.querySelectorAll('.rail').forEach((line) => {
