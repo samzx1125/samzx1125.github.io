@@ -314,3 +314,11 @@ aside code {
   color: var(--muted);
 }
 .controls-list li { margin: 0.2rem 0; }
+
+@keyframes pawn-pulse {
+  0%, 100% { transform: translate(-50%, -85%) scale(1); }
+  50% { transform: translate(-50%, -85%) scale(1.12); }
+}
+#train-marker.pawn.traveling {
+  animation: pawn-pulse 0.9s ease-in-out infinite;
+}

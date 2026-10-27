@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027t';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027t';
-import { getLastSavedAt } from './saving.js?v=z1-20261027t';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027t';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027u';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027u';
+import { getLastSavedAt } from './saving.js?v=z1-20261027u';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261027u';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -231,6 +231,7 @@ export function render(s, ui = {}) {
     trainEl.style.left = x + 'px';
     trainEl.style.top = y + 'px';
     trainEl.hidden = false;
+    trainEl.classList.toggle('traveling', !!s.travel);
   }
 
   const sig = quoteSignature(s);
