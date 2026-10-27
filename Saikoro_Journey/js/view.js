@@ -191,6 +191,22 @@ export function render(s, ui = {}) {
     renderQuotes(s);
   }
 
+  const travelPanel = document.getElementById('travel-panel');
+  if (travelPanel) {
+    if (s.travel) {
+      travelPanel.hidden = false;
+      const pct = Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100));
+      setText('travel-route', `${locName(s.travel.from)} → ${locName(s.travel.to)}`);
+      const fill = document.getElementById('travel-bar-fill');
+      if (fill) fill.style.width = pct + '%';
+      setText('travel-pct', pct + '%');
+    } else {
+      travelPanel.hidden = true;
+      const fill = document.getElementById('travel-bar-fill');
+      if (fill) fill.style.width = '0%';
+    }
+  }
+
   if (ui.lastMsg) setText('toast', ui.lastMsg);
 }
 

@@ -244,3 +244,18 @@ aside code {
   main { grid-template-columns: 1fr; }
   aside { border-left: none; border-top: 1px solid var(--border); }
 }
+
+.bar {
+  height: 10px;
+  background: #d0d0d0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #000000;
+  transition: width 0.05s linear;
+}
+#travel-panel .muted { margin: 0.35rem 0 0; font-size: 0.8rem; }
