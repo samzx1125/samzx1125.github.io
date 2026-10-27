@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027h';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027h';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027h';
-import { cargoUsed } from './state.js?v=z1-20261027h';
-import { saveGame, clearSave } from './saving.js?v=z1-20261027h';
-import { render, invalidateQuotes } from './view.js?v=z1-20261027h';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261027i';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261027i';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261027i';
+import { cargoUsed } from './state.js?v=z1-20261027i';
+import { saveGame, clearSave } from './saving.js?v=z1-20261027i';
+import { render, invalidateQuotes } from './view.js?v=z1-20261027i';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -13,6 +13,16 @@ const ui = { lastMsg: '' };
 /** @param {import('./state.js').GameState} s */
 export function bindEvents(s) {
   state = s;
+
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Escape') return;
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = '';
+    toast.classList.add('fade');
+    ui.lastMsg = '';
+    document.dispatchEvent(new Event('sj-toast-clear'));
+  });
 
   document.getElementById('quote-panel')?.addEventListener('input', (ev) => {
     const el = ev.target.closest('input.qty[data-qty]');

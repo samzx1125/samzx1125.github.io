@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027h';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027h';
-import { getLastSavedAt } from './saving.js?v=z1-20261027h';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261027h';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261027i';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261027i';
+import { getLastSavedAt } from './saving.js?v=z1-20261027i';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261027i';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -17,6 +17,14 @@ let toastTimer = null;
 let lastToastText = '';
 
 export function mountView() {
+  document.addEventListener('sj-toast-clear', () => {
+    lastToastText = '';
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+  });
+
   const railsEl = document.getElementById('rails');
   const nodesEl = document.getElementById('nodes');
   trainEl = document.getElementById('train-marker');
