@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028d';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028d';
-import { getLastSavedAt } from './saving.js?v=z1-20261028d';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028d';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028e';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028e';
+import { getLastSavedAt } from './saving.js?v=z1-20261028e';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028e';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -248,6 +248,7 @@ export function render(s, ui = {}) {
     el.classList.toggle('selected', id === s.selectedLocId);
     el.classList.toggle('dest', !!s.travel && id === s.travel.to);
     el.disabled = false;
+    el.tabIndex = unlocked ? 0 : -1;
     el.setAttribute("aria-disabled", unlocked ? "false" : "true");
   });
 

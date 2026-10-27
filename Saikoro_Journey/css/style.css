@@ -244,6 +244,26 @@ button.primary {
   font-weight: 600;
 }
 
+/* :focus-visible — keyboard/Tab black mono ring; mouse click stays clean */
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+.node:focus:not(:focus-visible) {
+  outline: none;
+}
+button:focus-visible,
+input:focus-visible,
+input.qty:focus-visible,
+.node:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+/* Locked map nodes: muted ring if somehow focused (normally tabIndex=-1) */
+.node.locked:focus-visible,
+.node[aria-disabled="true"]:focus-visible {
+  outline: 1px solid #888888;
+  outline-offset: 2px;
+}
+
 /* :active press — Train (go) / Unlock / Buy / Sell; mono only */
 button[data-act="go"]:active:not(:disabled),
 button[data-act="buy"]:active:not(:disabled),
