@@ -575,3 +575,14 @@ button.primary[data-act="travel-to"]:active:not(:disabled) {
   box-shadow: 0 1px 2px #00000033;
 }
 .travel-rect[hidden] { display: none !important; }
+
+.travel-controls {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+#btn-stop-travel {
+  width: 100%;
+  font-weight: 600;
+}

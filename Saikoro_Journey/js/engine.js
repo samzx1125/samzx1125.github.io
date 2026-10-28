@@ -1,5 +1,5 @@
-import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028q';
-import { goodWeightG } from './economy-data.js?v=z1-20261028q';
+import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028r';
+import { goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028r';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -136,3 +136,42 @@ export function tryUnlock(s, unlock) {
   return { ok: true };
 }
 
+
+/** Mid-travel stop — gated by STOP_REROUTE_UNLOCKED. Stays at travel.from. */
+export function tryStopTravel(s) {
+  if (!s.travel) return { ok: false, reason: 'not_traveling' };
+  if (!STOP_REROUTE_UNLOCKED) return { ok: false, reason: 'locked_feature' };
+  s.travel = null;
+  return { ok: true };
+}
+
+/**
+ * Mid-travel re-route to toId (from current locationId / travel.from).
+ * Gated by STOP_REROUTE_UNLOCKED.
+ * @param {number} durationMs
+ * @param {{ distance?: number, speed?: number }} [meta]
+ */
+export function tryReroute(s, toId, durationMs, meta = {}) {
+  if (!s.travel) return { ok: false, reason: 'not_traveling' };
+  if (!STOP_REROUTE_UNLOCKED) return { ok: false, reason: 'locked_feature' };
+  if (!s.unlocked.includes(toId)) return { ok: false, reason: 'locked' };
+  const fromId = s.locationId; // still at origin until arrive
+  if (toId === fromId) {
+    s.travel = null;
+    return { ok: true, stopped: true };
+  }
+  if (toId === s.travel.to) return { ok: false, reason: 'same_dest' };
+  if (durationMs == null || durationMs <= 0) return { ok: false, reason: 'no_edge' };
+  const distance = meta.distance != null ? meta.distance : 0;
+  const speed = meta.speed != null ? meta.speed : 0;
+  s.travel = {
+    from: fromId,
+    to: toId,
+    elapsedMs: 0,
+    durationMs,
+    distance,
+    speed,
+    traveledDistance: 0,
+  };
+  return { ok: true };
+}

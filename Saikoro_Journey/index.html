@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028q" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028q" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028r" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028r" />
 </head>
 <body>
   <header class="top-row">
@@ -50,6 +50,10 @@
           <p id="travel-route" class="hint">—</p>
           <div class="bar" aria-label="travel progress"><div id="travel-bar-fill" class="bar-fill"></div></div>
           <p id="travel-pct" class="muted">0%</p>
+          <div class="travel-controls">
+            <button type="button" id="btn-stop-travel" data-act="stop-travel" disabled>Stop</button>
+            <p id="stop-reroute-hint" class="hint">Stop / re-route locked until unlock.</p>
+          </div>
         </section>
         <section id="dest-panel">
           <h3 class="subhead">Destinations</h3>
@@ -111,6 +115,6 @@
       <p id="toast"></p>
     </aside>
   </main>
-  <script type="module" src="js/main.js?v=z1-20261028q"></script>
+  <script type="module" src="js/main.js?v=z1-20261028r"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028q';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028q';
-import { getLastSavedAt } from './saving.js?v=z1-20261028q';
-import { cargoUsed, isTraveling, effectiveBuyAvg } from './state.js?v=z1-20261028q';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028r';
+import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028r';
+import { getLastSavedAt } from './saving.js?v=z1-20261028r';
+import { cargoUsed, isTraveling, effectiveBuyAvg } from './state.js?v=z1-20261028r';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -146,7 +146,18 @@ function quoteSignature(s) {
  * @param {import('./state.js').GameState} s
  */
 function destSignature(s) {
-  if (s.travel) return 'traveling|' + s.travel.from + '>' + s.travel.to;
+  if (s.travel) {
+    const parts = ['traveling', s.travel.from + '>' + s.travel.to, STOP_REROUTE_UNLOCKED ? 'rr1' : 'rr0'];
+    if (STOP_REROUTE_UNLOCKED) {
+      const fromId = s.locationId;
+      const neigh = neighborsOf(fromId).filter((id) => s.unlocked.includes(id) && id !== s.travel.to);
+      for (const id of neigh) {
+        const ms = travelMsBetween(fromId, id) || 0;
+        parts.push(id, String(Math.round(ms / 1000)));
+      }
+    }
+    return parts.join('|');
+  }
   const neigh = neighborsOf(s.locationId).filter((id) => s.unlocked.includes(id));
   const parts = [s.locationId, 'docked'];
   for (const id of neigh) {
@@ -362,12 +373,27 @@ export function render(s, ui = {}) {
   const destPanel = document.getElementById('dest-panel');
   if (destList && destPanel) {
     const dsig = destSignature(s);
-    if (s.travel) {
+    if (s.travel && !STOP_REROUTE_UNLOCKED) {
       destPanel.hidden = true;
       if (dsig !== lastDestSig) {
         lastDestSig = dsig;
         destList.innerHTML = '';
         if (destEmpty) destEmpty.hidden = true;
+      }
+    } else if (s.travel && STOP_REROUTE_UNLOCKED) {
+      destPanel.hidden = false;
+      if (dsig !== lastDestSig) {
+        lastDestSig = dsig;
+        const fromId = s.locationId;
+        const neigh = neighborsOf(fromId).filter((id) => s.unlocked.includes(id) && id !== s.travel.to);
+        destList.innerHTML = neigh
+          .map((id) => {
+            const ms = travelMsBetween(fromId, id) || 0;
+            return `<li><button type="button" data-act="go" data-loc="${id}">Re-route ${locName(id)} <span class="eta">${formatEta(ms)}</span></button></li>`;
+          })
+          .join('');
+        // also allow stop via going "home" listed? Stop button handles abort
+        if (destEmpty) destEmpty.hidden = neigh.length > 0;
       }
     } else {
       destPanel.hidden = false;
@@ -421,6 +447,17 @@ export function render(s, ui = {}) {
       const fill = document.getElementById('travel-bar-fill');
       if (fill) fill.style.width = pct + '%';
       setText('travel-pct', `${pct}% · ETA ${formatEta(leftMs)} · ${tr.toFixed(0)}/${td}`);
+      const stopBtn = document.getElementById('btn-stop-travel');
+      if (stopBtn) {
+        stopBtn.disabled = !STOP_REROUTE_UNLOCKED;
+        stopBtn.title = STOP_REROUTE_UNLOCKED ? 'Stop mid-travel' : 'Locked until unlock';
+      }
+      setText(
+        'stop-reroute-hint',
+        STOP_REROUTE_UNLOCKED
+          ? 'Stop aborts to origin · Destinations re-route'
+          : 'Stop / re-route locked until unlock.',
+      );
     } else {
       travelPanel.hidden = true;
       const fill = document.getElementById('travel-bar-fill');

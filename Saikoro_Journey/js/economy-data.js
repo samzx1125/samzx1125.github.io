@@ -48,3 +48,9 @@ export function goodName(id) {
 export function goodWeightG(id) {
   return GOODS.find((g) => g.id === id)?.weightG || 0;
 }
+
+/**
+ * Slice H — mid-travel stop / re-route.
+ * Feature is implemented but gated until later unlock (keep false).
+ */
+export const STOP_REROUTE_UNLOCKED = false;

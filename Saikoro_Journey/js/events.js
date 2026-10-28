@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028q';
-import { UNLOCK_LOC3, goodName, goodWeightG } from './economy-data.js?v=z1-20261028q';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028q';
-import { cargoUsed } from './state.js?v=z1-20261028q';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028q';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028q';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028r';
+import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028r';
+import { tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute } from './engine.js?v=z1-20261028r';
+import { cargoUsed } from './state.js?v=z1-20261028r';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028r';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028r';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -89,11 +89,33 @@ export function bindEvents(s) {
     if (btn && !btn.disabled) btn.click();
   });
 
-  /** Depart to locId if adjacent / unlocked / not traveling. */
+  /** Depart to locId if adjacent / unlocked; re-route mid-travel if feature unlocked. */
   function travelTo(locId) {
     if (!state || !locId) return;
     if (state.travel) {
-      ui.lastMsg = 'already traveling';
+      if (!STOP_REROUTE_UNLOCKED) {
+        ui.lastMsg = 'already traveling (stop/re-route locked)';
+        render(state, ui);
+        return;
+      }
+      if (!state.unlocked.includes(locId)) {
+        ui.lastMsg = 'location locked';
+        render(state, ui);
+        return;
+      }
+      const fromId = state.locationId;
+      if (locId !== fromId && !neighborsOf(fromId).includes(locId)) {
+        ui.lastMsg = 'only adjacent locations';
+        render(state, ui);
+        return;
+      }
+      const dist = distanceBetween(fromId, locId);
+      const ms = travelMsBetween(fromId, locId);
+      const r = tryReroute(state, locId, ms, { distance: dist ?? 0, speed: TRAIN_SPEED });
+      ui.lastMsg = r.ok
+        ? (r.stopped ? 'stopped' : `re-routed → ${locName(locId)}`)
+        : `cannot re-route (${r.reason})`;
+      if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
       return;
     }
@@ -216,6 +238,15 @@ export function bindEvents(s) {
     const r = tryUnlock(state, UNLOCK_LOC3);
     ui.lastMsg = r.ok ? `unlocked ${locName(UNLOCK_LOC3.target)}` : `unlock failed (${r.reason})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); flashUnlockedNode(UNLOCK_LOC3.target); }
+    render(state, ui);
+  });
+
+  document.getElementById('travel-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="stop-travel"]');
+    if (!btn || !state) return;
+    const r = tryStopTravel(state);
+    ui.lastMsg = r.ok ? 'stopped' : `cannot stop (${r.reason})`;
+    if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
   });
 
