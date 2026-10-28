@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028i';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028i';
-import { getLastSavedAt } from './saving.js?v=z1-20261028i';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028i';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028j';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028j';
+import { getLastSavedAt } from './saving.js?v=z1-20261028j';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028j';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -165,10 +165,10 @@ function renderQuotes(s) {
       <td class="num">${s.cargo[g.id] || 0}</td>
       <td class="actions">
         <button type="button" data-act="buy" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>buy</button>
-        <button type="button" data-act="buy-max" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>max</button>
+        <button type="button" data-act="buy-max" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>Buy max</button>
         <input type="number" min="1" value="${qtyVal}" data-qty="${g.id}" class="qty" ${atStation ? '' : 'disabled'} />
         <button type="button" data-act="sell" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>sell</button>
-        <button type="button" data-act="sell-all" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>all</button>
+        <button type="button" data-act="sell-all" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>Sell all</button>
       </td>`;
     tbody.appendChild(tr);
   }
