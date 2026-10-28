@@ -1,5 +1,5 @@
-import { cargoUsed } from './state.js?v=z1-20261028o';
-import { goodWeightG } from './economy-data.js?v=z1-20261028o';
+import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028p';
+import { goodWeightG } from './economy-data.js?v=z1-20261028p';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -42,6 +42,12 @@ export function tryBuy(s, locId, goodId, qty) {
   if (cargoUsed(s) + w * qty > s.capacity) return { ok: false, reason: 'capacity' };
   s.gold -= cost;
   s.cargo[goodId] = (s.cargo[goodId] || 0) + qty;
+  // Slice G: save buy MP into this station visit (avg committed on leave)
+  if (!s.stationBuys) s.stationBuys = {};
+  const sb = s.stationBuys[goodId] || { sum: 0, qty: 0 };
+  sb.sum += price * qty;
+  sb.qty += qty;
+  s.stationBuys[goodId] = sb;
   return { ok: true };
 }
 
@@ -62,6 +68,26 @@ export function trySell(s, locId, goodId, qty) {
   if ((s.cargo[goodId] || 0) < qty) return { ok: false, reason: 'stock' };
   s.cargo[goodId] -= qty;
   s.gold += price * qty;
+  // Keep buyMp in sync with remaining cargo (FIFO-ish qty shrink)
+  if (s.buyMp?.[goodId]) {
+    s.buyMp[goodId].qty = Math.max(0, s.buyMp[goodId].qty - qty);
+    if (s.buyMp[goodId].qty <= 0) delete s.buyMp[goodId];
+  }
+  if (s.stationBuys?.[goodId]) {
+    // shrink pending proportional if sold before leave — prefer cutting pending last;
+    // simple: cut committed first above; if cargo still tracks, trim pending to not exceed cargo
+    const cargoLeft = s.cargo[goodId] || 0;
+    const committedQty = s.buyMp?.[goodId]?.qty || 0;
+    const maxPend = Math.max(0, cargoLeft - committedQty);
+    if (s.stationBuys[goodId].qty > maxPend) {
+      const keep = maxPend;
+      if (keep <= 0) delete s.stationBuys[goodId];
+      else {
+        const unit = s.stationBuys[goodId].sum / s.stationBuys[goodId].qty;
+        s.stationBuys[goodId] = { qty: keep, sum: unit * keep };
+      }
+    }
+  }
   return { ok: true };
 }
 
@@ -79,6 +105,7 @@ export function tryTravel(s, toId, durationMs, meta = {}) {
   if (!s.unlocked.includes(toId)) return { ok: false, reason: 'locked' };
   if (toId === s.locationId) return { ok: false, reason: 'same' };
   if (durationMs == null || durationMs <= 0) return { ok: false, reason: 'no_edge' };
+  commitStationBuys(s);
   const distance = meta.distance != null ? meta.distance : 0;
   const speed = meta.speed != null ? meta.speed : 0;
   s.travel = {

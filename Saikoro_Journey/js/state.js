@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028o';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028o';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028p';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028p';
 
 /**
  * @typedef {{
@@ -12,6 +12,8 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1
  *   prices: Record<string, Record<string, number>>,
  *   selectedLocId: string | null,
  *   nowMs: number,
+ *   buyMp: Record<string, { avg: number, qty: number }>,
+ *   stationBuys: Record<string, { sum: number, qty: number }>,
  * }} GameState
  */
 
@@ -40,8 +42,38 @@ export function createInitialState() {
     prices,
     selectedLocId: START_LOC,
     nowMs: performance.now(),
+    buyMp: {},
+    stationBuys: {},
   };
 }
+
+/** Pending + committed buy MP average for a good (null if none). */
+export function effectiveBuyAvg(s, goodId) {
+  const committed = s.buyMp?.[goodId];
+  const pending = s.stationBuys?.[goodId];
+  const cQty = committed?.qty || 0;
+  const pQty = pending?.qty || 0;
+  if (cQty + pQty <= 0) return null;
+  const cSum = (committed?.avg || 0) * cQty;
+  const pSum = pending?.sum || 0;
+  return (cSum + pSum) / (cQty + pQty);
+}
+
+/** Fold stationBuys into buyMp (call when leaving a station). */
+export function commitStationBuys(s) {
+  if (!s.stationBuys) s.stationBuys = {};
+  if (!s.buyMp) s.buyMp = {};
+  for (const goodId of Object.keys(s.stationBuys)) {
+    const pend = s.stationBuys[goodId];
+    if (!pend || !pend.qty) continue;
+    const cur = s.buyMp[goodId] || { avg: 0, qty: 0 };
+    const newQty = cur.qty + pend.qty;
+    const newAvg = newQty > 0 ? (cur.avg * cur.qty + pend.sum) / newQty : 0;
+    s.buyMp[goodId] = { avg: newAvg, qty: newQty };
+  }
+  s.stationBuys = {};
+}
+
 
 /** Total cargo weight in grams. @param {GameState} s */
 export function cargoUsed(s) {

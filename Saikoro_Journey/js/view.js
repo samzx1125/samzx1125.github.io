@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028o';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028o';
-import { getLastSavedAt } from './saving.js?v=z1-20261028o';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028o';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028p';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028p';
+import { getLastSavedAt } from './saving.js?v=z1-20261028p';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028p';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -129,7 +129,13 @@ function quoteSignature(s) {
   const atStation = !isTraveling(s) && s.locationId === quoteLoc && s.unlocked.includes(quoteLoc);
   const parts = [quoteLoc, s.locationId, atStation ? '1' : '0', s.gold];
   for (const g of GOODS) {
-    parts.push(g.id, String(s.prices[quoteLoc]?.[g.id] ?? ''), String(s.cargo[g.id] || 0));
+    const avg = effectiveBuyAvg(s, g.id);
+    parts.push(
+      g.id,
+      String(s.prices[quoteLoc]?.[g.id] ?? ''),
+      String(s.cargo[g.id] || 0),
+      avg == null ? '' : avg.toFixed(2),
+    );
   }
   parts.push(s.unlocked.join(','));
   return parts.join('|');
@@ -169,17 +175,20 @@ function renderQuotes(s) {
     const qtyVal = qtyByGood[g.id] != null ? qtyByGood[g.id] : '1';
     const tr = document.createElement('tr');
     tr.dataset.good = g.id;
-    const herePrice = s.prices[s.locationId]?.[g.id];
+    const buyAvg = effectiveBuyAvg(s, g.id);
     let deltaHtml = '—';
-    if (quoteLoc !== s.locationId && herePrice != null) {
-      const d = price - herePrice;
+    let deltaTitle = 'no buy MP yet';
+    if (buyAvg != null) {
+      const d = price - buyAvg;
       const sign = d > 0 ? '+' : '';
-      deltaHtml = `${sign}${d}`;
+      const avgShown = Number.isInteger(buyAvg) ? String(buyAvg) : buyAvg.toFixed(1);
+      deltaHtml = `${sign}${Number.isInteger(d) ? d : d.toFixed(1)}`;
+      deltaTitle = `loc MP ${price} vs buy avg ${avgShown}`;
     }
     tr.innerHTML = `
       <td title="${g.id}">${g.name}</td>
       <td class="num">${price}</td>
-      <td class="num delta">${deltaHtml}</td>
+      <td class="num delta" title="${deltaTitle}">${deltaHtml}</td>
       <td class="num">${s.cargo[g.id] || 0}</td>
       <td class="actions">
         <button type="button" data-act="buy" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>buy</button>
