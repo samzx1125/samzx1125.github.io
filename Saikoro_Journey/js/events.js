@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028n';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028n';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028n';
-import { cargoUsed } from './state.js?v=z1-20261028n';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028n';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028n';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028o';
+import { UNLOCK_LOC3, goodName, goodWeightG } from './economy-data.js?v=z1-20261028o';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028o';
+import { cargoUsed } from './state.js?v=z1-20261028o';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028o';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028o';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -193,7 +193,8 @@ export function bindEvents(s) {
       if (act === 'buy-max') {
         const price = state.prices[loc]?.[good] || 1;
         const byGold = Math.floor(state.gold / price);
-        const byCap = state.capacity - cargoUsed(state);
+        const w = goodWeightG(good);
+        const byCap = w > 0 ? Math.floor((state.capacity - cargoUsed(state)) / w) : 0;
         n = Math.max(0, Math.min(byGold, byCap));
       }
       const r = tryBuy(state, loc, good, n);

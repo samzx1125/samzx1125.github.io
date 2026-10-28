@@ -1,11 +1,11 @@
-/** @typedef {{ id: string, name: string, tags: string[] }} GoodDef */
+/** @typedef {{ id: string, name: string, tags: string[], weightG: number }} GoodDef */
 
 /** Naming v2 goods_aAAzZZiIII_slug — name is display label. Prices static. */
 /** @type {GoodDef[]} */
 export const GOODS = [
-  { id: 'goods_a01z01i001_dry_food', name: 'Dry Food', tags: [] },
-  { id: 'goods_a01z01i002_oil_speciality', name: 'Oil Speciality', tags: ['volatile'] },
-  { id: 'goods_a01z01i003_water_speciality', name: 'Water Speciality', tags: ['liquid'] },
+  { id: 'goods_a01z01i001_dry_food', name: 'Dry Food', tags: [], weightG: 200 },
+  { id: 'goods_a01z01i002_oil_speciality', name: 'Oil Speciality', tags: ['volatile'], weightG: 500 },
+  { id: 'goods_a01z01i003_water_speciality', name: 'Water Speciality', tags: ['liquid'], weightG: 750 },
 ];
 
 export const BASE_PRICES = {
@@ -27,7 +27,8 @@ export const BASE_PRICES = {
 };
 
 export const START_GOLD = 200;
-export const CAPACITY = 20;
+/** Cargo capacity in grams (total weight). */
+export const CAPACITY = 5000;
 
 /** Unlock loc_a01z01l003 at any unlocked station. */
 export const UNLOCK_LOC3 = {
@@ -41,4 +42,9 @@ export const UNLOCK_LOC3 = {
 /** @param {string} id */
 export function goodName(id) {
   return GOODS.find((g) => g.id === id)?.name || id;
+}
+
+/** Weight in grams for one unit. @param {string} id */
+export function goodWeightG(id) {
+  return GOODS.find((g) => g.id === id)?.weightG || 0;
 }

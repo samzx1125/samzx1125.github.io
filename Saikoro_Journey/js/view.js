@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028n';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028n';
-import { getLastSavedAt } from './saving.js?v=z1-20261028n';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028n';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028o';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028o';
+import { getLastSavedAt } from './saving.js?v=z1-20261028o';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028o';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -245,7 +245,7 @@ export function render(s, ui = {}) {
     lastRenderedGold = s.gold;
     goldEl.textContent = String(s.gold);
   }
-  setText('hud-cargo', `${cargoUsed(s)} / ${s.capacity}`);
+  setText('hud-cargo', `${cargoUsed(s)} / ${s.capacity} g`);
   const cargoBar = document.getElementById('hud-cargo-bar');
   if (cargoBar) {
     const pct = s.capacity ? Math.min(100, Math.round((cargoUsed(s) / s.capacity) * 100)) : 0;
@@ -391,7 +391,9 @@ export function render(s, ui = {}) {
   if (cargoList) {
     const rows = GOODS.map((g) => {
       const n = s.cargo[g.id] || 0;
-      return n > 0 ? `<li title="${g.id}">${g.name} ×${n}</li>` : '';
+      if (n <= 0) return '';
+      const lineG = n * (g.weightG || 0);
+      return `<li title="${g.id} · ${g.weightG}g each">${g.name} ×${n} <span class="muted">(${lineG}g)</span></li>`;
     }).filter(Boolean);
     cargoList.innerHTML = rows.join('');
     if (cargoEmpty) cargoEmpty.hidden = rows.length > 0;

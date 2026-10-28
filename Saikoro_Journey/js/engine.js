@@ -1,4 +1,5 @@
-import { cargoUsed } from './state.js?v=z1-20261028n';
+import { cargoUsed } from './state.js?v=z1-20261028o';
+import { goodWeightG } from './economy-data.js?v=z1-20261028o';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -36,7 +37,9 @@ export function tryBuy(s, locId, goodId, qty) {
   if (qty <= 0) return { ok: false, reason: 'qty' };
   const cost = price * qty;
   if (s.gold < cost) return { ok: false, reason: 'gold' };
-  if (cargoUsed(s) + qty > s.capacity) return { ok: false, reason: 'capacity' };
+  const w = goodWeightG(goodId);
+  if (!(w > 0)) return { ok: false, reason: 'weight' };
+  if (cargoUsed(s) + w * qty > s.capacity) return { ok: false, reason: 'capacity' };
   s.gold -= cost;
   s.cargo[goodId] = (s.cargo[goodId] || 0) + qty;
   return { ok: true };

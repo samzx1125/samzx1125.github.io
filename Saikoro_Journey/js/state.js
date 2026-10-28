@@ -1,10 +1,10 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028n';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028n';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028o';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028o';
 
 /**
  * @typedef {{
  *   gold: number,
- *   capacity: number,
+ *   capacity: number, // grams
  *   cargo: Record<string, number>,
  *   locationId: string,
  *   unlocked: string[],
@@ -43,11 +43,14 @@ export function createInitialState() {
   };
 }
 
-/** @param {GameState} s */
+/** Total cargo weight in grams. @param {GameState} s */
 export function cargoUsed(s) {
-  let n = 0;
-  for (const k of Object.keys(s.cargo)) n += s.cargo[k] || 0;
-  return n;
+  let grams = 0;
+  for (const g of GOODS) {
+    const n = s.cargo[g.id] || 0;
+    if (n) grams += n * (g.weightG || 0);
+  }
+  return grams;
 }
 
 /** @param {GameState} s */
