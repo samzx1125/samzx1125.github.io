@@ -1,5 +1,5 @@
-import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028p';
-import { goodWeightG } from './economy-data.js?v=z1-20261028p';
+import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028q';
+import { goodWeightG } from './economy-data.js?v=z1-20261028q';
 
 /**
  * @param {import('./state.js').GameState} s
