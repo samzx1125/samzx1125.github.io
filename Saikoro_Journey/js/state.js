@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028m';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028m';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028n';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028n';
 
 /**
  * @typedef {{
@@ -8,7 +8,7 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1
  *   cargo: Record<string, number>,
  *   locationId: string,
  *   unlocked: string[],
- *   travel: null | { from: string, to: string, elapsedMs: number, durationMs: number },
+ *   travel: null | { from: string, to: string, elapsedMs: number, durationMs: number, distance: number, speed: number, traveledDistance: number },
  *   prices: Record<string, Record<string, number>>,
  *   selectedLocId: string | null,
  *   nowMs: number,

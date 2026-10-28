@@ -1,10 +1,11 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028m';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028m';
-import { getLastSavedAt } from './saving.js?v=z1-20261028m';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028m';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028n';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028n';
+import { getLastSavedAt } from './saving.js?v=z1-20261028n';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028n';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
+let travelRectEl = null;
 
 /** Persist qty across quote rebuilds. */
 /** @type {Record<string, string>} */
@@ -56,6 +57,7 @@ export function mountView() {
   const railsEl = document.getElementById('rails');
   const nodesEl = document.getElementById('nodes');
   trainEl = document.getElementById('train-marker');
+  travelRectEl = document.getElementById('travel-rect');
 
   if (railsEl) {
     railsEl.innerHTML = '';
@@ -253,8 +255,8 @@ export function render(s, ui = {}) {
   const travelLabel = s.travel
     ? (() => {
         const pct = Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100));
-        const leftSec = (Math.max(0, s.travel.durationMs - s.travel.elapsedMs) / 1000).toFixed(1);
-        return `moving → ${locName(s.travel.to)} (${pct}% · ${leftSec}s)`;
+        const leftMs = Math.max(0, s.travel.durationMs - s.travel.elapsedMs);
+        return `moving → ${locName(s.travel.to)} (${pct}% · ${formatEta(leftMs)})`;
       })()
     : here
       ? here.name
@@ -286,24 +288,38 @@ export function render(s, ui = {}) {
     line.classList.toggle('locked', !bothUnlocked);
   });
 
-  if (trainEl) {
+  {
     let x;
     let y;
     if (s.travel) {
       const from = LOCATIONS.find((l) => l.id === s.travel.from);
       const to = LOCATIONS.find((l) => l.id === s.travel.to);
-      const t = Math.min(1, s.travel.elapsedMs / s.travel.durationMs);
-      x = from.x + (to.x - from.x) * t;
-      y = from.y + (to.y - from.y) * t;
+      const tt = Math.min(1, s.travel.elapsedMs / s.travel.durationMs);
+      x = from.x + (to.x - from.x) * tt;
+      y = from.y + (to.y - from.y) * tt;
     } else {
       const loc = LOCATIONS.find((l) => l.id === s.locationId);
       x = loc.x;
       y = loc.y;
     }
-    trainEl.style.left = x + 'px';
-    trainEl.style.top = y + 'px';
-    trainEl.hidden = false;
-    trainEl.classList.toggle('traveling', !!s.travel);
+    if (trainEl) {
+      trainEl.style.left = x + 'px';
+      trainEl.style.top = y + 'px';
+      trainEl.hidden = false;
+      trainEl.classList.toggle('traveling', !!s.travel);
+    }
+    if (travelRectEl) {
+      if (s.travel) {
+        travelRectEl.hidden = false;
+        travelRectEl.style.left = x + 'px';
+        travelRectEl.style.top = y + 'px';
+        const td = s.travel.distance || 0;
+        const tr = s.travel.traveledDistance != null ? s.travel.traveledDistance : 0;
+        travelRectEl.title = `on train · ${tr.toFixed(0)} / ${td}`;
+      } else {
+        travelRectEl.hidden = true;
+      }
+    }
   }
 
   const sig = quoteSignature(s);
@@ -352,8 +368,7 @@ export function render(s, ui = {}) {
         destList.innerHTML = neigh
           .map((id) => {
             const ms = travelMsBetween(s.locationId, id) || 0;
-            const sec = Math.round(ms / 1000);
-            return `<li><button type="button" data-act="go" data-loc="${id}">${locName(id)} <span class="eta">${sec}s</span></button></li>`;
+            return `<li><button type="button" data-act="go" data-loc="${id}">${locName(id)} <span class="eta">${formatEta(ms)}</span></button></li>`;
           })
           .join('');
         if (destEmpty) destEmpty.hidden = neigh.length > 0;
@@ -388,11 +403,13 @@ export function render(s, ui = {}) {
       travelPanel.hidden = false;
       const pct = Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100));
       const leftMs = Math.max(0, s.travel.durationMs - s.travel.elapsedMs);
-      const leftSec = (leftMs / 1000).toFixed(1);
-      setText('travel-route', `${locName(s.travel.from)} → ${locName(s.travel.to)}`);
+      const td = s.travel.distance || 0;
+      const tr = s.travel.traveledDistance != null ? s.travel.traveledDistance : 0;
+      const spd = s.travel.speed || 0;
+      setText('travel-route', `${locName(s.travel.from)} → ${locName(s.travel.to)} · ${td} @${spd}`);
       const fill = document.getElementById('travel-bar-fill');
       if (fill) fill.style.width = pct + '%';
-      setText('travel-pct', `${pct}% · ${leftSec}s left`);
+      setText('travel-pct', `${pct}% · ETA ${formatEta(leftMs)} · ${tr.toFixed(0)}/${td}`);
     } else {
       travelPanel.hidden = true;
       const fill = document.getElementById('travel-bar-fill');

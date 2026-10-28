@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028m';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028m';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028m';
-import { cargoUsed } from './state.js?v=z1-20261028m';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028m';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028m';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028n';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028n';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028n';
+import { cargoUsed } from './state.js?v=z1-20261028n';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028n';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028n';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -113,8 +113,9 @@ export function bindEvents(s) {
       render(state, ui);
       return;
     }
+    const dist = distanceBetween(state.locationId, locId);
     const ms = travelMsBetween(state.locationId, locId);
-    const r = tryTravel(state, locId, ms);
+    const r = tryTravel(state, locId, ms, { distance: dist ?? 0, speed: TRAIN_SPEED });
     ui.lastMsg = r.ok ? `departing → ${locName(locId)}` : `cannot travel (${r.reason})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
