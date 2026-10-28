@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028k" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028k" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028l" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028l" />
 </head>
 <body>
   <header class="top-row">
@@ -23,7 +23,7 @@
         <section id="controls-panel">
           <h2>Controls</h2>
           <ul class="controls-list">
-            <li>Map / Destinations — travel</li>
+            <li>Map opens location · Travel to / Destinations — travel</li>
             <li>Enter buy · Shift+Enter sell</li>
             <li>Alt+Enter Buy max · Shift+Alt+Enter Sell all</li>
             <li>Esc / blank map close panel / toast</li>
@@ -79,9 +79,15 @@
       <section id="station-panel">
         <h2>Station</h2>
         <p class="hint">Location quotes and unlocks. Esc / blank map closes.</p>
+        <button type="button" class="primary" id="btn-travel" data-act="travel-to" disabled>Travel</button>
+        <p id="station-travel-hint" class="hint"></p>
       </section>
       <section id="quote-panel">
         <h2 id="quote-title">quotes</h2>
+        <div class="loc-travel-bar">
+          <button type="button" class="primary" id="btn-travel-to" data-act="travel-to" disabled>Travel to</button>
+          <p id="loc-travel-hint" class="hint"></p>
+        </div>
         <p class="hint">Trade only when docked. Prices are static. See Options → Controls.</p>
         <table>
           <thead>
@@ -101,6 +107,6 @@
       <p id="toast"></p>
     </aside>
   </main>
-  <script type="module" src="js/main.js?v=z1-20261028k"></script>
+  <script type="module" src="js/main.js?v=z1-20261028l"></script>
 </body>
 </html>

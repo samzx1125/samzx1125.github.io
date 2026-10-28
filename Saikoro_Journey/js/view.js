@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028k';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028k';
-import { getLastSavedAt } from './saving.js?v=z1-20261028k';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028k';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028l';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028l';
+import { getLastSavedAt } from './saving.js?v=z1-20261028l';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028l';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -382,6 +382,31 @@ export function render(s, ui = {}) {
       const fill = document.getElementById('travel-bar-fill');
       if (fill) fill.style.width = '0%';
     }
+  }
+
+  // Travel to / Travel (right station menu) — same action, Slice D
+  {
+    const target = s.selectedLocId || s.locationId;
+    const name = locName(target);
+    const here = target === s.locationId;
+    const unlocked = s.unlocked.includes(target);
+    const adjacent = !here && neighborsOf(s.locationId).includes(target);
+    const can = !s.travel && unlocked && adjacent;
+    let hint = '';
+    if (s.travel) hint = 'traveling…';
+    else if (here) hint = 'you are here';
+    else if (!unlocked) hint = 'location locked';
+    else if (!adjacent) hint = 'only adjacent locations';
+    else hint = `depart → ${name}`;
+    for (const id of ['btn-travel-to', 'btn-travel']) {
+      const btn = document.getElementById(id);
+      if (!btn) continue;
+      btn.disabled = !can;
+      if (id === 'btn-travel-to') btn.textContent = here ? 'Travel to' : `Travel to ${name}`;
+      else btn.textContent = 'Travel';
+    }
+    setText('loc-travel-hint', hint);
+    setText('station-travel-hint', hint);
   }
 
   // Station panels (quotes + unlock): Esc / blank map closes; node click reopens

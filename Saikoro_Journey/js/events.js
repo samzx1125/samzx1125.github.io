@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028k';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028k';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028k';
-import { cargoUsed } from './state.js?v=z1-20261028k';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028k';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028k';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028l';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028l';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028l';
+import { cargoUsed } from './state.js?v=z1-20261028l';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028l';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028l';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -88,6 +88,37 @@ export function bindEvents(s) {
     if (btn && !btn.disabled) btn.click();
   });
 
+  /** Depart to locId if adjacent / unlocked / not traveling. */
+  function travelTo(locId) {
+    if (!state || !locId) return;
+    if (state.travel) {
+      ui.lastMsg = 'already traveling';
+      render(state, ui);
+      return;
+    }
+    if (!state.unlocked.includes(locId)) {
+      ui.lastMsg = 'location locked';
+      render(state, ui);
+      return;
+    }
+    if (locId === state.locationId) {
+      ui.lastMsg = 'already here';
+      render(state, ui);
+      return;
+    }
+    const neigh = neighborsOf(state.locationId);
+    if (!neigh.includes(locId)) {
+      ui.lastMsg = 'only adjacent locations';
+      render(state, ui);
+      return;
+    }
+    const ms = travelMsBetween(state.locationId, locId);
+    const r = tryTravel(state, locId, ms);
+    ui.lastMsg = r.ok ? `departing → ${locName(locId)}` : `cannot travel (${r.reason})`;
+    if (r.ok) { saveGame(state); invalidateQuotes(); }
+    render(state, ui);
+  }
+
   document.getElementById('nodes')?.addEventListener('click', (ev) => {
     const btn = ev.target.closest('.node');
     if (!btn || !state) return;
@@ -103,23 +134,24 @@ export function bindEvents(s) {
       render(state, ui);
       return;
     }
+    // Slice D: open location panel only — travel via Travel to / Destinations
     state.selectedLocId = locId;
     ui.panelOpen = true;
-
-    if (locId !== state.locationId) {
-      const neigh = neighborsOf(state.locationId);
-      if (neigh.includes(locId)) {
-        const ms = travelMsBetween(state.locationId, locId);
-        const r = tryTravel(state, locId, ms);
-        ui.lastMsg = r.ok ? `departing → ${locName(locId)}` : `cannot travel (${r.reason})`;
-        if (r.ok) { saveGame(state); invalidateQuotes(); }
-      } else {
-        ui.lastMsg = 'only adjacent locations';
-      }
+    if (locId === state.locationId) {
+      ui.lastMsg = locName(locId);
+    } else if (!neighborsOf(state.locationId).includes(locId)) {
+      ui.lastMsg = 'only adjacent locations';
     } else {
       ui.lastMsg = locName(locId);
     }
     render(state, ui);
+  });
+
+  document.getElementById('right-menu')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="travel-to"]');
+    if (!btn || !state) return;
+    const locId = state.selectedLocId || state.locationId;
+    travelTo(locId);
   });
 
 
@@ -138,28 +170,10 @@ export function bindEvents(s) {
   document.getElementById('dest-panel')?.addEventListener('click', (ev) => {
     const btn = ev.target.closest('button[data-act="go"]');
     if (!btn || !state) return;
-    if (state.travel) {
-      ui.lastMsg = 'already traveling';
-      render(state, ui);
-      return;
-    }
     const locId = btn.dataset.loc;
-    if (!state.unlocked.includes(locId)) {
-      ui.lastMsg = 'location locked';
-      render(state, ui);
-      return;
-    }
-    const ms = travelMsBetween(state.locationId, locId);
-    if (ms == null) {
-      ui.lastMsg = 'only adjacent locations';
-      render(state, ui);
-      return;
-    }
     state.selectedLocId = locId;
-    const r = tryTravel(state, locId, ms);
-    ui.lastMsg = r.ok ? `departing → ${locName(locId)}` : `cannot travel (${r.reason})`;
-    if (r.ok) { saveGame(state); invalidateQuotes(); }
-    render(state, ui);
+    ui.panelOpen = true;
+    travelTo(locId);
   });
 
   document.getElementById('quote-panel')?.addEventListener('click', (ev) => {
