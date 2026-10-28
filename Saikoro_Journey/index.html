@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028h" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028h" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028i" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028i" />
 </head>
 <body>
-  <header>
+  <header class="top-row">
     <h1>Saikoro Journey · Z1</h1>
     <div class="hud">
       <span>gold <strong id="hud-gold">0</strong></span>
@@ -17,8 +17,52 @@
       </span>
       <span>loc <strong id="hud-loc">—</strong></span>
     </div>
+    <div class="options-wrap">
+      <button type="button" id="btn-options" aria-expanded="false" aria-controls="options-menu">Options</button>
+      <div id="options-menu" class="options-menu" hidden role="menu" aria-label="Options">
+        <section id="controls-panel">
+          <h2>Controls</h2>
+          <ul class="controls-list">
+            <li>Map / Destinations — travel</li>
+            <li>Enter buy · Shift+Enter sell</li>
+            <li>Alt+Enter max · Shift+Alt+Enter all</li>
+            <li>Esc / blank map close panel / toast</li>
+            <li>Options — save &amp; controls</li>
+          </ul>
+        </section>
+        <section id="save-panel">
+          <h2>Save</h2>
+          <p class="hint">localStorage only (this browser).</p>
+          <p id="save-stamp" class="muted">never saved</p>
+          <button type="button" class="primary" data-act="save">Save</button>
+          <button type="button" data-act="reset-save">Clear save</button>
+        </section>
+      </div>
+    </div>
   </header>
   <main>
+    <aside id="left-menu" class="side-menu side-left" aria-label="Train and inventory">
+      <section id="train-panel">
+        <h2>Train</h2>
+        <p class="hint">Route status and adjacent destinations.</p>
+        <section id="travel-panel" hidden>
+          <h3 class="subhead">Travel</h3>
+          <p id="travel-route" class="hint">—</p>
+          <div class="bar" aria-label="travel progress"><div id="travel-bar-fill" class="bar-fill"></div></div>
+          <p id="travel-pct" class="muted">0%</p>
+        </section>
+        <section id="dest-panel">
+          <h3 class="subhead">Destinations</h3>
+          <ul id="dest-list" class="dest-list"></ul>
+          <p id="dest-empty" class="hint" hidden>no adjacent routes</p>
+        </section>
+      </section>
+      <section id="cargo-panel">
+        <h2>Inventory</h2>
+        <ul id="cargo-list" class="cargo-list"></ul>
+        <p id="cargo-empty" class="hint" hidden>empty</p>
+      </section>
+    </aside>
     <div id="map-wrap">
       <div id="map-plane">
         <svg id="rails" viewBox="0 0 680 400" width="680" height="400" preserveAspectRatio="xMinYMin meet"></svg>
@@ -32,35 +76,14 @@
         </div>
       </div>
     </div>
-    <aside>
-      <section id="controls-panel">
-        <h2>Controls</h2>
-        <ul class="controls-list">
-          <li>Map / Destinations — travel</li>
-          <li>Enter buy · Shift+Enter sell</li>
-          <li>Alt+Enter max · Shift+Alt+Enter all</li>
-          <li>Esc / blank map close panel / toast</li>
-        </ul>
-      </section>
-      <section id="cargo-panel">
-        <h2>Cargo</h2>
-        <ul id="cargo-list" class="cargo-list"></ul>
-        <p id="cargo-empty" class="hint" hidden>empty</p>
-      </section>
-      <section id="dest-panel">
-        <h2>Destinations</h2>
-        <ul id="dest-list" class="dest-list"></ul>
-        <p id="dest-empty" class="hint" hidden>no adjacent routes</p>
-      </section>
-      <section id="travel-panel" hidden>
-        <h2>Travel</h2>
-        <p id="travel-route" class="hint">—</p>
-        <div class="bar" aria-label="travel progress"><div id="travel-bar-fill" class="bar-fill"></div></div>
-        <p id="travel-pct" class="muted">0%</p>
+    <aside id="right-menu" class="side-menu side-right" aria-label="Station">
+      <section id="station-panel">
+        <h2>Station</h2>
+        <p class="hint">Location quotes and unlocks. Esc / blank map closes.</p>
       </section>
       <section id="quote-panel">
         <h2 id="quote-title">quotes</h2>
-        <p class="hint">Trade only when docked. Prices are static. See Controls.</p>
+        <p class="hint">Trade only when docked. Prices are static. See Options → Controls.</p>
         <table>
           <thead>
             <tr><th>goods</th><th>price</th><th title="vs current station">vs</th><th>cargo</th><th></th></tr>
@@ -76,16 +99,9 @@
         <ul class="unlock-list"></ul>
         <button type="button" class="primary" data-act="unlock">Unlock Star Ash</button>
       </section>
-      <section id="save-panel">
-        <h2>Save</h2>
-        <p class="hint">localStorage only (this browser).</p>
-        <p id="save-stamp" class="muted">never saved</p>
-        <button type="button" class="primary" data-act="save">Save</button>
-        <button type="button" data-act="reset-save">Clear save</button>
-      </section>
       <p id="toast"></p>
     </aside>
   </main>
-  <script type="module" src="js/main.js?v=z1-20261028h"></script>
+  <script type="module" src="js/main.js?v=z1-20261028i"></script>
 </body>
 </html>

@@ -1,18 +1,27 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028h';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028h';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028h';
-import { cargoUsed } from './state.js?v=z1-20261028h';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028h';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028h';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028i';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028i';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028i';
+import { cargoUsed } from './state.js?v=z1-20261028i';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028i';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028i';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
-/** @type {{ lastMsg: string, panelOpen: boolean }} */
-const ui = { lastMsg: '', panelOpen: true };
+/** @type {{ lastMsg: string, panelOpen: boolean, optionsOpen: boolean }} */
+const ui = { lastMsg: '', panelOpen: true, optionsOpen: false };
 
 /** @param {import('./state.js').GameState} s */
 export function bindEvents(s) {
   state = s;
+
+  const optionsBtn = document.getElementById('btn-options');
+  const optionsMenu = document.getElementById('options-menu');
+
+  function setOptionsOpen(open) {
+    ui.optionsOpen = !!open;
+    if (optionsMenu) optionsMenu.hidden = !ui.optionsOpen;
+    if (optionsBtn) optionsBtn.setAttribute('aria-expanded', ui.optionsOpen ? 'true' : 'false');
+  }
 
   /** Close location/unlock panels + clear toast (Esc / blank map). */
   function closePanelsAndToast() {
@@ -31,14 +40,30 @@ export function bindEvents(s) {
     if (closed && state) render(state, ui);
   }
 
+  optionsBtn?.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    setOptionsOpen(!ui.optionsOpen);
+  });
+
+  document.addEventListener('click', (ev) => {
+    if (!ui.optionsOpen) return;
+    if (ev.target.closest('.options-wrap')) return;
+    setOptionsOpen(false);
+  });
+
   document.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Escape') return;
+    if (ui.optionsOpen) {
+      setOptionsOpen(false);
+      return;
+    }
     closePanelsAndToast();
   });
 
-  // Blank map click closes panels (same as Esc); node clicks handled above keep panel open
+  // Blank map click closes panels (same as Esc); node clicks keep panel open
   document.getElementById('map-wrap')?.addEventListener('click', (ev) => {
     if (ev.target.closest('.node')) return;
+    if (ui.optionsOpen) setOptionsOpen(false);
     closePanelsAndToast();
   });
 
