@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028l';
-import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028l';
-import { getLastSavedAt } from './saving.js?v=z1-20261028l';
-import { cargoUsed, isTraveling } from './state.js?v=z1-20261028l';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween } from './map-data.js?v=z1-20261028m';
+import { GOODS, UNLOCK_LOC3 } from './economy-data.js?v=z1-20261028m';
+import { getLastSavedAt } from './saving.js?v=z1-20261028m';
+import { cargoUsed, isTraveling } from './state.js?v=z1-20261028m';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -78,12 +78,16 @@ export function mountView() {
   if (nodesEl) {
     nodesEl.innerHTML = '';
     for (const loc of LOCATIONS) {
+      const wrap = document.createElement('div');
+      wrap.className = 'node-wrap';
+      wrap.dataset.locId = loc.id;
+      wrap.style.left = loc.x + 'px';
+      wrap.style.top = loc.y + 'px';
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'node';
       btn.dataset.locId = loc.id;
-      btn.style.left = loc.x + 'px';
-      btn.style.top = loc.y + 'px';
       btn.title = loc.id;
       // Default out of tab order until first render sets unlocked state
       btn.tabIndex = -1;
@@ -91,7 +95,19 @@ export function mountView() {
       btn.setAttribute('aria-disabled', 'true');
       btn.classList.add('locked');
       btn.innerHTML = `<span class="node-name">${loc.name}</span>`;
-      nodesEl.appendChild(btn);
+
+      const travel = document.createElement('button');
+      travel.type = 'button';
+      travel.className = 'map-travel primary';
+      travel.dataset.act = 'travel-to';
+      travel.dataset.loc = loc.id;
+      travel.textContent = 'Travel';
+      travel.hidden = true;
+      travel.disabled = true;
+
+      wrap.appendChild(btn);
+      wrap.appendChild(travel);
+      nodesEl.appendChild(wrap);
     }
   }
 }
@@ -384,8 +400,9 @@ export function render(s, ui = {}) {
     }
   }
 
-  // Travel to / Travel (right station menu) — same action, Slice D
+  // Travel to / Travel (panel + map under chip) — same action, Slice D
   {
+    const panelOpen = ui.panelOpen !== false;
     const target = s.selectedLocId || s.locationId;
     const name = locName(target);
     const here = target === s.locationId;
@@ -407,6 +424,23 @@ export function render(s, ui = {}) {
     }
     setText('loc-travel-hint', hint);
     setText('station-travel-hint', hint);
+
+    document.querySelectorAll('.map-travel').forEach((btn) => {
+      const locId = btn.dataset.loc;
+      const show = panelOpen && !!s.selectedLocId && locId === s.selectedLocId && !s.travel;
+      btn.hidden = !show;
+      if (!show) {
+        btn.disabled = true;
+        return;
+      }
+      const thisCan =
+        s.unlocked.includes(locId) &&
+        locId !== s.locationId &&
+        neighborsOf(s.locationId).includes(locId);
+      btn.disabled = !thisCan;
+      btn.textContent = 'Travel';
+      btn.title = thisCan ? `Travel to ${locName(locId)}` : hint;
+    });
   }
 
   // Station panels (quotes + unlock): Esc / blank map closes; node click reopens

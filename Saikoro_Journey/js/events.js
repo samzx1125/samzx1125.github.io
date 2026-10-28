@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028l';
-import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028l';
-import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028l';
-import { cargoUsed } from './state.js?v=z1-20261028l';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028l';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028l';
+import { neighborsOf, travelMsBetween, locName } from './map-data.js?v=z1-20261028m';
+import { UNLOCK_LOC3, goodName } from './economy-data.js?v=z1-20261028m';
+import { tryBuy, trySell, tryTravel, tryUnlock } from './engine.js?v=z1-20261028m';
+import { cargoUsed } from './state.js?v=z1-20261028m';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028m';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028m';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -63,6 +63,7 @@ export function bindEvents(s) {
   // Blank map click closes panels (same as Esc); node clicks keep panel open
   document.getElementById('map-wrap')?.addEventListener('click', (ev) => {
     if (ev.target.closest('.node')) return;
+    if (ev.target.closest('button[data-act="travel-to"]')) return;
     if (ui.optionsOpen) setOptionsOpen(false);
     closePanelsAndToast();
   });
@@ -147,10 +148,10 @@ export function bindEvents(s) {
     render(state, ui);
   });
 
-  document.getElementById('right-menu')?.addEventListener('click', (ev) => {
+  document.addEventListener('click', (ev) => {
     const btn = ev.target.closest('button[data-act="travel-to"]');
     if (!btn || !state) return;
-    const locId = state.selectedLocId || state.locationId;
+    const locId = btn.dataset.loc || state.selectedLocId || state.locationId;
     travelTo(locId);
   });
 
