@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028s';
-import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028s';
-import { getLastSavedAt } from './saving.js?v=z1-20261028s';
-import { cargoUsed, isTraveling, effectiveBuyAvg } from './state.js?v=z1-20261028s';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028t';
+import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028t';
+import { getLastSavedAt } from './saving.js?v=z1-20261028t';
+import { cargoUsed, isTraveling, effectiveBuyAvg } from './state.js?v=z1-20261028t';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -475,7 +475,7 @@ export function render(s, ui = {}) {
       setText(
         'stop-reroute-hint',
         STOP_REROUTE_UNLOCKED
-          ? 'Stop aborts to origin · Destinations re-route'
+          ? 'Stop → origin · Destinations / Travel / map chip re-route'
           : 'Stop / re-route locked until unlock.',
       );
     } else {
@@ -485,7 +485,7 @@ export function render(s, ui = {}) {
     }
   }
 
-  // Travel to / Travel (panel + map under chip) — same action, Slice D
+  // Travel to / Travel (panel + map under chip) — Slice D; mid-route when STOP_REROUTE_UNLOCKED (Slice J)
   {
     const panelOpen = ui.panelOpen !== false;
     const target = s.selectedLocId || s.locationId;
@@ -493,38 +493,60 @@ export function render(s, ui = {}) {
     const here = target === s.locationId;
     const unlocked = s.unlocked.includes(target);
     const adjacent = !here && neighborsOf(s.locationId).includes(target);
-    const can = !s.travel && unlocked && adjacent;
+    const sameDest = !!(s.travel && target === s.travel.to);
+    let can = false;
     let hint = '';
-    if (s.travel) hint = 'traveling…';
-    else if (here) hint = 'you are here';
-    else if (!unlocked) hint = 'location locked';
-    else if (!adjacent) hint = 'only adjacent locations';
-    else hint = `depart → ${name}`;
+    if (s.travel && !STOP_REROUTE_UNLOCKED) {
+      can = false;
+      hint = 'traveling…';
+    } else if (s.travel && STOP_REROUTE_UNLOCKED) {
+      can = unlocked && adjacent && !sameDest;
+      if (sameDest) hint = 'current destination';
+      else if (here) hint = 'you are here (use Stop)';
+      else if (!unlocked) hint = 'location locked';
+      else if (!adjacent) hint = 'only adjacent locations';
+      else hint = `re-route → ${name}`;
+    } else {
+      can = unlocked && adjacent;
+      if (here) hint = 'you are here';
+      else if (!unlocked) hint = 'location locked';
+      else if (!adjacent) hint = 'only adjacent locations';
+      else hint = `depart → ${name}`;
+    }
     for (const id of ['btn-travel-to', 'btn-travel']) {
       const btn = document.getElementById(id);
       if (!btn) continue;
       btn.disabled = !can;
-      if (id === 'btn-travel-to') btn.textContent = here ? 'Travel to' : `Travel to ${name}`;
-      else btn.textContent = 'Travel';
+      if (id === 'btn-travel-to') {
+        if (s.travel && STOP_REROUTE_UNLOCKED && can) btn.textContent = `Re-route ${name}`;
+        else btn.textContent = here ? 'Travel to' : `Travel to ${name}`;
+      } else {
+        btn.textContent = s.travel && STOP_REROUTE_UNLOCKED && can ? 'Re-route' : 'Travel';
+      }
     }
     setText('loc-travel-hint', hint);
     setText('station-travel-hint', hint);
 
     document.querySelectorAll('.map-travel').forEach((btn) => {
       const locId = btn.dataset.loc;
-      const show = panelOpen && !!s.selectedLocId && locId === s.selectedLocId && !s.travel;
+      const allowMid = !s.travel || STOP_REROUTE_UNLOCKED;
+      const show = panelOpen && !!s.selectedLocId && locId === s.selectedLocId && allowMid;
       btn.hidden = !show;
       if (!show) {
         btn.disabled = true;
         return;
       }
+      const thisSameDest = !!(s.travel && locId === s.travel.to);
       const thisCan =
         s.unlocked.includes(locId) &&
         locId !== s.locationId &&
-        neighborsOf(s.locationId).includes(locId);
+        neighborsOf(s.locationId).includes(locId) &&
+        !thisSameDest;
       btn.disabled = !thisCan;
-      btn.textContent = 'Travel';
-      btn.title = thisCan ? `Travel to ${locName(locId)}` : hint;
+      btn.textContent = s.travel && STOP_REROUTE_UNLOCKED ? 'Re-route' : 'Travel';
+      btn.title = thisCan
+        ? (s.travel ? `Re-route → ${locName(locId)}` : `Travel to ${locName(locId)}`)
+        : hint;
     });
   }
 

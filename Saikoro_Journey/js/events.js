@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028s';
-import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028s';
-import { tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute } from './engine.js?v=z1-20261028s';
-import { cargoUsed } from './state.js?v=z1-20261028s';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028s';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028s';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028t';
+import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028t';
+import { tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute } from './engine.js?v=z1-20261028t';
+import { cargoUsed } from './state.js?v=z1-20261028t';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028t';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028t';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -153,15 +153,20 @@ export function bindEvents(s) {
       return;
     }
 
-    if (state.travel) {
+    if (state.travel && !STOP_REROUTE_UNLOCKED) {
       ui.lastMsg = 'already traveling';
       render(state, ui);
       return;
     }
-    // Slice D: open location panel only — travel via Travel to / Destinations
+    // Slice D/J: open location panel — travel / re-route via Travel to / Destinations / map chip
     state.selectedLocId = locId;
     ui.panelOpen = true;
-    if (locId === state.locationId) {
+    if (state.travel && STOP_REROUTE_UNLOCKED) {
+      if (locId === state.locationId) ui.lastMsg = locName(locId) + ' (origin · Stop)';
+      else if (locId === state.travel.to) ui.lastMsg = locName(locId) + ' (current dest)';
+      else if (!neighborsOf(state.locationId).includes(locId)) ui.lastMsg = 'only adjacent locations';
+      else ui.lastMsg = 're-route? ' + locName(locId);
+    } else if (locId === state.locationId) {
       ui.lastMsg = locName(locId);
     } else if (!neighborsOf(state.locationId).includes(locId)) {
       ui.lastMsg = 'only adjacent locations';

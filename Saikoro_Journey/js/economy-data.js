@@ -50,7 +50,8 @@ export function goodWeightG(id) {
 }
 
 /**
- * Slice H — mid-travel stop / re-route.
- * Feature is implemented but gated until later unlock (keep false).
+ * Slice H/J — mid-travel stop / re-route.
+ * When true: Stop + Destinations + panel Travel + map Travel chip all re-route.
+ * Keep false for live; flip true only for unlock / Reviewer test path.
  */
 export const STOP_REROUTE_UNLOCKED = false;
