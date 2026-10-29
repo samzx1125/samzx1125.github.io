@@ -20,8 +20,12 @@ export function serialize(s) {
     locationId: s.locationId,
     unlocked: [...s.unlocked],
     buyMp: s.buyMp ? { ...Object.fromEntries(Object.entries(s.buyMp).map(([k, v]) => [k, { ...v }])) } : {},
+    prices: s.prices
+      ? Object.fromEntries(
+          Object.entries(s.prices).map(([loc, row]) => [loc, { ...row }]),
+        )
+      : {},
     savedAt: Date.now(),
-    // prices are static — reload from BASE_PRICES on load
     // stationBuys not persisted — mid-visit buffer
   };
 }
@@ -40,6 +44,18 @@ export function applySave(s, data) {
   s.travel = null;
   s.buyMp = data.buyMp && typeof data.buyMp === 'object' ? { ...data.buyMp } : {};
   s.stationBuys = {};
+  if (data.prices && typeof data.prices === 'object') {
+    for (const locId of Object.keys(data.prices)) {
+      if (!s.prices[locId]) s.prices[locId] = {};
+      const row = data.prices[locId];
+      if (!row || typeof row !== 'object') continue;
+      for (const goodId of Object.keys(row)) {
+        const n = Number(row[goodId]);
+        if (Number.isFinite(n) && n > 0) s.prices[locId][goodId] = Math.round(n);
+      }
+    }
+  }
+  s.lastPriceDriftMs = 0;
   lastSavedAt = typeof data.savedAt === 'number' ? data.savedAt : Date.now();
   return true;
 }

@@ -1,10 +1,41 @@
-import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028u';
-import { goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028u';
+import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028v';
+import {
+  goodWeightG,
+  STOP_REROUTE_UNLOCKED,
+  BASE_PRICES,
+  GOODS,
+  PRICE_DRIFT_INTERVAL_MS,
+  PRICE_DRIFT_PCT_MAX,
+  PRICE_DRIFT_BAND,
+} from './economy-data.js?v=z1-20261028v';
+import { LOCATIONS } from './map-data.js?v=z1-20261028v';
 
 /**
  * @param {import('./state.js').GameState} s
  * @param {number} nowMs
  */
+/** One drift step for all (loc, good) quotes around BASE_PRICES. */
+function driftPricesOnce(s) {
+  for (const loc of LOCATIONS) {
+    const baseRow = BASE_PRICES[loc.id];
+    if (!baseRow) continue;
+    if (!s.prices[loc.id]) s.prices[loc.id] = {};
+    for (const g of GOODS) {
+      const base = baseRow[g.id];
+      if (base == null) continue;
+      const cur = s.prices[loc.id][g.id];
+      const current = cur != null ? cur : base;
+      const delta = base * ((Math.random() * 2 - 1) * PRICE_DRIFT_PCT_MAX);
+      let next = current + delta;
+      const lo = Math.max(1, base * (1 - PRICE_DRIFT_BAND));
+      const hi = base * (1 + PRICE_DRIFT_BAND);
+      if (next < lo) next = lo;
+      if (next > hi) next = hi;
+      s.prices[loc.id][g.id] = Math.max(1, Math.round(next));
+    }
+  }
+}
+
 export function tick(s, nowMs) {
   const rawDt = Math.max(0, nowMs - s.nowMs);
   s.nowMs = nowMs;
@@ -18,6 +49,12 @@ export function tick(s, nowMs) {
       s.selectedLocId = s.travel.to;
       s.travel = null;
     }
+  }
+  // Slice L — price slow-drift every ~5s
+  if (!s.lastPriceDriftMs) s.lastPriceDriftMs = nowMs;
+  while (nowMs - s.lastPriceDriftMs >= PRICE_DRIFT_INTERVAL_MS) {
+    s.lastPriceDriftMs += PRICE_DRIFT_INTERVAL_MS;
+    driftPricesOnce(s);
   }
 }
 

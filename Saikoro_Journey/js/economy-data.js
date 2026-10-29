@@ -1,6 +1,6 @@
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number }} GoodDef */
 
-/** Naming v2 goods_aAAzZZiIII_slug — name is display label. Prices static. */
+/** Naming v2 goods_aAAzZZiIII_slug — name is display label. Live MP drifts around BASE_PRICES. */
 /** @type {GoodDef[]} */
 export const GOODS = [
   { id: 'goods_a01z01i001_dry_food', name: 'Dry Food', tags: [], weightG: 200 },
@@ -25,6 +25,13 @@ export const BASE_PRICES = {
     goods_a01z01i003_water_speciality: 28,
   },
 };
+
+/** Slice L — slow MP drift around base (prototype-z1 appendix). */
+export const PRICE_DRIFT_INTERVAL_MS = 5000;
+/** Each interval: random nudge in [-max,+max] as fraction of base MP. */
+export const PRICE_DRIFT_PCT_MAX = 0.02;
+/** Soft clamp band around base while drifting. */
+export const PRICE_DRIFT_BAND = 0.15;
 
 export const START_GOLD = 200;
 /** Cargo capacity in grams (total weight). */

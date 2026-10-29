@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028u';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028u';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028v';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028v';
 
 /**
  * @typedef {{
@@ -14,6 +14,7 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1
  *   nowMs: number,
  *   buyMp: Record<string, { avg: number, qty: number }>,
  *   stationBuys: Record<string, { sum: number, qty: number }>,
+ *   lastPriceDriftMs: number,
  * }} GameState
  */
 
@@ -44,6 +45,7 @@ export function createInitialState() {
     nowMs: performance.now(),
     buyMp: {},
     stationBuys: {},
+    lastPriceDriftMs: 0,
   };
 }
 
