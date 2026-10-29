@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028r';
-import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028r';
-import { getLastSavedAt } from './saving.js?v=z1-20261028r';
-import { cargoUsed, isTraveling, effectiveBuyAvg } from './state.js?v=z1-20261028r';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028s';
+import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028s';
+import { getLastSavedAt } from './saving.js?v=z1-20261028s';
+import { cargoUsed, isTraveling, effectiveBuyAvg } from './state.js?v=z1-20261028s';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -15,6 +15,8 @@ const qtyByGood = {};
 let lastQuoteSig = '';
 /** Last dest-list signature — skip rebuild so :active can stick on go buttons. */
 let lastDestSig = '';
+/** Last cargo-list signature — skip rebuild so Options click-outside sees inventory clicks. */
+let lastCargoSig = '';
 /** @type {ReturnType<typeof setTimeout> | null} */
 let toastTimer = null;
 let lastToastText = '';
@@ -165,6 +167,20 @@ function destSignature(s) {
     parts.push(id, String(Math.round(ms / 1000)));
   }
   return parts.join('|');
+}
+
+/**
+ * Cargo-list signature — qty + weight per good with stock.
+ * @param {import('./state.js').GameState} s
+ */
+function cargoSignature(s) {
+  const parts = [];
+  for (const g of GOODS) {
+    const n = s.cargo[g.id] || 0;
+    if (n <= 0) continue;
+    parts.push(g.id, String(n), String(g.weightG || 0));
+  }
+  return parts.join('|') || 'empty';
 }
 
 /**
@@ -424,14 +440,18 @@ export function render(s, ui = {}) {
   const cargoList = document.getElementById('cargo-list');
   const cargoEmpty = document.getElementById('cargo-empty');
   if (cargoList) {
-    const rows = GOODS.map((g) => {
-      const n = s.cargo[g.id] || 0;
-      if (n <= 0) return '';
-      const lineG = n * (g.weightG || 0);
-      return `<li title="${g.id} · ${g.weightG}g each">${g.name} ×${n} <span class="muted">(${lineG}g)</span></li>`;
-    }).filter(Boolean);
-    cargoList.innerHTML = rows.join('');
-    if (cargoEmpty) cargoEmpty.hidden = rows.length > 0;
+    const csig = cargoSignature(s);
+    if (csig !== lastCargoSig) {
+      lastCargoSig = csig;
+      const rows = GOODS.map((g) => {
+        const n = s.cargo[g.id] || 0;
+        if (n <= 0) return '';
+        const lineG = n * (g.weightG || 0);
+        return `<li title="${g.id} · ${g.weightG}g each">${g.name} ×${n} <span class="muted">(${lineG}g)</span></li>`;
+      }).filter(Boolean);
+      cargoList.innerHTML = rows.join('');
+      if (cargoEmpty) cargoEmpty.hidden = rows.length > 0;
+    }
   }
 
   const travelPanel = document.getElementById('travel-panel');
