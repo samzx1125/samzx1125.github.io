@@ -33,6 +33,20 @@ export const PRICE_DRIFT_PCT_MAX = 0.02;
 /** Soft clamp band around base while drifting. */
 export const PRICE_DRIFT_BAND = 0.15;
 
+/** Slice M — buy/sell impact windows (prototype-z1 / economy §3.2). */
+export const IMPACT_WINDOW_MS = 10000;
+export const BUY_IMPACT_QTY = 100;
+export const SELL_IMPACT_QTY = 150;
+/** Max uplift above base from buy impact. */
+export const BUY_IMPACT_CAP = 0.25;
+/** Max drop below base from sell impact. */
+export const SELL_IMPACT_CAP = 0.15;
+/** Push/crush step as fraction of base when threshold exceeded. */
+export const BUY_IMPACT_STEP = 0.03;
+export const SELL_IMPACT_STEP = 0.015;
+/** Per drift tick, fraction of base pulled back toward drift band when outside it. */
+export const IMPACT_RECOVERY_STEP = 0.01;
+
 export const START_GOLD = 200;
 /** Cargo capacity in grams (total weight). */
 export const CAPACITY = 5000;

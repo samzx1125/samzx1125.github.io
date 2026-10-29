@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028v';
-import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028v';
-import { tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute } from './engine.js?v=z1-20261028v';
-import { cargoUsed } from './state.js?v=z1-20261028v';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028v';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028v';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028w';
+import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028w';
+import { tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute } from './engine.js?v=z1-20261028w';
+import { cargoUsed } from './state.js?v=z1-20261028w';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028w';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028w';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;

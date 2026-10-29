@@ -1,4 +1,4 @@
-import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028v';
+import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028w';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -7,8 +7,16 @@ import {
   PRICE_DRIFT_INTERVAL_MS,
   PRICE_DRIFT_PCT_MAX,
   PRICE_DRIFT_BAND,
-} from './economy-data.js?v=z1-20261028v';
-import { LOCATIONS } from './map-data.js?v=z1-20261028v';
+  IMPACT_WINDOW_MS,
+  BUY_IMPACT_QTY,
+  SELL_IMPACT_QTY,
+  BUY_IMPACT_CAP,
+  SELL_IMPACT_CAP,
+  BUY_IMPACT_STEP,
+  SELL_IMPACT_STEP,
+  IMPACT_RECOVERY_STEP,
+} from './economy-data.js?v=z1-20261028w';
+import { LOCATIONS } from './map-data.js?v=z1-20261028w';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -25,12 +33,22 @@ function driftPricesOnce(s) {
       if (base == null) continue;
       const cur = s.prices[loc.id][g.id];
       const current = cur != null ? cur : base;
-      const delta = base * ((Math.random() * 2 - 1) * PRICE_DRIFT_PCT_MAX);
-      let next = current + delta;
       const lo = Math.max(1, base * (1 - PRICE_DRIFT_BAND));
       const hi = base * (1 + PRICE_DRIFT_BAND);
-      if (next < lo) next = lo;
-      if (next > hi) next = hi;
+      const hardLo = Math.max(1, base * (1 - SELL_IMPACT_CAP));
+      const hardHi = base * (1 + BUY_IMPACT_CAP);
+      let next = current;
+      // Recover toward drift band if buy/sell impact pushed outside
+      if (current > hi) next = current - base * IMPACT_RECOVERY_STEP;
+      else if (current < lo) next = current + base * IMPACT_RECOVERY_STEP;
+      else next = current + base * ((Math.random() * 2 - 1) * PRICE_DRIFT_PCT_MAX);
+      if (next < hardLo) next = hardLo;
+      if (next > hardHi) next = hardHi;
+      // Inside normal band, soft-clamp drift
+      if (current >= lo && current <= hi) {
+        if (next < lo) next = lo;
+        if (next > hi) next = hi;
+      }
       s.prices[loc.id][g.id] = Math.max(1, Math.round(next));
     }
   }
@@ -55,6 +73,57 @@ export function tick(s, nowMs) {
   while (nowMs - s.lastPriceDriftMs >= PRICE_DRIFT_INTERVAL_MS) {
     s.lastPriceDriftMs += PRICE_DRIFT_INTERVAL_MS;
     driftPricesOnce(s);
+  }
+}
+
+
+function impactKey(locId, goodId) {
+  return locId + '|' + goodId;
+}
+
+function pruneImpactBucket(bucket, nowMs) {
+  const cut = nowMs - IMPACT_WINDOW_MS;
+  bucket.buys = (bucket.buys || []).filter((e) => e.t >= cut);
+  bucket.sells = (bucket.sells || []).filter((e) => e.t >= cut);
+}
+
+function sumQty(list) {
+  let n = 0;
+  for (const e of list) n += e.qty;
+  return n;
+}
+
+/** Record trade + apply buy/sell impact when window volume exceeds threshold. */
+function recordTradeImpact(s, locId, goodId, qty, side) {
+  if (!s.tradeImpact) s.tradeImpact = {};
+  const key = impactKey(locId, goodId);
+  const bucket = s.tradeImpact[key] || { buys: [], sells: [] };
+  const now = s.nowMs || 0;
+  pruneImpactBucket(bucket, now);
+  if (side === 'buy') bucket.buys.push({ t: now, qty });
+  else bucket.sells.push({ t: now, qty });
+  s.tradeImpact[key] = bucket;
+
+  const base = BASE_PRICES[locId]?.[goodId];
+  if (base == null) return;
+  if (!s.prices[locId]) s.prices[locId] = {};
+  let cur = s.prices[locId][goodId];
+  if (cur == null) cur = base;
+
+  if (side === 'buy') {
+    const vol = sumQty(bucket.buys);
+    if (vol <= BUY_IMPACT_QTY) return;
+    const cap = Math.round(base * (1 + BUY_IMPACT_CAP));
+    if (cur >= cap) return;
+    const step = Math.max(1, Math.round(base * BUY_IMPACT_STEP));
+    s.prices[locId][goodId] = Math.min(cap, cur + step);
+  } else {
+    const vol = sumQty(bucket.sells);
+    if (vol <= SELL_IMPACT_QTY) return;
+    const floor = Math.max(1, Math.round(base * (1 - SELL_IMPACT_CAP)));
+    if (cur <= floor) return;
+    const step = Math.max(1, Math.round(base * SELL_IMPACT_STEP));
+    s.prices[locId][goodId] = Math.max(floor, cur - step);
   }
 }
 
@@ -85,6 +154,7 @@ export function tryBuy(s, locId, goodId, qty) {
   sb.sum += price * qty;
   sb.qty += qty;
   s.stationBuys[goodId] = sb;
+  recordTradeImpact(s, locId, goodId, qty, 'buy');
   return { ok: true };
 }
 
@@ -125,6 +195,7 @@ export function trySell(s, locId, goodId, qty) {
       }
     }
   }
+  recordTradeImpact(s, locId, goodId, qty, 'sell');
   return { ok: true };
 }
 

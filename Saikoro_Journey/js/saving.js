@@ -56,6 +56,7 @@ export function applySave(s, data) {
     }
   }
   s.lastPriceDriftMs = 0;
+  s.tradeImpact = {};
   lastSavedAt = typeof data.savedAt === 'number' ? data.savedAt : Date.now();
   return true;
 }
