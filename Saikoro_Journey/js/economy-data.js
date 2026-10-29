@@ -50,8 +50,19 @@ export function goodWeightG(id) {
 }
 
 /**
- * Slice H/J — mid-travel stop / re-route.
+ * Slice H/J/K — mid-travel stop / re-route.
  * When true: Stop + Destinations + panel Travel + map Travel chip all re-route.
- * Keep false for live; flip true only for unlock / Reviewer test path.
+ * Live default false. Playtest: hard-reload with ?rr=1 (or &rr=1) forces unlock.
  */
-export const STOP_REROUTE_UNLOCKED = false;
+const STOP_REROUTE_DEFAULT = false;
+
+function rrQueryForcesUnlock() {
+  try {
+    const v = new URLSearchParams(globalThis.location?.search || '').get('rr');
+    return v === '1' || v === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export const STOP_REROUTE_UNLOCKED = STOP_REROUTE_DEFAULT || rrQueryForcesUnlock();

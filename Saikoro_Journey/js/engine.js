@@ -1,5 +1,5 @@
-import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028t';
-import { goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028t';
+import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028u';
+import { goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028u';
 
 /**
  * @param {import('./state.js').GameState} s
