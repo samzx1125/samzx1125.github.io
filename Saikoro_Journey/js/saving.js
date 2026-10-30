@@ -27,6 +27,11 @@ export function serialize(s) {
           Object.entries(s.prices).map(([loc, row]) => [loc, { ...row }]),
         )
       : {},
+    visitedPrices: s.visitedPrices
+      ? Object.fromEntries(
+          Object.entries(s.visitedPrices).map(([loc, row]) => [loc, { ...row }]),
+        )
+      : {},
     savedAt: Date.now(),
     // stationBuys not persisted — mid-visit buffer
   };
@@ -67,6 +72,29 @@ export function applySave(s, data) {
         const n = Number(row[goodId]);
         if (Number.isFinite(n) && n > 0) s.prices[locId][goodId] = Math.round(n);
       }
+    }
+  }
+  s.visitedPrices = {};
+  if (data.visitedPrices && typeof data.visitedPrices === 'object') {
+    for (const locId of Object.keys(data.visitedPrices)) {
+      const row = data.visitedPrices[locId];
+      if (!row || typeof row !== 'object') continue;
+      s.visitedPrices[locId] = {};
+      for (const goodId of Object.keys(row)) {
+        const n = Number(row[goodId]);
+        if (Number.isFinite(n) && n > 0) s.visitedPrices[locId][goodId] = Math.round(n);
+      }
+    }
+  }
+  // ensure current station has a memory snapshot
+  if (s.locationId && s.prices?.[s.locationId]) {
+    if (!s.visitedPrices[s.locationId]) {
+      const snap = {};
+      for (const goodId of Object.keys(s.prices[s.locationId])) {
+        const n = Number(s.prices[s.locationId][goodId]);
+        if (Number.isFinite(n) && n > 0) snap[goodId] = Math.round(n);
+      }
+      s.visitedPrices[s.locationId] = snap;
     }
   }
   s.lastPriceDriftMs = 0;

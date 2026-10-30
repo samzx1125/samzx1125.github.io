@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028z';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG } from './economy-data.js?v=z1-20261028z';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028aa';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG } from './economy-data.js?v=z1-20261028aa';
 
 /**
  * @typedef {{
@@ -12,6 +12,7 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG } from './economy
  *   unlocked: string[],
  *   travel: null | { from: string, to: string, elapsedMs: number, durationMs: number, distance: number, speed: number, traveledDistance: number },
  *   prices: Record<string, Record<string, number>>,
+ *   visitedPrices: Record<string, Record<string, number>>, // Slice P — last-seen MP per station
  *   selectedLocId: string | null,
  *   nowMs: number,
  *   buyMp: Record<string, { avg: number, qty: number }>,
@@ -36,7 +37,8 @@ export function createInitialState() {
   const cargo = {};
   for (const g of GOODS) cargo[g.id] = 0;
 
-  return {
+  /** @type {GameState} */
+  const s = {
     gold: START_GOLD,
     capacity: CAPACITY,
     cargo,
@@ -46,6 +48,7 @@ export function createInitialState() {
     unlocked: [...INITIALLY_UNLOCKED],
     travel: null,
     prices,
+    visitedPrices: {},
     selectedLocId: START_LOC,
     nowMs: performance.now(),
     buyMp: {},
@@ -53,6 +56,15 @@ export function createInitialState() {
     lastPriceDriftMs: 0,
     tradeImpact: {},
   };
+  // start station counts as visited
+  const startRow = prices[START_LOC] || {};
+  const startSnap = {};
+  for (const g of GOODS) {
+    const p = startRow[g.id];
+    if (p != null && Number.isFinite(p)) startSnap[g.id] = Math.round(p);
+  }
+  s.visitedPrices[START_LOC] = startSnap;
+  return s;
 }
 
 /** Pending + committed buy MP average for a good (null if none). */
@@ -107,4 +119,17 @@ export function goodCondition(s, goodId) {
   if (n <= 0) return 0;
   const c = s.condition?.[goodId];
   return c == null ? 100 : Math.max(0, Math.min(100, c));
+}
+
+/** Copy live MP for loc into visitedPrices (Slice P). */
+export function snapshotVisitedPrices(s, locId) {
+  if (!locId || !s.prices?.[locId]) return;
+  if (!s.visitedPrices) s.visitedPrices = {};
+  const row = s.prices[locId];
+  const snap = {};
+  for (const g of GOODS) {
+    const p = row[g.id];
+    if (p != null && Number.isFinite(p)) snap[g.id] = Math.round(p);
+  }
+  s.visitedPrices[locId] = snap;
 }

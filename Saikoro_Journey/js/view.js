@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028z';
-import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG } from './economy-data.js?v=z1-20261028z';
-import { getLastSavedAt } from './saving.js?v=z1-20261028z';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition } from './state.js?v=z1-20261028z';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028aa';
+import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG } from './economy-data.js?v=z1-20261028aa';
+import { getLastSavedAt } from './saving.js?v=z1-20261028aa';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition } from './state.js?v=z1-20261028aa';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -129,16 +129,20 @@ function captureQtyInputs() {
 function quoteSignature(s) {
   const quoteLoc = s.selectedLocId || s.locationId;
   const atStation = !isTraveling(s) && s.locationId === quoteLoc && s.unlocked.includes(quoteLoc);
-  const parts = [quoteLoc, s.locationId, atStation ? '1' : '0', s.gold];
+  const mem = !atStation ? s.visitedPrices?.[quoteLoc] : null;
+  const parts = [quoteLoc, s.locationId, atStation ? '1' : '0', mem ? 'mem' : 'live', s.gold];
   for (const g of GOODS) {
     const avg = effectiveBuyAvg(s, g.id);
     const cond =
       (s.cargo[g.id] || 0) > 0 && depleteRateForGood(g.id) > 0
         ? Math.round(goodCondition(s, g.id))
         : '';
+    const shown = atStation
+      ? s.prices[quoteLoc]?.[g.id]
+      : mem?.[g.id];
     parts.push(
       g.id,
-      String(s.prices[quoteLoc]?.[g.id] ?? ''),
+      String(shown ?? ''),
       String(s.cargo[g.id] || 0),
       avg == null ? '' : avg.toFixed(2),
       String(cond),
@@ -211,31 +215,59 @@ function renderQuotes(s) {
   captureQtyInputs();
   tbody.innerHTML = '';
   const atStation = !isTraveling(s) && s.locationId === quoteLoc && s.unlocked.includes(quoteLoc);
+  const memRow = !atStation ? s.visitedPrices?.[quoteLoc] : null;
+  const remHint = document.getElementById('quote-mem-hint');
+  if (remHint) {
+    if (atStation) remHint.textContent = 'Live MP at this station.';
+    else if (memRow) remHint.textContent = 'Remembered last-seen MP (not live). Revisit to refresh.';
+    else remHint.textContent = 'No price memory — visit this station first.';
+  }
   for (const g of GOODS) {
-    const price = s.prices[quoteLoc]?.[g.id];
-    if (price == null) continue;
+    const live = s.prices[quoteLoc]?.[g.id];
+    const mem = memRow?.[g.id];
+    // at station: only goods with live MP; remote: show all goods known at base or mem/—
+    if (atStation && live == null) continue;
+    if (!atStation && live == null && mem == null) {
+      // still show if BASE would have had it — check live map keys from any
+      // skip goods never listed at this loc
+      const ever = s.prices[quoteLoc] && Object.prototype.hasOwnProperty.call(s.prices[quoteLoc], g.id);
+      if (!ever && mem == null) continue;
+    }
+    const price = atStation ? live : mem;
     const qtyVal = qtyByGood[g.id] != null ? qtyByGood[g.id] : '1';
     const tr = document.createElement('tr');
     tr.dataset.good = g.id;
     const buyAvg = effectiveBuyAvg(s, g.id);
     let deltaHtml = '—';
     let deltaTitle = 'no buy MP yet';
-    if (buyAvg != null) {
+    if (price != null && buyAvg != null) {
       const d = price - buyAvg;
       const sign = d > 0 ? '+' : '';
       const avgShown = Number.isInteger(buyAvg) ? String(buyAvg) : buyAvg.toFixed(1);
       deltaHtml = `${sign}${Number.isInteger(d) ? d : d.toFixed(1)}`;
-      deltaTitle = `loc MP ${price} vs buy avg ${avgShown}`;
+      deltaTitle = atStation
+        ? `loc MP ${price} vs buy avg ${avgShown}`
+        : `mem MP ${price} vs buy avg ${avgShown}`;
     }
     const have = s.cargo[g.id] || 0;
-    let priceCell = String(price);
-    let priceTitle = `market ${price}`;
-    if (have > 0 && depleteRateForGood(g.id) > 0) {
-      const cond = Math.round(goodCondition(s, g.id));
-      const mul = sellMulFromCondition(cond);
-      const sellAt = Math.max(0, Math.round(price * mul));
-      priceCell = `${price}<span class="muted sell-at" title="sell at condition ${cond}%">→${sellAt}</span>`;
-      priceTitle = `MP ${price}; sell @ ${sellAt} (${cond}% condition)`;
+    let priceCell;
+    let priceTitle;
+    if (price == null) {
+      priceCell = '—';
+      priceTitle = 'unvisited / no memory';
+    } else if (atStation) {
+      priceCell = String(price);
+      priceTitle = `market ${price}`;
+      if (have > 0 && depleteRateForGood(g.id) > 0) {
+        const cond = Math.round(goodCondition(s, g.id));
+        const mul = sellMulFromCondition(cond);
+        const sellAt = Math.max(0, Math.round(price * mul));
+        priceCell = `${price}<span class="muted sell-at" title="sell at condition ${cond}%">→${sellAt}</span>`;
+        priceTitle = `MP ${price}; sell @ ${sellAt} (${cond}% condition)`;
+      }
+    } else {
+      priceCell = `<span class="mem-price" title="last seen MP">mem ${price}</span>`;
+      priceTitle = `remembered MP ${price} (not live)`;
     }
     tr.innerHTML = `
       <td title="${g.id}">${g.name}</td>

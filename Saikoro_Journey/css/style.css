@@ -613,3 +613,8 @@ button.primary[data-act="travel-to"]:active:not(:disabled) {
   margin-right: 0.35rem;
   margin-top: 0.35rem;
 }
+
+.mem-price {
+  font-style: italic;
+  opacity: 0.9;
+}

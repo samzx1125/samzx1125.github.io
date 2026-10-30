@@ -1,4 +1,4 @@
-import { cargoUsed, commitStationBuys, goodCondition } from './state.js?v=z1-20261028z';
+import { cargoUsed, commitStationBuys, goodCondition, snapshotVisitedPrices } from './state.js?v=z1-20261028aa';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -19,8 +19,8 @@ import {
   sellMulFromCondition,
   TRANSPORT_QUESTS,
   goodName,
-} from './economy-data.js?v=z1-20261028z';
-import { LOCATIONS } from './map-data.js?v=z1-20261028z';
+} from './economy-data.js?v=z1-20261028aa';
+import { LOCATIONS } from './map-data.js?v=z1-20261028aa';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -114,6 +114,7 @@ export function tick(s, nowMs) {
       s.locationId = s.travel.to;
       s.selectedLocId = s.travel.to;
       s.travel = null;
+      snapshotVisitedPrices(s, s.locationId); // Slice P — arrive snapshot
     }
   }
   // Slice L — price slow-drift every ~5s
@@ -274,6 +275,7 @@ export function tryTravel(s, toId, durationMs, meta = {}) {
   if (toId === s.locationId) return { ok: false, reason: 'same' };
   if (durationMs == null || durationMs <= 0) return { ok: false, reason: 'no_edge' };
   commitStationBuys(s);
+  snapshotVisitedPrices(s, s.locationId); // Slice P — leave snapshot
   const distance = meta.distance != null ? meta.distance : 0;
   const speed = meta.speed != null ? meta.speed : 0;
   s.travel = {

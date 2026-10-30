@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028z" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028z" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028aa" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028aa" />
 </head>
 <body>
   <header class="top-row">
@@ -103,7 +103,8 @@
           <button type="button" class="primary" id="btn-travel-to" data-act="travel-to" disabled>Travel to</button>
           <p id="loc-travel-hint" class="hint"></p>
         </div>
-        <p class="hint">Trade only when docked. vs buy = location MP − buy avg (avg updates when you leave). See Options → Controls.</p>
+        <p id="quote-mem-hint" class="hint">Live MP at this station.</p>
+        <p class="hint">Trade only when docked. Remote stations show <strong>mem</strong> last-seen MP (stale until revisit). vs buy = MP − buy avg. See Options → Controls.</p>
         <table>
           <thead>
             <tr><th>goods</th><th>price</th><th title="location MP vs buy avg MP">vs buy</th><th>cargo</th><th></th></tr>
@@ -128,6 +129,6 @@
       <p id="toast"></p>
     </aside>
   </main>
-  <script type="module" src="js/main.js?v=z1-20261028z"></script>
+  <script type="module" src="js/main.js?v=z1-20261028aa"></script>
 </body>
 </html>
