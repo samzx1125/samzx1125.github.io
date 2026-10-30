@@ -1,4 +1,4 @@
-import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028w';
+import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028x';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -15,8 +15,8 @@ import {
   BUY_IMPACT_STEP,
   SELL_IMPACT_STEP,
   IMPACT_RECOVERY_STEP,
-} from './economy-data.js?v=z1-20261028w';
-import { LOCATIONS } from './map-data.js?v=z1-20261028w';
+} from './economy-data.js?v=z1-20261028x';
+import { LOCATIONS } from './map-data.js?v=z1-20261028x';
 
 /**
  * @param {import('./state.js').GameState} s
