@@ -123,6 +123,17 @@ function rrQueryForcesUnlock() {
 
 export const STOP_REROUTE_UNLOCKED = STOP_REROUTE_DEFAULT || rrQueryForcesUnlock();
 
+
+/**
+ * Slice Q — Zone1 courier MVP (systems.md §4 / economy.md §8 thin).
+ * Hire is FREE (teaching unlock after Star Ash); seed gold modest; capacity < player.
+ */
+export const COURIER_UNLOCK_LOC = 'loc_a01z01l003_star_ash';
+/** Slice Q: free hire for teaching MVP (not a gold sink). */
+export const COURIER_HIRE_COST = 0;
+export const COURIER_SEED_GOLD = 300;
+export const COURIER_CAPACITY = 3000;
+
 /**
  * Slice O — A→B transport quests (economy.md §5 / systems.md §5 / map-area1 §4).
  * Flat modest gold rewards (teaching / safety net, not arb replacement).

@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028aa" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028aa" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028ab" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028ab" />
 </head>
 <body>
   <header class="top-row">
@@ -27,8 +27,13 @@
             <li>Enter buy · Shift+Enter sell</li>
             <li>Alt+Enter Buy max · Shift+Alt+Enter Sell all</li>
             <li>Esc / blank map close panel / toast</li>
-            <li>Options — save &amp; controls</li>
+            <li>Options — save, courier hire &amp; controls</li>
           </ul>
+        </section>
+        <section id="courier-hire-panel" hidden>
+          <h2>Courier</h2>
+          <p class="hint">Zone1-only after Star Ash. Free hire · seed 300G · 3000g hold.</p>
+          <button type="button" class="primary" data-act="hire-courier" id="btn-hire-courier">Hire Courier</button>
         </section>
         <section id="save-panel">
           <h2>Save</h2>
@@ -68,6 +73,31 @@
         <button type="button" id="btn-quest-deliver" data-act="quest-deliver" disabled>Deliver</button>
         <button type="button" id="btn-quest-abandon" data-act="quest-abandon">Abandon</button>
       </section>
+      <section id="courier-panel" hidden>
+        <h2>Courier</h2>
+        <p id="courier-summary" class="hint">—</p>
+        <p id="courier-status" class="muted"></p>
+        <div class="courier-controls">
+          <button type="button" data-act="courier-pause" id="btn-courier-pause">Pause</button>
+          <button type="button" data-act="courier-resume" id="btn-courier-resume" hidden>Resume</button>
+        </div>
+        <h3 class="subhead">Route</h3>
+        <ul id="courier-route-list" class="courier-route-list"></ul>
+        <p class="hint">Min 2 stops to run. Up / down / remove · add unlocked.</p>
+        <div id="courier-route-add" class="courier-route-add"></div>
+        <h3 class="subhead">Trade per stop</h3>
+        <div id="courier-trade-list" class="courier-trade-list"></div>
+      </section>
+      <section id="transfer-panel" hidden>
+        <h2>Transfer</h2>
+        <p class="hint">Same station · both docked. Move gold / goods either way.</p>
+        <div class="transfer-gold">
+          <label>Gold <input type="number" id="xfer-gold-qty" class="qty" min="1" value="50" /></label>
+          <button type="button" data-act="xfer-gold-to-courier">→ Courier</button>
+          <button type="button" data-act="xfer-gold-to-player">→ You</button>
+        </div>
+        <ul id="transfer-goods" class="transfer-goods"></ul>
+      </section>
       <section id="cargo-panel">
         <h2>Inventory</h2>
         <p class="hint">Capacity by weight (g). Oil/water show condition % (depletes on travel). Quest lot listed separately.</p>
@@ -88,6 +118,7 @@
             <circle cx="8" cy="8" r="3.25" fill="#ffffff"/>
           </svg>
         </div>
+        <div id="courier-marker" class="courier-pin" hidden title="courier" aria-label="courier">◇</div>
       </div>
     </div>
     <aside id="right-menu" class="side-menu side-right" aria-label="Station">
@@ -129,6 +160,6 @@
       <p id="toast"></p>
     </aside>
   </main>
-  <script type="module" src="js/main.js?v=z1-20261028aa"></script>
+  <script type="module" src="js/main.js?v=z1-20261028ab"></script>
 </body>
 </html>

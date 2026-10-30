@@ -1,9 +1,14 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028aa';
-import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028aa';
-import { tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute, tryAcceptQuest, tryDeliverQuest, tryAbandonQuest } from './engine.js?v=z1-20261028aa';
-import { cargoUsed } from './state.js?v=z1-20261028aa';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028aa';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028aa';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ab';
+import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ab';
+import {
+  tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute,
+  tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
+  tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
+  tryTransferGold, tryTransferGood,
+} from './engine.js?v=z1-20261028ab';
+import { cargoUsed } from './state.js?v=z1-20261028ab';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028ab';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ab';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -278,6 +283,110 @@ export function bindEvents(s) {
     if (abandon) {
       const r = tryAbandonQuest(state);
       ui.lastMsg = r.ok ? 'quest failed (abandoned)' : `cannot abandon (${r.reason})`;
+      if (r.ok) { saveGame(state); invalidateQuotes(); }
+      render(state, ui);
+    }
+  });
+
+  // Slice Q — hire / route / trade / transfer
+  document.getElementById('courier-hire-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="hire-courier"]');
+    if (!btn || !state) return;
+    const r = tryHireCourier(state);
+    ui.lastMsg = r.ok ? 'courier hired' : `hire failed (${r.reason})`;
+    if (r.ok) { saveGame(state); invalidateQuotes(); }
+    render(state, ui);
+  });
+
+  document.getElementById('courier-panel')?.addEventListener('click', (ev) => {
+    if (!state || !state.courier) return;
+    const pause = ev.target.closest('button[data-act="courier-pause"]');
+    const resume = ev.target.closest('button[data-act="courier-resume"]');
+    if (pause) {
+      trySetCourierPaused(state, true);
+      ui.lastMsg = 'courier paused';
+      saveGame(state);
+      render(state, ui);
+      return;
+    }
+    if (resume) {
+      trySetCourierPaused(state, false);
+      ui.lastMsg = 'courier resumed';
+      saveGame(state);
+      render(state, ui);
+      return;
+    }
+    const up = ev.target.closest('button[data-act="courier-route-up"]');
+    const down = ev.target.closest('button[data-act="courier-route-down"]');
+    const rm = ev.target.closest('button[data-act="courier-route-rm"]');
+    const add = ev.target.closest('button[data-act="courier-route-add"]');
+    let route = [...state.courier.route];
+    if (up) {
+      const i = Number(up.dataset.idx);
+      if (i > 0) {
+        [route[i - 1], route[i]] = [route[i], route[i - 1]];
+        trySetCourierRoute(state, route);
+        saveGame(state);
+        render(state, ui);
+      }
+      return;
+    }
+    if (down) {
+      const i = Number(down.dataset.idx);
+      if (i < route.length - 1) {
+        [route[i], route[i + 1]] = [route[i + 1], route[i]];
+        trySetCourierRoute(state, route);
+        saveGame(state);
+        render(state, ui);
+      }
+      return;
+    }
+    if (rm) {
+      const i = Number(rm.dataset.idx);
+      route.splice(i, 1);
+      const r = trySetCourierRoute(state, route);
+      ui.lastMsg = r.ok ? (route.length < 2 ? 'courier docked (need ≥2 stops)' : 'route updated') : `route failed (${r.reason})`;
+      if (r.ok) saveGame(state);
+      render(state, ui);
+      return;
+    }
+    if (add) {
+      route.push(add.dataset.loc);
+      const r = trySetCourierRoute(state, route);
+      ui.lastMsg = r.ok ? 'stop added' : `add failed (${r.reason})`;
+      if (r.ok) saveGame(state);
+      render(state, ui);
+    }
+  });
+
+  document.getElementById('courier-panel')?.addEventListener('change', (ev) => {
+    const el = ev.target.closest('input[data-act="courier-trade"]');
+    if (!el || !state) return;
+    const r = trySetCourierTradeFlag(state, el.dataset.loc, el.dataset.good, el.dataset.side, el.checked);
+    if (r.ok) saveGame(state);
+    // no full rebuild needed — checkbox already mirrors state
+  });
+
+  document.getElementById('transfer-panel')?.addEventListener('click', (ev) => {
+    if (!state) return;
+    const gToC = ev.target.closest('button[data-act="xfer-gold-to-courier"]');
+    const gToP = ev.target.closest('button[data-act="xfer-gold-to-player"]');
+    const goodToC = ev.target.closest('button[data-act="xfer-good-to-courier"]');
+    const goodToP = ev.target.closest('button[data-act="xfer-good-to-player"]');
+    if (gToC || gToP) {
+      const qty = Number(document.getElementById('xfer-gold-qty')?.value || 0);
+      const r = tryTransferGold(state, gToC ? 'toCourier' : 'toPlayer', qty);
+      ui.lastMsg = r.ok ? `transferred ${qty}G` : `transfer failed (${r.reason})`;
+      if (r.ok) { saveGame(state); invalidateQuotes(); }
+      render(state, ui);
+      return;
+    }
+    if (goodToC || goodToP) {
+      const good = (goodToC || goodToP).dataset.good;
+      const input = document.querySelector(`input[data-xfer-good="${good}"]`);
+      const qty = Number(input?.value || 1);
+      const r = tryTransferGood(state, good, goodToC ? 'toCourier' : 'toPlayer', qty);
+      ui.lastMsg = r.ok ? `transferred ${goodName(good)} ×${qty}` : `transfer failed (${r.reason})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
     }

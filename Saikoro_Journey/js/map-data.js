@@ -71,3 +71,39 @@ export function neighborsOf(locId) {
 export function locName(id) {
   return LOCATIONS.find((l) => l.id === id)?.name || id;
 }
+
+/**
+ * Shortest loc-id path along EDGES (BFS). Both ends of each hop should be unlocked by caller if needed.
+ * @param {string} fromId
+ * @param {string} toId
+ * @param {string[] | null} [allowedIds] if set, only traverse these locs
+ * @returns {string[] | null} path including from and to, or null
+ */
+export function shortestPath(fromId, toId, allowedIds = null) {
+  if (fromId === toId) return [fromId];
+  const allow = allowedIds ? new Set(allowedIds) : null;
+  if (allow && (!allow.has(fromId) || !allow.has(toId))) return null;
+  /** @type {Record<string, string | null>} */
+  const prev = { [fromId]: null };
+  const q = [fromId];
+  while (q.length) {
+    const cur = q.shift();
+    for (const n of neighborsOf(cur)) {
+      if (allow && !allow.has(n)) continue;
+      if (n in prev) continue;
+      prev[n] = cur;
+      if (n === toId) {
+        const path = [toId];
+        let p = cur;
+        while (p != null) {
+          path.push(p);
+          p = prev[p];
+        }
+        path.reverse();
+        return path;
+      }
+      q.push(n);
+    }
+  }
+  return null;
+}

@@ -1,4 +1,12 @@
-import { cargoUsed, commitStationBuys, goodCondition, snapshotVisitedPrices } from './state.js?v=z1-20261028aa';
+import {
+  cargoUsed,
+  commitStationBuys,
+  goodCondition,
+  snapshotVisitedPrices,
+  courierCargoUsed,
+  courierGoodCondition,
+  emptyCargoMap,
+} from './state.js?v=z1-20261028ab';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -19,8 +27,12 @@ import {
   sellMulFromCondition,
   TRANSPORT_QUESTS,
   goodName,
-} from './economy-data.js?v=z1-20261028aa';
-import { LOCATIONS } from './map-data.js?v=z1-20261028aa';
+  COURIER_UNLOCK_LOC,
+  COURIER_HIRE_COST,
+  COURIER_SEED_GOLD,
+  COURIER_CAPACITY,
+} from './economy-data.js?v=z1-20261028ab';
+import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath } from './map-data.js?v=z1-20261028ab';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -60,6 +72,25 @@ function depleteConditions(s, distanceDelta) {
     }
   }
   if (wasted.length) s._conditionWaste = wasted;
+}
+
+/** Deplete courier cargo condition (Slice Q / N). */
+function depleteCourierConditions(c, distanceDelta) {
+  if (!c || !(distanceDelta > 0)) return;
+  if (!c.condition) c.condition = {};
+  for (const g of GOODS) {
+    const qty = c.cargo[g.id] || 0;
+    if (qty <= 0) continue;
+    const rate = depleteRateForGood(g.id);
+    if (!(rate > 0)) continue;
+    const cur = c.condition[g.id] != null ? c.condition[g.id] : 100;
+    const next = Math.max(0, cur - rate * distanceDelta);
+    c.condition[g.id] = next;
+    if (next <= 0) {
+      c.cargo[g.id] = 0;
+      delete c.condition[g.id];
+    }
+  }
 }
 
 function failQuest(s, reason) {
@@ -117,6 +148,7 @@ export function tick(s, nowMs) {
       snapshotVisitedPrices(s, s.locationId); // Slice P — arrive snapshot
     }
   }
+  tickCourier(s, rawDt);
   // Slice L — price slow-drift every ~5s
   if (!s.lastPriceDriftMs) s.lastPriceDriftMs = nowMs;
   while (nowMs - s.lastPriceDriftMs >= PRICE_DRIFT_INTERVAL_MS) {
@@ -125,6 +157,129 @@ export function tick(s, nowMs) {
   }
 }
 
+/** Advance courier travel + stop trades. */
+function tickCourier(s, rawDt) {
+  const c = s.courier;
+  if (!c) return;
+  if (c.paused) return;
+  if (c.travel) {
+    c.travel.elapsedMs += rawDt;
+    const speed = c.travel.speed || 0;
+    const dist = c.travel.distance || 0;
+    const prevTr = c.travel.traveledDistance != null ? c.travel.traveledDistance : 0;
+    c.travel.traveledDistance = Math.min(dist, speed * (c.travel.elapsedMs / 1000));
+    const dDist = Math.max(0, c.travel.traveledDistance - prevTr);
+    if (dDist > 0) depleteCourierConditions(c, dDist);
+    if (c.travel.elapsedMs >= c.travel.durationMs) {
+      const arrived = c.travel.to;
+      const finalDest = c.travel.finalDest || arrived;
+      c.locationId = arrived;
+      c.travel = null;
+      if (arrived === finalDest) {
+        runCourierStopTrades(s, c);
+        advanceCourierRoute(s, c);
+      } else {
+        // intermediate hop toward finalDest
+        startCourierTravel(s, c, finalDest);
+      }
+      s._courierArrived = true;
+    }
+    return;
+  }
+  // docked — ensure we have a trip if route allows
+  if (!c.paused && c.route && c.route.length >= 2) {
+    const dest = c.route[c.routeIndex % c.route.length];
+    if (dest && dest !== c.locationId) startCourierTravel(s, c, dest);
+  }
+}
+
+/** Sell-first then buy at docked stop per trade checkboxes. */
+function runCourierStopTrades(s, c) {
+  const locId = c.locationId;
+  const perStop = c.trade?.[locId] || {};
+  // sell first so gold frees for buys
+  for (const g of GOODS) {
+    const flags = perStop[g.id];
+    if (!flags || !flags.sell) continue;
+    const qty = c.cargo[g.id] || 0;
+    if (qty > 0) courierTrySell(s, c, locId, g.id, qty);
+  }
+  for (const g of GOODS) {
+    const flags = perStop[g.id];
+    if (!flags || !flags.buy) continue;
+    courierBuyMax(s, c, locId, g.id);
+  }
+}
+
+function advanceCourierRoute(s, c) {
+  if (!c.route || c.route.length < 2) return;
+  c.routeIndex = (c.routeIndex + 1) % c.route.length;
+  const dest = c.route[c.routeIndex];
+  if (dest && dest !== c.locationId) startCourierTravel(s, c, dest);
+}
+
+/**
+ * Start (or continue) travel toward destId via next unlocked hop.
+ * @param {import('./state.js').GameState} s
+ * @param {import('./state.js').CourierState} c
+ * @param {string} destId
+ */
+function startCourierTravel(s, c, destId) {
+  if (!destId || destId === c.locationId) return;
+  const path = shortestPath(c.locationId, destId, s.unlocked);
+  if (!path || path.length < 2) return;
+  const nextHop = path[1];
+  const dist = distanceBetween(c.locationId, nextHop);
+  const ms = travelMsBetween(c.locationId, nextHop, TRAIN_SPEED);
+  if (dist == null || ms == null) return;
+  c.travel = {
+    from: c.locationId,
+    to: nextHop,
+    elapsedMs: 0,
+    durationMs: ms,
+    distance: dist,
+    speed: TRAIN_SPEED,
+    traveledDistance: 0,
+    finalDest: destId,
+  };
+}
+
+function courierTrySell(s, c, locId, goodId, qty) {
+  const price = s.prices[locId]?.[goodId];
+  if (price == null) return;
+  qty = Math.floor(qty);
+  if (qty <= 0) return;
+  if ((c.cargo[goodId] || 0) < qty) return;
+  const cond = courierGoodCondition(c, goodId);
+  const mul = sellMulFromCondition(cond);
+  if (mul <= 0) return;
+  const unit = Math.max(0, Math.round(price * mul));
+  c.cargo[goodId] -= qty;
+  c.gold += unit * qty;
+  if ((c.cargo[goodId] || 0) <= 0 && c.condition) delete c.condition[goodId];
+  recordTradeImpact(s, locId, goodId, qty, 'sell');
+}
+
+function courierBuyMax(s, c, locId, goodId) {
+  const price = s.prices[locId]?.[goodId];
+  if (price == null || !(price > 0)) return;
+  const w = goodWeightG(goodId);
+  if (!(w > 0)) return;
+  const byGold = Math.floor(c.gold / price);
+  const byCap = Math.floor((c.capacity - courierCargoUsed(c)) / w);
+  const qty = Math.max(0, Math.min(byGold, byCap));
+  if (qty <= 0) return;
+  const cost = price * qty;
+  c.gold -= cost;
+  const had = c.cargo[goodId] || 0;
+  if (!c.condition) c.condition = {};
+  if (depleteRateForGood(goodId) > 0) {
+    const oldC = had > 0 && c.condition[goodId] != null ? c.condition[goodId] : 100;
+    c.condition[goodId] = had + qty > 0 ? (oldC * had + 100 * qty) / (had + qty) : 100;
+  }
+  c.cargo[goodId] = had + qty;
+  recordTradeImpact(s, locId, goodId, qty, 'buy');
+}
 
 function impactKey(locId, goodId) {
   return locId + '|' + goodId;
@@ -242,8 +397,6 @@ export function trySell(s, locId, goodId, qty) {
     if (s.buyMp[goodId].qty <= 0) delete s.buyMp[goodId];
   }
   if (s.stationBuys?.[goodId]) {
-    // shrink pending proportional if sold before leave — prefer cutting pending last;
-    // simple: cut committed first above; if cargo still tracks, trim pending to not exceed cargo
     const cargoLeft = s.cargo[goodId] || 0;
     const committedQty = s.buyMp?.[goodId]?.qty || 0;
     const maxPend = Math.max(0, cargoLeft - committedQty);
@@ -251,8 +404,8 @@ export function trySell(s, locId, goodId, qty) {
       const keep = maxPend;
       if (keep <= 0) delete s.stationBuys[goodId];
       else {
-        const unit = s.stationBuys[goodId].sum / s.stationBuys[goodId].qty;
-        s.stationBuys[goodId] = { qty: keep, sum: unit * keep };
+        const unitAvg = s.stationBuys[goodId].sum / s.stationBuys[goodId].qty;
+        s.stationBuys[goodId] = { qty: keep, sum: unitAvg * keep };
       }
     }
   }
@@ -263,9 +416,6 @@ export function trySell(s, locId, goodId, qty) {
 /**
  * @param {import('./state.js').GameState} s
  * @param {string} toId
- * @param {number} durationMs
- */
-/**
  * @param {number} durationMs
  * @param {{ distance?: number, speed?: number }} [meta]
  */
@@ -393,5 +543,191 @@ export function tryDeliverQuest(s) {
 export function tryAbandonQuest(s) {
   if (!s.quest) return { ok: false, reason: 'no_quest' };
   failQuest(s, 'abandon');
+  return { ok: true };
+}
+
+// ——— Slice Q: courier ———
+
+/** Hire Zone1 courier once Star Ash is unlocked. Free hire (COURIER_HIRE_COST=0). */
+export function tryHireCourier(s) {
+  if (s.courier) return { ok: false, reason: 'already' };
+  if (!s.unlocked.includes(COURIER_UNLOCK_LOC)) return { ok: false, reason: 'locked' };
+  if (COURIER_HIRE_COST > 0 && s.gold < COURIER_HIRE_COST) return { ok: false, reason: 'gold' };
+  if (COURIER_HIRE_COST > 0) s.gold -= COURIER_HIRE_COST;
+
+  const route = LOCATIONS.map((l) => l.id).filter((id) => s.unlocked.includes(id));
+  /** @type {Record<string, Record<string, { buy: boolean, sell: boolean }>>} */
+  const trade = {};
+  for (const locId of route) {
+    trade[locId] = {};
+    for (const g of GOODS) trade[locId][g.id] = { buy: false, sell: false };
+  }
+
+  const startLoc = s.locationId;
+  s.courier = {
+    locationId: startLoc,
+    gold: COURIER_SEED_GOLD,
+    capacity: COURIER_CAPACITY,
+    cargo: emptyCargoMap(),
+    condition: {},
+    route: [...route],
+    routeIndex: 0,
+    trade,
+    travel: null,
+    paused: false,
+  };
+
+  // Point routeIndex at next stop after start (if start is in route)
+  const c = s.courier;
+  const atIdx = c.route.indexOf(startLoc);
+  if (atIdx >= 0 && c.route.length >= 2) {
+    c.routeIndex = (atIdx + 1) % c.route.length;
+    startCourierTravel(s, c, c.route[c.routeIndex]);
+  } else if (c.route.length >= 2) {
+    c.routeIndex = 0;
+    if (c.route[0] !== startLoc) startCourierTravel(s, c, c.route[0]);
+    else {
+      c.routeIndex = 1 % c.route.length;
+      startCourierTravel(s, c, c.route[c.routeIndex]);
+    }
+  }
+  return { ok: true };
+}
+
+export function trySetCourierPaused(s, paused) {
+  if (!s.courier) return { ok: false, reason: 'no_courier' };
+  s.courier.paused = !!paused;
+  if (!s.courier.paused && !s.courier.travel && s.courier.route.length >= 2) {
+    const dest = s.courier.route[s.courier.routeIndex % s.courier.route.length];
+    if (dest && dest !== s.courier.locationId) startCourierTravel(s, s.courier, dest);
+  }
+  return { ok: true };
+}
+
+/** Replace route with unlocked loc ids (min 2 to run). Clears travel; restarts toward first. */
+export function trySetCourierRoute(s, routeIds) {
+  if (!s.courier) return { ok: false, reason: 'no_courier' };
+  const cleaned = [];
+  for (const id of routeIds) {
+    if (!s.unlocked.includes(id)) continue;
+    if (cleaned.includes(id)) continue;
+    cleaned.push(id);
+  }
+  if (cleaned.length < 1) return { ok: false, reason: 'empty' };
+  const c = s.courier;
+  c.route = cleaned;
+  c.travel = null;
+  // ensure trade rows exist
+  if (!c.trade) c.trade = {};
+  for (const locId of cleaned) {
+    if (!c.trade[locId]) {
+      c.trade[locId] = {};
+      for (const g of GOODS) c.trade[locId][g.id] = { buy: false, sell: false };
+    }
+  }
+  if (cleaned.length < 2) {
+    c.routeIndex = 0;
+    return { ok: true, docked: true };
+  }
+  // next target: first stop that isn't current, else index 0 cycling
+  let idx = cleaned.indexOf(c.locationId);
+  if (idx < 0) idx = -1;
+  c.routeIndex = (idx + 1) % cleaned.length;
+  if (!c.paused) startCourierTravel(s, c, cleaned[c.routeIndex]);
+  return { ok: true };
+}
+
+export function trySetCourierTradeFlag(s, locId, goodId, side, value) {
+  if (!s.courier) return { ok: false, reason: 'no_courier' };
+  if (!s.unlocked.includes(locId)) return { ok: false, reason: 'locked' };
+  if (!GOODS.some((g) => g.id === goodId)) return { ok: false, reason: 'good' };
+  if (side !== 'buy' && side !== 'sell') return { ok: false, reason: 'side' };
+  const c = s.courier;
+  if (!c.trade) c.trade = {};
+  if (!c.trade[locId]) {
+    c.trade[locId] = {};
+    for (const g of GOODS) c.trade[locId][g.id] = { buy: false, sell: false };
+  }
+  if (!c.trade[locId][goodId]) c.trade[locId][goodId] = { buy: false, sell: false };
+  c.trade[locId][goodId][side] = !!value;
+  return { ok: true };
+}
+
+/**
+ * Transfer gold between player and courier when co-located docked.
+ * @param {'toCourier'|'toPlayer'} dir
+ */
+export function tryTransferGold(s, dir, amount) {
+  const c = s.courier;
+  if (!c) return { ok: false, reason: 'no_courier' };
+  if (s.travel || c.travel) return { ok: false, reason: 'traveling' };
+  if (c.locationId !== s.locationId) return { ok: false, reason: 'apart' };
+  amount = Math.floor(Number(amount));
+  if (!(amount > 0)) return { ok: false, reason: 'qty' };
+  if (dir === 'toCourier') {
+    if (s.gold < amount) return { ok: false, reason: 'gold' };
+    s.gold -= amount;
+    c.gold += amount;
+  } else if (dir === 'toPlayer') {
+    if (c.gold < amount) return { ok: false, reason: 'gold' };
+    c.gold -= amount;
+    s.gold += amount;
+  } else {
+    return { ok: false, reason: 'dir' };
+  }
+  return { ok: true };
+}
+
+/**
+ * Transfer goods either way when co-located docked.
+ * @param {'toCourier'|'toPlayer'} dir
+ */
+export function tryTransferGood(s, goodId, dir, qty) {
+  const c = s.courier;
+  if (!c) return { ok: false, reason: 'no_courier' };
+  if (s.travel || c.travel) return { ok: false, reason: 'traveling' };
+  if (c.locationId !== s.locationId) return { ok: false, reason: 'apart' };
+  if (!GOODS.some((g) => g.id === goodId)) return { ok: false, reason: 'good' };
+  qty = Math.floor(Number(qty));
+  if (!(qty > 0)) return { ok: false, reason: 'qty' };
+  const w = goodWeightG(goodId);
+  if (!(w > 0)) return { ok: false, reason: 'weight' };
+
+  if (dir === 'toCourier') {
+    if ((s.cargo[goodId] || 0) < qty) return { ok: false, reason: 'stock' };
+    if (courierCargoUsed(c) + w * qty > c.capacity) return { ok: false, reason: 'capacity' };
+    // move with blended condition
+    const hadP = s.cargo[goodId] || 0;
+    const hadC = c.cargo[goodId] || 0;
+    const pCond = depleteRateForGood(goodId) > 0
+      ? (s.condition?.[goodId] != null ? s.condition[goodId] : 100)
+      : null;
+    s.cargo[goodId] = hadP - qty;
+    if ((s.cargo[goodId] || 0) <= 0 && s.condition) delete s.condition[goodId];
+    c.cargo[goodId] = hadC + qty;
+    if (pCond != null) {
+      if (!c.condition) c.condition = {};
+      const oldC = hadC > 0 && c.condition[goodId] != null ? c.condition[goodId] : 100;
+      c.condition[goodId] = (oldC * hadC + pCond * qty) / (hadC + qty);
+    }
+  } else if (dir === 'toPlayer') {
+    if ((c.cargo[goodId] || 0) < qty) return { ok: false, reason: 'stock' };
+    if (cargoUsed(s) + w * qty > s.capacity) return { ok: false, reason: 'capacity' };
+    const hadC = c.cargo[goodId] || 0;
+    const hadP = s.cargo[goodId] || 0;
+    const cCond = depleteRateForGood(goodId) > 0
+      ? (c.condition?.[goodId] != null ? c.condition[goodId] : 100)
+      : null;
+    c.cargo[goodId] = hadC - qty;
+    if ((c.cargo[goodId] || 0) <= 0 && c.condition) delete c.condition[goodId];
+    s.cargo[goodId] = hadP + qty;
+    if (cCond != null) {
+      if (!s.condition) s.condition = {};
+      const oldP = hadP > 0 && s.condition[goodId] != null ? s.condition[goodId] : 100;
+      s.condition[goodId] = (oldP * hadP + cCond * qty) / (hadP + qty);
+    }
+  } else {
+    return { ok: false, reason: 'dir' };
+  }
   return { ok: true };
 }

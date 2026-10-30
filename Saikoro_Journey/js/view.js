@@ -1,11 +1,15 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028aa';
-import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG } from './economy-data.js?v=z1-20261028aa';
-import { getLastSavedAt } from './saving.js?v=z1-20261028aa';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition } from './state.js?v=z1-20261028aa';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028ab';
+import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC } from './economy-data.js?v=z1-20261028ab';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ab';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ab';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
 let travelRectEl = null;
+/** @type {HTMLElement | null} */
+let courierEl = null;
+let lastCourierPanelSig = '';
+let lastTransferSig = '';
 
 /** Persist qty across quote rebuilds. */
 /** @type {Record<string, string>} */
@@ -60,6 +64,7 @@ export function mountView() {
   const nodesEl = document.getElementById('nodes');
   trainEl = document.getElementById('train-marker');
   travelRectEl = document.getElementById('travel-rect');
+  courierEl = document.getElementById('courier-marker');
 
   if (railsEl) {
     railsEl.innerHTML = '';
@@ -415,6 +420,36 @@ export function render(s, ui = {}) {
     }
   }
 
+  // Slice Q — courier map pin (◇)
+  if (courierEl) {
+    const c = s.courier;
+    if (!c) {
+      courierEl.hidden = true;
+    } else {
+      let cx;
+      let cy;
+      if (c.travel) {
+        const from = LOCATIONS.find((l) => l.id === c.travel.from);
+        const to = LOCATIONS.find((l) => l.id === c.travel.to);
+        const tt = Math.min(1, c.travel.elapsedMs / c.travel.durationMs);
+        cx = from.x + (to.x - from.x) * tt;
+        cy = from.y + (to.y - from.y) * tt;
+      } else {
+        const loc = LOCATIONS.find((l) => l.id === c.locationId);
+        cx = loc ? loc.x : 0;
+        cy = loc ? loc.y : 0;
+      }
+      // offset so it doesn't sit under player pin when co-located
+      courierEl.style.left = (cx + 10) + 'px';
+      courierEl.style.top = (cy - 8) + 'px';
+      courierEl.hidden = false;
+      courierEl.classList.toggle('traveling', !!c.travel);
+      courierEl.title = c.travel
+        ? `courier → ${locName(c.travel.finalDest || c.travel.to)}`
+        : `courier @ ${locName(c.locationId)}`;
+    }
+  }
+
   const sig = quoteSignature(s);
   if (sig !== lastQuoteSig) {
     lastQuoteSig = sig;
@@ -690,6 +725,122 @@ export function render(s, ui = {}) {
       const unlocked3 = s.unlocked.includes(UNLOCK_LOC3.target);
       unlockPanel.hidden = unlocked3 || !panelOpen;
     }
+  }
+
+  // Slice Q — hire button in Options + left courier / transfer panels
+  {
+    const hirePanel = document.getElementById('courier-hire-panel');
+    if (hirePanel) {
+      const canHire = s.unlocked.includes(COURIER_UNLOCK_LOC) && !s.courier;
+      hirePanel.hidden = !canHire;
+    }
+    const cPanel = document.getElementById('courier-panel');
+    const xPanel = document.getElementById('transfer-panel');
+    const c = s.courier;
+    if (cPanel) {
+      cPanel.hidden = !c;
+      if (c) {
+        const used = courierCargoUsed(c);
+        setText(
+          'courier-summary',
+          `${c.gold}G · ${used}/${c.capacity}g · ${locName(c.locationId)}`,
+        );
+        let st = c.paused ? 'paused' : c.travel
+          ? `→ ${locName(c.travel.finalDest || c.travel.to)}`
+          : (c.route.length < 2 ? 'docked (need ≥2 stops)' : 'docked');
+        setText('courier-status', st);
+        const pauseBtn = document.getElementById('btn-courier-pause');
+        const resumeBtn = document.getElementById('btn-courier-resume');
+        if (pauseBtn) pauseBtn.hidden = !!c.paused;
+        if (resumeBtn) resumeBtn.hidden = !c.paused;
+
+        const rsig = [
+          c.route.join(','),
+          c.routeIndex,
+          c.paused ? 1 : 0,
+          JSON.stringify(c.trade || {}),
+          ...GOODS.map((g) => `${g.id}:${c.cargo[g.id] || 0}`),
+          c.gold,
+        ].join('|');
+        if (rsig !== lastCourierPanelSig) {
+          lastCourierPanelSig = rsig;
+          const routeList = document.getElementById('courier-route-list');
+          if (routeList) {
+            routeList.innerHTML = c.route
+              .map((id, i) => {
+                const cur = i === (c.routeIndex % Math.max(1, c.route.length)) ? ' · next' : '';
+                return `<li data-idx="${i}"><span>${locName(id)}${cur}</span>
+                  <button type="button" data-act="courier-route-up" data-idx="${i}" title="up">↑</button>
+                  <button type="button" data-act="courier-route-down" data-idx="${i}" title="down">↓</button>
+                  <button type="button" data-act="courier-route-rm" data-idx="${i}" title="remove">×</button>
+                </li>`;
+              })
+              .join('');
+          }
+          const addWrap = document.getElementById('courier-route-add');
+          if (addWrap) {
+            const missing = s.unlocked.filter((id) => !c.route.includes(id));
+            addWrap.innerHTML = missing
+              .map(
+                (id) =>
+                  `<button type="button" data-act="courier-route-add" data-loc="${id}">+ ${locName(id)}</button>`,
+              )
+              .join(' ');
+          }
+          const tradeWrap = document.getElementById('courier-trade-list');
+          if (tradeWrap) {
+            tradeWrap.innerHTML = c.route
+              .map((locId) => {
+                const rows = GOODS.map((g) => {
+                  const flags = c.trade?.[locId]?.[g.id] || { buy: false, sell: false };
+                  return `<label class="courier-trade-row"><span>${g.name}</span>
+                    <input type="checkbox" data-act="courier-trade" data-loc="${locId}" data-good="${g.id}" data-side="buy" ${flags.buy ? 'checked' : ''}/> buy
+                    <input type="checkbox" data-act="courier-trade" data-loc="${locId}" data-good="${g.id}" data-side="sell" ${flags.sell ? 'checked' : ''}/> sell
+                  </label>`;
+                }).join('');
+                return `<details class="courier-trade-stop"><summary>${locName(locId)}</summary>${rows}</details>`;
+              })
+              .join('');
+          }
+        }
+      } else {
+        lastCourierPanelSig = '';
+      }
+    }
+    if (xPanel) {
+      const showX = courierCoLocated(s);
+      xPanel.hidden = !showX;
+      if (showX && c) {
+        const tsig = [
+          s.gold,
+          c.gold,
+          ...GOODS.map((g) => `${g.id}:${s.cargo[g.id] || 0}:${c.cargo[g.id] || 0}`),
+        ].join('|');
+        if (tsig !== lastTransferSig) {
+          lastTransferSig = tsig;
+          const ul = document.getElementById('transfer-goods');
+          if (ul) {
+            ul.innerHTML = GOODS.map((g) => {
+              const pN = s.cargo[g.id] || 0;
+              const cN = c.cargo[g.id] || 0;
+              return `<li data-good="${g.id}">
+                <span>${g.name} · you ${pN} / C ${cN}</span>
+                <input type="number" class="qty" data-xfer-good="${g.id}" min="1" value="1" />
+                <button type="button" data-act="xfer-good-to-courier" data-good="${g.id}">→ C</button>
+                <button type="button" data-act="xfer-good-to-player" data-good="${g.id}">→ You</button>
+              </li>`;
+            }).join('');
+          }
+        }
+      } else {
+        lastTransferSig = '';
+      }
+    }
+  }
+
+  if (s._courierMsg) {
+    if (ui) ui.lastMsg = s._courierMsg;
+    s._courierMsg = null;
   }
 
   if (ui.lastMsg && ui.lastMsg !== lastToastText) {

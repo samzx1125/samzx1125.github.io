@@ -1,12 +1,12 @@
 /**
  * SaikoroJourney — Zone1 boot
  */
-import { createInitialState } from './state.js?v=z1-20261028aa';
-import { tick } from './engine.js?v=z1-20261028aa';
-import { mountView, render } from './view.js?v=z1-20261028aa';
-import { bindEvents, getUi } from './events.js?v=z1-20261028aa';
-import { loadGame, saveGame } from './saving.js?v=z1-20261028aa';
-import { locName } from './map-data.js?v=z1-20261028aa';
+import { createInitialState } from './state.js?v=z1-20261028ab';
+import { tick } from './engine.js?v=z1-20261028ab';
+import { mountView, render } from './view.js?v=z1-20261028ab';
+import { bindEvents, getUi } from './events.js?v=z1-20261028ab';
+import { loadGame, saveGame } from './saving.js?v=z1-20261028ab';
+import { locName } from './map-data.js?v=z1-20261028ab';
 
 const state = createInitialState();
 const loaded = loadGame(state);
@@ -17,6 +17,7 @@ if (loaded) ui.lastMsg = 'save loaded';
 render(state, ui);
 
 let wasTraveling = false;
+let wasCourierTraveling = false;
 function loop(now) {
   tick(state, now);
   if (wasTraveling && !state.travel) {
@@ -24,6 +25,15 @@ function loop(now) {
     ui.lastMsg = `arrived ${locName(state.locationId)}`;
   }
   wasTraveling = !!state.travel;
+  const cTraveling = !!(state.courier && state.courier.travel);
+  if (wasCourierTraveling && !cTraveling && state.courier) {
+    saveGame(state);
+    if (state._courierArrived) {
+      state._courierArrived = false;
+      // keep quiet unless nothing else to say — avoid toast spam
+    }
+  }
+  wasCourierTraveling = cTraveling;
   render(state, getUi());
   requestAnimationFrame(loop);
 }

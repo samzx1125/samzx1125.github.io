@@ -618,3 +618,93 @@ button.primary[data-act="travel-to"]:active:not(:disabled) {
   font-style: italic;
   opacity: 0.9;
 }
+
+/* Slice Q — courier pin + panels */
+#courier-marker.courier-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  color: #000;
+  background: #fff;
+  border: 1.5px solid #000;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 6;
+  filter: drop-shadow(0 1px 2px #00000040);
+}
+#courier-marker.courier-pin.traveling {
+  opacity: 0.92;
+}
+#courier-panel,
+#transfer-panel,
+#courier-hire-panel {
+  margin-bottom: 0.75rem;
+}
+#courier-panel .courier-controls,
+#transfer-panel .transfer-gold {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin: 0.35rem 0;
+}
+.courier-route-list {
+  list-style: none;
+  margin: 0.25rem 0;
+  padding: 0;
+}
+.courier-route-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  margin: 0.2rem 0;
+  font-size: 0.85rem;
+}
+.courier-route-list li span { flex: 1 1 auto; min-width: 4rem; }
+.courier-route-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.courier-trade-list {
+  font-size: 0.8rem;
+}
+.courier-trade-stop {
+  margin: 0.25rem 0;
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.4rem;
+}
+.courier-trade-stop summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.courier-trade-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin: 0.2rem 0;
+}
+.courier-trade-row span { min-width: 5.5rem; }
+.transfer-goods {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+}
+.transfer-goods li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  margin: 0.3rem 0;
+  font-size: 0.85rem;
+}
+.transfer-goods li span { flex: 1 1 100%; }
+.transfer-goods input.qty { width: 3.5rem; }
