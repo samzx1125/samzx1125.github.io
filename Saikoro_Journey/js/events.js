@@ -1,14 +1,14 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ab';
-import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ab';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ac';
+import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ac';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
-} from './engine.js?v=z1-20261028ab';
-import { cargoUsed } from './state.js?v=z1-20261028ab';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028ab';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ab';
+} from './engine.js?v=z1-20261028ac';
+import { cargoUsed } from './state.js?v=z1-20261028ac';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028ac';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ac';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -362,9 +362,18 @@ export function bindEvents(s) {
   document.getElementById('courier-panel')?.addEventListener('change', (ev) => {
     const el = ev.target.closest('input[data-act="courier-trade"]');
     if (!el || !state) return;
-    const r = trySetCourierTradeFlag(state, el.dataset.loc, el.dataset.good, el.dataset.side, el.checked);
-    if (r.ok) saveGame(state);
-    // no full rebuild needed — checkbox already mirrors state
+    const want = !!el.checked;
+    const r = trySetCourierTradeFlag(state, el.dataset.loc, el.dataset.good, el.dataset.side, want);
+    if (!r.ok) {
+      el.checked = !want;
+      ui.lastMsg = `trade toggle failed (${r.reason})`;
+      render(state, ui);
+      return;
+    }
+    const flags = state.courier?.trade?.[el.dataset.loc]?.[el.dataset.good];
+    if (flags) el.checked = !!flags[el.dataset.side];
+    saveGame(state);
+    invalidateQuotes();
   });
 
   document.getElementById('transfer-panel')?.addEventListener('click', (ev) => {

@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028ab';
-import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC } from './economy-data.js?v=z1-20261028ab';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ab';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ab';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028ac';
+import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC } from './economy-data.js?v=z1-20261028ac';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ac';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ac';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -754,13 +754,26 @@ export function render(s, ui = {}) {
         if (pauseBtn) pauseBtn.hidden = !!c.paused;
         if (resumeBtn) resumeBtn.hidden = !c.paused;
 
+        // Slice R — cargo list with condition %
+        const cargoUl = document.getElementById('courier-cargo-list');
+        if (cargoUl) {
+          const rows = GOODS.map((g) => {
+            const n = c.cargo[g.id] || 0;
+            if (n <= 0) return '';
+            const depletes = depleteRateForGood(g.id) > 0;
+            const cond = depletes ? Math.round(courierGoodCondition(c, g.id)) : null;
+            const condHtml = cond == null ? '' : ` <span class="cond" title="condition">· ${cond}%</span>`;
+            return `<li>${g.name} ×${n}${condHtml}</li>`;
+          }).filter(Boolean);
+          cargoUl.innerHTML = rows.length ? rows.join('') : '<li class="muted">empty</li>';
+        }
+
+        // Slice R — rebuild trade UI only when route/trade/pause change (not gold/cargo)
         const rsig = [
           c.route.join(','),
           c.routeIndex,
           c.paused ? 1 : 0,
           JSON.stringify(c.trade || {}),
-          ...GOODS.map((g) => `${g.id}:${c.cargo[g.id] || 0}`),
-          c.gold,
         ].join('|');
         if (rsig !== lastCourierPanelSig) {
           lastCourierPanelSig = rsig;
@@ -789,6 +802,11 @@ export function render(s, ui = {}) {
           }
           const tradeWrap = document.getElementById('courier-trade-list');
           if (tradeWrap) {
+            const openLocs = new Set(
+              [...tradeWrap.querySelectorAll('details.courier-trade-stop[open]')].map(
+                (d) => d.getAttribute('data-loc'),
+              ),
+            );
             tradeWrap.innerHTML = c.route
               .map((locId) => {
                 const rows = GOODS.map((g) => {
@@ -798,7 +816,8 @@ export function render(s, ui = {}) {
                     <input type="checkbox" data-act="courier-trade" data-loc="${locId}" data-good="${g.id}" data-side="sell" ${flags.sell ? 'checked' : ''}/> sell
                   </label>`;
                 }).join('');
-                return `<details class="courier-trade-stop"><summary>${locName(locId)}</summary>${rows}</details>`;
+                const openAttr = openLocs.has(locId) ? ' open' : '';
+                return `<details class="courier-trade-stop" data-loc="${locId}"${openAttr}><summary>${locName(locId)}</summary>${rows}</details>`;
               })
               .join('');
           }

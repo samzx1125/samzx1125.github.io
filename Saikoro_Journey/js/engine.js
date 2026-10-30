@@ -6,7 +6,7 @@ import {
   courierCargoUsed,
   courierGoodCondition,
   emptyCargoMap,
-} from './state.js?v=z1-20261028ab';
+} from './state.js?v=z1-20261028ac';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -31,8 +31,8 @@ import {
   COURIER_HIRE_COST,
   COURIER_SEED_GOLD,
   COURIER_CAPACITY,
-} from './economy-data.js?v=z1-20261028ab';
-import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath } from './map-data.js?v=z1-20261028ab';
+} from './economy-data.js?v=z1-20261028ac';
+import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath } from './map-data.js?v=z1-20261028ac';
 
 /**
  * @param {import('./state.js').GameState} s
