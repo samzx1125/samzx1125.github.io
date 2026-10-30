@@ -601,3 +601,15 @@ button.primary[data-act="travel-to"]:active:not(:disabled) {
   margin-left: 0.2rem;
   font-size: 0.85em;
 }
+
+.quest-lot {
+  font-weight: 600;
+}
+#quest-offer-panel,
+#quest-active-panel {
+  margin-bottom: 0.75rem;
+}
+#quest-active-panel button {
+  margin-right: 0.35rem;
+  margin-top: 0.35rem;
+}

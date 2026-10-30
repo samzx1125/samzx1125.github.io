@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028y" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028y" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028z" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028z" />
 </head>
 <body>
   <header class="top-row">
@@ -61,9 +61,16 @@
           <p id="dest-empty" class="hint" hidden>no adjacent routes</p>
         </section>
       </section>
+      <section id="quest-active-panel" hidden>
+        <h2>Quest</h2>
+        <p id="quest-active-summary" class="hint">—</p>
+        <p id="quest-active-detail" class="muted"></p>
+        <button type="button" id="btn-quest-deliver" data-act="quest-deliver" disabled>Deliver</button>
+        <button type="button" id="btn-quest-abandon" data-act="quest-abandon">Abandon</button>
+      </section>
       <section id="cargo-panel">
         <h2>Inventory</h2>
-        <p class="hint">Capacity by weight (g). Oil/water show condition % (depletes on travel).</p>
+        <p class="hint">Capacity by weight (g). Oil/water show condition % (depletes on travel). Quest lot listed separately.</p>
         <ul id="cargo-list" class="cargo-list"></ul>
         <p id="cargo-empty" class="hint" hidden>empty</p>
       </section>
@@ -104,6 +111,12 @@
           <tbody id="quote-body"></tbody>
         </table>
       </section>
+      <section id="quest-offer-panel" hidden>
+        <h2>Transport quest</h2>
+        <p id="quest-offer-text" class="hint">—</p>
+        <p id="quest-offer-reward" class="muted"></p>
+        <button type="button" class="primary" id="btn-quest-accept" data-act="quest-accept">Accept</button>
+      </section>
       <section id="unlock-panel">
         <h2>Unlock Star Ash</h2>
         <p class="hint">Hand in at any unlocked location:</p>
@@ -115,6 +128,6 @@
       <p id="toast"></p>
     </aside>
   </main>
-  <script type="module" src="js/main.js?v=z1-20261028y"></script>
+  <script type="module" src="js/main.js?v=z1-20261028z"></script>
 </body>
 </html>

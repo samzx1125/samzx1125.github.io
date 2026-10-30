@@ -1,4 +1,4 @@
-import { cargoUsed, commitStationBuys, goodCondition } from './state.js?v=z1-20261028y';
+import { cargoUsed, commitStationBuys, goodCondition } from './state.js?v=z1-20261028z';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -17,8 +17,10 @@ import {
   IMPACT_RECOVERY_STEP,
   depleteRateForGood,
   sellMulFromCondition,
-} from './economy-data.js?v=z1-20261028y';
-import { LOCATIONS } from './map-data.js?v=z1-20261028y';
+  TRANSPORT_QUESTS,
+  goodName,
+} from './economy-data.js?v=z1-20261028z';
+import { LOCATIONS } from './map-data.js?v=z1-20261028z';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -46,7 +48,23 @@ function depleteConditions(s, distanceDelta) {
       wasted.push(g.name);
     }
   }
+  // Slice O — quest lot depletes separately; 0% fails quest
+  if (s.quest && s.quest.qty > 0) {
+    const rate = depleteRateForGood(s.quest.goodId);
+    if (rate > 0) {
+      s.quest.condition = Math.max(0, (s.quest.condition ?? 100) - rate * distanceDelta);
+      if (s.quest.condition <= 0) {
+        wasted.push(goodName(s.quest.goodId) + ' (quest)');
+        failQuest(s, 'condition');
+      }
+    }
+  }
   if (wasted.length) s._conditionWaste = wasted;
+}
+
+function failQuest(s, reason) {
+  s.quest = null;
+  s._questMsg = reason === 'condition' ? 'quest failed (cargo wasted)' : 'quest failed';
 }
 
 /** One drift step for all (loc, good) quotes around BASE_PRICES. */
@@ -323,5 +341,55 @@ export function tryReroute(s, toId, durationMs, meta = {}) {
     speed,
     traveledDistance: 0,
   };
+  return { ok: true };
+}
+
+/** Offer definition at loc if any. */
+export function questOfferAt(locId) {
+  return TRANSPORT_QUESTS[locId] || null;
+}
+
+/**
+ * Accept transport quest at current station (one at a time).
+ * Dedicated quest lot — not sellable trade cargo.
+ */
+export function tryAcceptQuest(s) {
+  if (s.travel) return { ok: false, reason: 'traveling' };
+  if (s.quest) return { ok: false, reason: 'quest_active' };
+  const offer = TRANSPORT_QUESTS[s.locationId];
+  if (!offer) return { ok: false, reason: 'no_offer' };
+  if (!s.unlocked.includes(offer.to)) return { ok: false, reason: 'dest_locked' };
+  const w = goodWeightG(offer.goodId) * offer.qty;
+  if (cargoUsed(s) + w > s.capacity) return { ok: false, reason: 'capacity' };
+  s.quest = {
+    from: s.locationId,
+    to: offer.to,
+    goodId: offer.goodId,
+    qty: offer.qty,
+    rewardGold: offer.rewardGold,
+    condition: 100,
+  };
+  return { ok: true };
+}
+
+/** Deliver at destination if condition > 0. */
+export function tryDeliverQuest(s) {
+  if (s.travel) return { ok: false, reason: 'traveling' };
+  if (!s.quest) return { ok: false, reason: 'no_quest' };
+  if (s.locationId !== s.quest.to) return { ok: false, reason: 'wrong_station' };
+  if (!(s.quest.condition > 0) || !(s.quest.qty > 0)) {
+    failQuest(s, 'condition');
+    return { ok: false, reason: 'waste' };
+  }
+  const pay = s.quest.rewardGold;
+  s.gold += pay;
+  s.quest = null;
+  return { ok: true, reward: pay };
+}
+
+/** Abandon / dump quest cargo (counts as fail). */
+export function tryAbandonQuest(s) {
+  if (!s.quest) return { ok: false, reason: 'no_quest' };
+  failQuest(s, 'abandon');
   return { ok: true };
 }

@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028y';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028y';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028z';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG } from './economy-data.js?v=z1-20261028z';
 
 /**
  * @typedef {{
@@ -7,6 +7,7 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1
  *   capacity: number, // grams
  *   cargo: Record<string, number>,
  *   condition: Record<string, number>, // 0–100% for goods that deplete; absent = 100
+ *   quest: null | { from: string, to: string, goodId: string, qty: number, rewardGold: number, condition: number },
  *   locationId: string,
  *   unlocked: string[],
  *   travel: null | { from: string, to: string, elapsedMs: number, durationMs: number, distance: number, speed: number, traveledDistance: number },
@@ -40,6 +41,7 @@ export function createInitialState() {
     capacity: CAPACITY,
     cargo,
     condition: {},
+    quest: null,
     locationId: START_LOC,
     unlocked: [...INITIALLY_UNLOCKED],
     travel: null,
@@ -87,6 +89,9 @@ export function cargoUsed(s) {
   for (const g of GOODS) {
     const n = s.cargo[g.id] || 0;
     if (n) grams += n * (g.weightG || 0);
+  }
+  if (s.quest && s.quest.qty > 0) {
+    grams += s.quest.qty * (goodWeightG(s.quest.goodId) || 0);
   }
   return grams;
 }

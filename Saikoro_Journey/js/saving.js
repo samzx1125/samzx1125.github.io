@@ -18,6 +18,7 @@ export function serialize(s) {
     gold: s.gold,
     cargo: { ...s.cargo },
     condition: s.condition ? { ...s.condition } : {},
+    quest: s.quest ? { ...s.quest } : null,
     locationId: s.locationId,
     unlocked: [...s.unlocked],
     buyMp: s.buyMp ? { ...Object.fromEntries(Object.entries(s.buyMp).map(([k, v]) => [k, { ...v }])) } : {},
@@ -40,6 +41,17 @@ export function applySave(s, data) {
   s.gold = data.gold;
   s.cargo = { ...data.cargo };
   s.condition = data.condition && typeof data.condition === 'object' ? { ...data.condition } : {};
+  s.quest =
+    data.quest && typeof data.quest === 'object'
+      ? {
+          from: data.quest.from,
+          to: data.quest.to,
+          goodId: data.quest.goodId,
+          qty: data.quest.qty,
+          rewardGold: data.quest.rewardGold,
+          condition: data.quest.condition != null ? data.quest.condition : 100,
+        }
+      : null;
   s.locationId = data.locationId;
   s.unlocked = [...data.unlocked];
   s.selectedLocId = data.locationId;

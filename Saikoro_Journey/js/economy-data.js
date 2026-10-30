@@ -122,3 +122,29 @@ function rrQueryForcesUnlock() {
 }
 
 export const STOP_REROUTE_UNLOCKED = STOP_REROUTE_DEFAULT || rrQueryForcesUnlock();
+
+/**
+ * Slice O — A→B transport quests (economy.md §5 / systems.md §5 / map-area1 §4).
+ * Flat modest gold rewards (teaching / safety net, not arb replacement).
+ * @type {Record<string, { to: string, goodId: string, qty: number, rewardGold: number }>}
+ */
+export const TRANSPORT_QUESTS = {
+  loc_a01z01l001_broken_lamp: {
+    to: 'loc_a01z01l002_drywind_depot',
+    goodId: 'goods_a01z01i001_dry_food',
+    qty: 5,
+    rewardGold: 60, // ~dry MP×5 teaching payout
+  },
+  loc_a01z01l002_drywind_depot: {
+    to: 'loc_a01z01l001_broken_lamp',
+    goodId: 'goods_a01z01i003_water_speciality',
+    qty: 2,
+    rewardGold: 80,
+  },
+  loc_a01z01l003_star_ash: {
+    to: 'loc_a01z01l002_drywind_depot',
+    goodId: 'goods_a01z01i001_dry_food',
+    qty: 5,
+    rewardGold: 70,
+  },
+};

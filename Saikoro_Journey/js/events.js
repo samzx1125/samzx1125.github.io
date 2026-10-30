@@ -1,9 +1,9 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028y';
-import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028y';
-import { tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute } from './engine.js?v=z1-20261028y';
-import { cargoUsed } from './state.js?v=z1-20261028y';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028y';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028y';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028z';
+import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028z';
+import { tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute, tryAcceptQuest, tryDeliverQuest, tryAbandonQuest } from './engine.js?v=z1-20261028z';
+import { cargoUsed } from './state.js?v=z1-20261028z';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028z';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028z';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -253,6 +253,34 @@ export function bindEvents(s) {
     ui.lastMsg = r.ok ? 'stopped' : `cannot stop (${r.reason})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
+  });
+
+  document.getElementById('quest-offer-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="quest-accept"]');
+    if (!btn || !state) return;
+    const r = tryAcceptQuest(state);
+    ui.lastMsg = r.ok ? 'quest accepted' : `cannot accept (${r.reason})`;
+    if (r.ok) { saveGame(state); invalidateQuotes(); }
+    render(state, ui);
+  });
+
+  document.getElementById('quest-active-panel')?.addEventListener('click', (ev) => {
+    if (!state) return;
+    const deliver = ev.target.closest('button[data-act="quest-deliver"]');
+    const abandon = ev.target.closest('button[data-act="quest-abandon"]');
+    if (deliver) {
+      const r = tryDeliverQuest(state);
+      ui.lastMsg = r.ok ? `delivered +${r.reward}G` : `cannot deliver (${r.reason})`;
+      if (r.ok || r.reason === 'waste') { saveGame(state); invalidateQuotes(); }
+      render(state, ui);
+      return;
+    }
+    if (abandon) {
+      const r = tryAbandonQuest(state);
+      ui.lastMsg = r.ok ? 'quest failed (abandoned)' : `cannot abandon (${r.reason})`;
+      if (r.ok) { saveGame(state); invalidateQuotes(); }
+      render(state, ui);
+    }
   });
 
   document.getElementById('save-panel')?.addEventListener('click', (ev) => {

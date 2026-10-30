@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028y';
-import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition } from './economy-data.js?v=z1-20261028y';
-import { getLastSavedAt } from './saving.js?v=z1-20261028y';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition } from './state.js?v=z1-20261028y';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028z';
+import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG } from './economy-data.js?v=z1-20261028z';
+import { getLastSavedAt } from './saving.js?v=z1-20261028z';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition } from './state.js?v=z1-20261028z';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -185,6 +185,15 @@ function cargoSignature(s) {
     if (n <= 0) continue;
     const c = depleteRateForGood(g.id) > 0 ? Math.round(goodCondition(s, g.id)) : '';
     parts.push(g.id, String(n), String(g.weightG || 0), String(c));
+  }
+  if (s.quest && s.quest.qty > 0) {
+    parts.push(
+      'quest',
+      s.quest.goodId,
+      String(s.quest.qty),
+      String(Math.round(s.quest.condition ?? 100)),
+      s.quest.to,
+    );
   }
   return parts.join('|') || 'empty';
 }
@@ -468,6 +477,16 @@ export function render(s, ui = {}) {
         const condHtml = cond == null ? '' : ` <span class="cond" title="condition">· ${cond}%</span>`;
         return `<li title="${g.id} · ${g.weightG}g each">${g.name} ×${n}${condHtml} <span class="muted">(${lineG}g)</span></li>`;
       }).filter(Boolean);
+      if (s.quest && s.quest.qty > 0) {
+        const q = s.quest;
+        const lineG = q.qty * (goodWeightG(q.goodId) || 0);
+        const depletes = depleteRateForGood(q.goodId) > 0;
+        const cond = depletes ? Math.round(q.condition ?? 100) : null;
+        const condHtml = cond == null ? '' : ` <span class="cond">· ${cond}%</span>`;
+        rows.unshift(
+          `<li class="quest-lot" title="quest cargo (not sellable)">Quest ${goodName(q.goodId)} ×${q.qty}${condHtml} <span class="muted">(${lineG}g)</span></li>`,
+        );
+      }
       cargoList.innerHTML = rows.join('');
       if (cargoEmpty) cargoEmpty.hidden = rows.length > 0;
     }
@@ -477,6 +496,60 @@ export function render(s, ui = {}) {
     const names = s._conditionWaste.join(', ');
     s._conditionWaste = null;
     if (ui) ui.lastMsg = `wasted: ${names}`;
+  }
+  if (s._questMsg) {
+    if (ui) ui.lastMsg = s._questMsg;
+    s._questMsg = null;
+  }
+
+  // Slice O — quest offer (right) + active (left)
+  {
+    const offerPanel = document.getElementById('quest-offer-panel');
+    const activePanel = document.getElementById('quest-active-panel');
+    const panelOpen = ui.panelOpen !== false;
+    const docked = !s.travel;
+    if (offerPanel) {
+      const offer = !s.quest && docked ? TRANSPORT_QUESTS[s.locationId] : null;
+      const show = !!offer && panelOpen && s.unlocked.includes(s.locationId);
+      offerPanel.hidden = !show;
+      if (show && offer) {
+        setText(
+          'quest-offer-text',
+          `Carry ${goodName(offer.goodId)} ×${offer.qty} → ${locName(offer.to)}`,
+        );
+        setText('quest-offer-reward', `Reward ${offer.rewardGold}G · dedicated lot (not sellable)`);
+        const btn = document.getElementById('btn-quest-accept');
+        if (btn) {
+          const w = goodWeightG(offer.goodId) * offer.qty;
+          const can = s.unlocked.includes(offer.to) && cargoUsed(s) + w <= s.capacity;
+          btn.disabled = !can;
+          btn.title = can ? 'Accept transport quest' : 'Need capacity or unlock dest';
+        }
+      }
+    }
+    if (activePanel) {
+      activePanel.hidden = !s.quest;
+      if (s.quest) {
+        const q = s.quest;
+        const cond = Math.round(q.condition ?? 100);
+        setText(
+          'quest-active-summary',
+          `${locName(q.from)} → ${locName(q.to)}`,
+        );
+        setText(
+          'quest-active-detail',
+          `${goodName(q.goodId)} ×${q.qty}` +
+            (depleteRateForGood(q.goodId) > 0 ? ` · ${cond}%` : '') +
+            ` · ${q.rewardGold}G`,
+        );
+        const del = document.getElementById('btn-quest-deliver');
+        if (del) {
+          const atDest = !s.travel && s.locationId === q.to && q.condition > 0;
+          del.disabled = !atDest;
+          del.title = atDest ? 'Deliver quest cargo' : 'Deliver at destination';
+        }
+      }
+    }
   }
 
   const travelPanel = document.getElementById('travel-panel');
