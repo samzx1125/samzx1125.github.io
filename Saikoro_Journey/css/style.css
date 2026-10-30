@@ -592,3 +592,12 @@ button.primary[data-act="travel-to"]:active:not(:disabled) {
   width: 100%;
   font-weight: 600;
 }
+
+.cargo-list .cond {
+  font-variant-numeric: tabular-nums;
+  color: #333;
+}
+.sell-at {
+  margin-left: 0.2rem;
+  font-size: 0.85em;
+}

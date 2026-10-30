@@ -1,4 +1,4 @@
-import { cargoUsed, commitStationBuys } from './state.js?v=z1-20261028x';
+import { cargoUsed, commitStationBuys, goodCondition } from './state.js?v=z1-20261028y';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -15,13 +15,40 @@ import {
   BUY_IMPACT_STEP,
   SELL_IMPACT_STEP,
   IMPACT_RECOVERY_STEP,
-} from './economy-data.js?v=z1-20261028x';
-import { LOCATIONS } from './map-data.js?v=z1-20261028x';
+  depleteRateForGood,
+  sellMulFromCondition,
+} from './economy-data.js?v=z1-20261028y';
+import { LOCATIONS } from './map-data.js?v=z1-20261028y';
 
 /**
  * @param {import('./state.js').GameState} s
  * @param {number} nowMs
  */
+
+/** Slice N — deplete liquid/volatile condition by distance traveled; waste at 0. */
+function depleteConditions(s, distanceDelta) {
+  if (!(distanceDelta > 0)) return;
+  if (!s.condition) s.condition = {};
+  const wasted = [];
+  for (const g of GOODS) {
+    const qty = s.cargo[g.id] || 0;
+    if (qty <= 0) continue;
+    const rate = depleteRateForGood(g.id);
+    if (!(rate > 0)) continue;
+    const cur = s.condition[g.id] != null ? s.condition[g.id] : 100;
+    const next = Math.max(0, cur - rate * distanceDelta);
+    s.condition[g.id] = next;
+    if (next <= 0) {
+      s.cargo[g.id] = 0;
+      delete s.condition[g.id];
+      if (s.buyMp?.[g.id]) delete s.buyMp[g.id];
+      if (s.stationBuys?.[g.id]) delete s.stationBuys[g.id];
+      wasted.push(g.name);
+    }
+  }
+  if (wasted.length) s._conditionWaste = wasted;
+}
+
 /** One drift step for all (loc, good) quotes around BASE_PRICES. */
 function driftPricesOnce(s) {
   for (const loc of LOCATIONS) {
@@ -61,7 +88,10 @@ export function tick(s, nowMs) {
     s.travel.elapsedMs += rawDt;
     const speed = s.travel.speed || 0;
     const dist = s.travel.distance || 0;
+    const prevTr = s.travel.traveledDistance != null ? s.travel.traveledDistance : 0;
     s.travel.traveledDistance = Math.min(dist, speed * (s.travel.elapsedMs / 1000));
+    const dDist = Math.max(0, s.travel.traveledDistance - prevTr);
+    if (dDist > 0) depleteConditions(s, dDist);
     if (s.travel.elapsedMs >= s.travel.durationMs) {
       s.locationId = s.travel.to;
       s.selectedLocId = s.travel.to;
@@ -147,7 +177,14 @@ export function tryBuy(s, locId, goodId, qty) {
   if (!(w > 0)) return { ok: false, reason: 'weight' };
   if (cargoUsed(s) + w * qty > s.capacity) return { ok: false, reason: 'capacity' };
   s.gold -= cost;
-  s.cargo[goodId] = (s.cargo[goodId] || 0) + qty;
+  const had = s.cargo[goodId] || 0;
+  if (!s.condition) s.condition = {};
+  if (depleteRateForGood(goodId) > 0) {
+    const oldC = had > 0 && s.condition[goodId] != null ? s.condition[goodId] : 100;
+    const newC = had + qty > 0 ? (oldC * had + 100 * qty) / (had + qty) : 100;
+    s.condition[goodId] = newC;
+  }
+  s.cargo[goodId] = had + qty;
   // Slice G: save buy MP into this station visit (avg committed on leave)
   if (!s.stationBuys) s.stationBuys = {};
   const sb = s.stationBuys[goodId] || { sum: 0, qty: 0 };
@@ -173,8 +210,13 @@ export function trySell(s, locId, goodId, qty) {
   qty = Math.floor(qty);
   if (qty <= 0) return { ok: false, reason: 'qty' };
   if ((s.cargo[goodId] || 0) < qty) return { ok: false, reason: 'stock' };
+  const cond = goodCondition(s, goodId);
+  const mul = sellMulFromCondition(cond);
+  if (mul <= 0) return { ok: false, reason: 'waste' };
+  const unit = Math.max(0, Math.round(price * mul));
   s.cargo[goodId] -= qty;
-  s.gold += price * qty;
+  s.gold += unit * qty;
+  if ((s.cargo[goodId] || 0) <= 0 && s.condition) delete s.condition[goodId];
   // Keep buyMp in sync with remaining cargo (FIFO-ish qty shrink)
   if (s.buyMp?.[goodId]) {
     s.buyMp[goodId].qty = Math.max(0, s.buyMp[goodId].qty - qty);

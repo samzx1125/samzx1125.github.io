@@ -1,11 +1,12 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028x';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028x';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028y';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY } from './economy-data.js?v=z1-20261028y';
 
 /**
  * @typedef {{
  *   gold: number,
  *   capacity: number, // grams
  *   cargo: Record<string, number>,
+ *   condition: Record<string, number>, // 0–100% for goods that deplete; absent = 100
  *   locationId: string,
  *   unlocked: string[],
  *   travel: null | { from: string, to: string, elapsedMs: number, durationMs: number, distance: number, speed: number, traveledDistance: number },
@@ -38,6 +39,7 @@ export function createInitialState() {
     gold: START_GOLD,
     capacity: CAPACITY,
     cargo,
+    condition: {},
     locationId: START_LOC,
     unlocked: [...INITIALLY_UNLOCKED],
     travel: null,
@@ -92,4 +94,12 @@ export function cargoUsed(s) {
 /** @param {GameState} s */
 export function isTraveling(s) {
   return s.travel != null;
+}
+
+/** Condition % for a good (100 if unset / non-depleting stock). */
+export function goodCondition(s, goodId) {
+  const n = s.cargo[goodId] || 0;
+  if (n <= 0) return 0;
+  const c = s.condition?.[goodId];
+  return c == null ? 100 : Math.max(0, Math.min(100, c));
 }

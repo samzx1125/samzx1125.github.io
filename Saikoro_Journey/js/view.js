@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028x';
-import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028x';
-import { getLastSavedAt } from './saving.js?v=z1-20261028x';
-import { cargoUsed, isTraveling, effectiveBuyAvg } from './state.js?v=z1-20261028x';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028y';
+import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition } from './economy-data.js?v=z1-20261028y';
+import { getLastSavedAt } from './saving.js?v=z1-20261028y';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition } from './state.js?v=z1-20261028y';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -132,11 +132,16 @@ function quoteSignature(s) {
   const parts = [quoteLoc, s.locationId, atStation ? '1' : '0', s.gold];
   for (const g of GOODS) {
     const avg = effectiveBuyAvg(s, g.id);
+    const cond =
+      (s.cargo[g.id] || 0) > 0 && depleteRateForGood(g.id) > 0
+        ? Math.round(goodCondition(s, g.id))
+        : '';
     parts.push(
       g.id,
       String(s.prices[quoteLoc]?.[g.id] ?? ''),
       String(s.cargo[g.id] || 0),
       avg == null ? '' : avg.toFixed(2),
+      String(cond),
     );
   }
   parts.push(s.unlocked.join(','));
@@ -178,7 +183,8 @@ function cargoSignature(s) {
   for (const g of GOODS) {
     const n = s.cargo[g.id] || 0;
     if (n <= 0) continue;
-    parts.push(g.id, String(n), String(g.weightG || 0));
+    const c = depleteRateForGood(g.id) > 0 ? Math.round(goodCondition(s, g.id)) : '';
+    parts.push(g.id, String(n), String(g.weightG || 0), String(c));
   }
   return parts.join('|') || 'empty';
 }
@@ -212,11 +218,21 @@ function renderQuotes(s) {
       deltaHtml = `${sign}${Number.isInteger(d) ? d : d.toFixed(1)}`;
       deltaTitle = `loc MP ${price} vs buy avg ${avgShown}`;
     }
+    const have = s.cargo[g.id] || 0;
+    let priceCell = String(price);
+    let priceTitle = `market ${price}`;
+    if (have > 0 && depleteRateForGood(g.id) > 0) {
+      const cond = Math.round(goodCondition(s, g.id));
+      const mul = sellMulFromCondition(cond);
+      const sellAt = Math.max(0, Math.round(price * mul));
+      priceCell = `${price}<span class="muted sell-at" title="sell at condition ${cond}%">→${sellAt}</span>`;
+      priceTitle = `MP ${price}; sell @ ${sellAt} (${cond}% condition)`;
+    }
     tr.innerHTML = `
       <td title="${g.id}">${g.name}</td>
-      <td class="num">${price}</td>
+      <td class="num" title="${priceTitle}">${priceCell}</td>
       <td class="num delta" title="${deltaTitle}">${deltaHtml}</td>
-      <td class="num">${s.cargo[g.id] || 0}</td>
+      <td class="num">${have}</td>
       <td class="actions">
         <button type="button" data-act="buy" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>buy</button>
         <button type="button" data-act="buy-max" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>Buy max</button>
@@ -447,11 +463,20 @@ export function render(s, ui = {}) {
         const n = s.cargo[g.id] || 0;
         if (n <= 0) return '';
         const lineG = n * (g.weightG || 0);
-        return `<li title="${g.id} · ${g.weightG}g each">${g.name} ×${n} <span class="muted">(${lineG}g)</span></li>`;
+        const depletes = depleteRateForGood(g.id) > 0;
+        const cond = depletes ? Math.round(goodCondition(s, g.id)) : null;
+        const condHtml = cond == null ? '' : ` <span class="cond" title="condition">· ${cond}%</span>`;
+        return `<li title="${g.id} · ${g.weightG}g each">${g.name} ×${n}${condHtml} <span class="muted">(${lineG}g)</span></li>`;
       }).filter(Boolean);
       cargoList.innerHTML = rows.join('');
       if (cargoEmpty) cargoEmpty.hidden = rows.length > 0;
     }
+  }
+
+  if (s._conditionWaste && s._conditionWaste.length) {
+    const names = s._conditionWaste.join(', ');
+    s._conditionWaste = null;
+    if (ui) ui.lastMsg = `wasted: ${names}`;
   }
 
   const travelPanel = document.getElementById('travel-panel');

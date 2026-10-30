@@ -17,6 +17,7 @@ export function serialize(s) {
     v: SAVE_VERSION,
     gold: s.gold,
     cargo: { ...s.cargo },
+    condition: s.condition ? { ...s.condition } : {},
     locationId: s.locationId,
     unlocked: [...s.unlocked],
     buyMp: s.buyMp ? { ...Object.fromEntries(Object.entries(s.buyMp).map(([k, v]) => [k, { ...v }])) } : {},
@@ -38,6 +39,7 @@ export function applySave(s, data) {
   if (!data || data.v !== SAVE_VERSION) return false;
   s.gold = data.gold;
   s.cargo = { ...data.cargo };
+  s.condition = data.condition && typeof data.condition === 'object' ? { ...data.condition } : {};
   s.locationId = data.locationId;
   s.unlocked = [...data.unlocked];
   s.selectedLocId = data.locationId;

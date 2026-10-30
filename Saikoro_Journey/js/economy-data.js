@@ -70,6 +70,41 @@ export function goodWeightG(id) {
   return GOODS.find((g) => g.id === id)?.weightG || 0;
 }
 
+/** @param {string} id */
+export function goodTags(id) {
+  return GOODS.find((g) => g.id === id)?.tags || [];
+}
+
+/**
+ * Slice N — condition deplete rates (% condition lost per distance unit traveled).
+ * Docs: liquid/volatile each have a rate; exact numbers TBD → tunable prototype.
+ */
+export const DEPLETE_RATE_BY_TAG = {
+  volatile: 0.15, // ~15% per 100 dist (oil)
+  liquid: 0.08, // ~8% per 100 dist (water)
+};
+
+/** Highest matching tag rate, or 0 if no depleting tags. */
+export function depleteRateForGood(goodId) {
+  const tags = goodTags(goodId);
+  let rate = 0;
+  for (const tag of tags) {
+    const r = DEPLETE_RATE_BY_TAG[tag];
+    if (r != null && r > rate) rate = r;
+  }
+  return rate;
+}
+
+/** Sell multiplier from condition % (systems.md §3.1c bands). */
+export function sellMulFromCondition(conditionPct) {
+  const c = conditionPct == null ? 100 : conditionPct;
+  if (c <= 0) return 0;
+  if (c >= 90) return 1;
+  if (c >= 50) return 0.6;
+  // 49–1% → ~59% → 10% MP
+  return 0.1 + (c / 49) * 0.49;
+}
+
 /**
  * Slice H/J/K — mid-travel stop / re-route.
  * When true: Stop + Destinations + panel Travel + map Travel chip all re-route.
