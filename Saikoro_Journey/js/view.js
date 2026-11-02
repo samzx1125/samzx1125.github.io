@@ -1,9 +1,9 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028al';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity } from './economy-data.js?v=z1-20261028al';
-import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028al';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028al';
-import { getLastSavedAt } from './saving.js?v=z1-20261028al';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028al';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028am';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor } from './economy-data.js?v=z1-20261028am';
+import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028am';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028am';
+import { getLastSavedAt } from './saving.js?v=z1-20261028am';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028am';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -827,6 +827,26 @@ export function render(s, ui = {}) {
     }
   }
 
+  // Slice Z — Preserve rate upgrade (Options)
+  {
+    const level = Math.max(0, Math.min(PRESERVE_MAX_LEVEL, s.preserveLevel | 0));
+    const factor = preserveDrainFactor(level);
+    const pct = Math.round(factor * 100);
+    setText('preserve-level-label', `Preserve level ${level} / ${PRESERVE_MAX_LEVEL} · drain ×${pct}%`);
+    const cost = preserveUpgradeCost(level);
+    const btn = document.getElementById('btn-upgrade-preserve');
+    if (btn) {
+      const atMax = level >= PRESERVE_MAX_LEVEL;
+      btn.disabled = atMax || s.gold < cost;
+      btn.textContent = atMax
+        ? 'Preserve maxed (×40% drain)'
+        : `Upgrade preserve (−12% drain) — ${cost}G`;
+      btn.title = atMax
+        ? 'Max preserve level'
+        : `Stub pricing: 600×(level+1). Drain factor ${pct}% → ${Math.round(preserveDrainFactor(level + 1) * 100)}%`;
+    }
+  }
+
   // Slice V — character page (read-only sheet)
   {
     const panel = document.getElementById('character-panel');
@@ -841,6 +861,11 @@ export function render(s, ui = {}) {
       const level = Math.max(0, Math.min(CAPACITY_MAX_LEVEL, s.capacityLevel | 0));
       const cap = effectiveCapacity(level);
       setText('character-capacity', `Cargo level ${level} / ${CAPACITY_MAX_LEVEL} · ${cap}g`);
+      {
+        const pl = Math.max(0, Math.min(PRESERVE_MAX_LEVEL, s.preserveLevel | 0));
+        const pct = Math.round(preserveDrainFactor(pl) * 100);
+        setText('character-preserve', `Preserve level ${pl} / ${PRESERVE_MAX_LEVEL} · drain ×${pct}%`);
+      }
       setText('character-gold', `Gold ${s.gold}`);
       const keysList = document.getElementById('character-keys');
       const keysEmpty = document.getElementById('character-keys-empty');

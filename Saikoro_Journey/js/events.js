@@ -1,14 +1,14 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028al';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028al';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028am';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028am';
 import {
-  tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryStopTravel, tryReroute,
+  tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
-} from './engine.js?v=z1-20261028al';
-import { cargoUsed } from './state.js?v=z1-20261028al';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028al';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028al';
+} from './engine.js?v=z1-20261028am';
+import { cargoUsed } from './state.js?v=z1-20261028am';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028am';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028am';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -466,6 +466,20 @@ export function bindEvents(s, opts = {}) {
       invalidateQuotes();
     } else {
       ui.lastMsg = `upgrade failed (${r.reason})`;
+    }
+    render(state, ui);
+  });
+
+  document.getElementById('preserve-upgrade-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="upgrade-preserve"]');
+    if (!btn || !state) return;
+    const r = tryUpgradePreserve(state);
+    if (r.ok) {
+      ui.lastMsg = `preserve upgraded to lv${r.level} −${r.cost}G`;
+      saveGame(state);
+      invalidateQuotes();
+    } else {
+      ui.lastMsg = `preserve upgrade failed (${r.reason})`;
     }
     render(state, ui);
   });

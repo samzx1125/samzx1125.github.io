@@ -118,6 +118,32 @@ export function capacityUpgradeCost(level) {
 export const CAPACITY = CAPACITY_BASE;
 
 /**
+ * Slice Z — Preserve rate upgrades (systems.md §3.1b–3.1c).
+ * Multiplier on base depleteRateForGood: factor = 1 − 0.12×level
+ * level 0..5 → 1.00 / 0.88 / 0.76 / 0.64 / 0.52 / 0.40
+ * Stub gold: 600 × (level+1) (slightly above capacity’s 500×).
+ */
+export const PRESERVE_MAX_LEVEL = 5;
+export const PRESERVE_UPGRADE_GOLD = 600;
+
+/** Drain multiplier for preserveLevel (clamped 0..5). */
+export function preserveDrainFactor(level) {
+  const lv = Math.max(0, Math.min(PRESERVE_MAX_LEVEL, Math.floor(Number(level) || 0)));
+  return 1 - 0.12 * lv;
+}
+
+/** Effective deplete rate after preserve upgrade. Base rates stay in depleteRateForGood. */
+export function effectiveDepleteRate(goodId, level) {
+  return depleteRateForGood(goodId) * preserveDrainFactor(level);
+}
+
+/** Gold cost to buy preserve upgrade from current level → level+1. */
+export function preserveUpgradeCost(level) {
+  const lv = Math.max(0, Math.min(PRESERVE_MAX_LEVEL, Math.floor(Number(level) || 0)));
+  return PRESERVE_UPGRADE_GOLD * (lv + 1);
+}
+
+/**
  * Slice T/W/X — data-driven unlocks (multi-trip deposit; starter 5000g, max 10000g).
  * Rule:
  *  1) Star Ash: oil×5 + dry×10 (fits starter; any unlocked station).

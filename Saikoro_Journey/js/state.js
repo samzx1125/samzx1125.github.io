@@ -1,11 +1,12 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028al';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY } from './economy-data.js?v=z1-20261028al';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028am';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY } from './economy-data.js?v=z1-20261028am';
 
 /**
  * @typedef {{
  *   gold: number,
  *   capacity: number, // grams — synced from capacityLevel via effectiveCapacity
  *   capacityLevel: number, // 0..5 upgrades (+20% base each → max 10000g)
+ *   preserveLevel: number, // 0..5 — slows liquid/volatile drain (1−0.12×lv)
  *   cargo: Record<string, number>,
  *   condition: Record<string, number>, // 0–100% for goods that deplete; absent = 100
  *   quest: null | { from: string, to: string, goodId: string, qty: number, rewardGold: number, condition: number },
@@ -62,6 +63,7 @@ export function createInitialState() {
     gold: START_GOLD,
     capacityLevel: 0,
     capacity: effectiveCapacity(0),
+    preserveLevel: 0,
     cargo,
     condition: {},
     quest: null,

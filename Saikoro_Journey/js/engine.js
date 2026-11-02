@@ -6,7 +6,7 @@ import {
   courierCargoUsed,
   courierGoodCondition,
   emptyCargoMap,
-} from './state.js?v=z1-20261028al';
+} from './state.js?v=z1-20261028am';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -24,6 +24,7 @@ import {
   SELL_IMPACT_STEP,
   IMPACT_RECOVERY_STEP,
   depleteRateForGood,
+  effectiveDepleteRate,
   sellMulFromCondition,
   TRANSPORT_QUESTS,
   goodName,
@@ -34,23 +35,26 @@ import {
   CAPACITY_MAX_LEVEL,
   effectiveCapacity,
   capacityUpgradeCost,
-} from './economy-data.js?v=z1-20261028al';
-import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028al';
+  PRESERVE_MAX_LEVEL,
+  preserveUpgradeCost,
+} from './economy-data.js?v=z1-20261028am';
+import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028am';
 
 /**
  * @param {import('./state.js').GameState} s
  * @param {number} nowMs
  */
 
-/** Slice N — deplete liquid/volatile condition by distance traveled; waste at 0. */
+/** Slice N/Z — deplete liquid/volatile condition by distance; preserveLevel slows drain. */
 function depleteConditions(s, distanceDelta) {
   if (!(distanceDelta > 0)) return;
   if (!s.condition) s.condition = {};
   const wasted = [];
+  const pl = s.preserveLevel | 0;
   for (const g of GOODS) {
     const qty = s.cargo[g.id] || 0;
     if (qty <= 0) continue;
-    const rate = depleteRateForGood(g.id);
+    const rate = effectiveDepleteRate(g.id, pl);
     if (!(rate > 0)) continue;
     const cur = s.condition[g.id] != null ? s.condition[g.id] : 100;
     const next = Math.max(0, cur - rate * distanceDelta);
@@ -65,7 +69,7 @@ function depleteConditions(s, distanceDelta) {
   }
   // Slice O — quest lot depletes separately; 0% fails quest
   if (s.quest && s.quest.qty > 0) {
-    const rate = depleteRateForGood(s.quest.goodId);
+    const rate = effectiveDepleteRate(s.quest.goodId, pl);
     if (rate > 0) {
       s.quest.condition = Math.max(0, (s.quest.condition ?? 100) - rate * distanceDelta);
       if (s.quest.condition <= 0) {
@@ -77,14 +81,15 @@ function depleteConditions(s, distanceDelta) {
   if (wasted.length) s._conditionWaste = wasted;
 }
 
-/** Deplete courier cargo condition (Slice Q / N). */
-function depleteCourierConditions(c, distanceDelta) {
+/** Deplete courier cargo (Slice Q/N/Z). Uses player preserveLevel (shared train tech). */
+function depleteCourierConditions(c, distanceDelta, preserveLevel) {
   if (!c || !(distanceDelta > 0)) return;
   if (!c.condition) c.condition = {};
+  const pl = preserveLevel | 0;
   for (const g of GOODS) {
     const qty = c.cargo[g.id] || 0;
     if (qty <= 0) continue;
-    const rate = depleteRateForGood(g.id);
+    const rate = effectiveDepleteRate(g.id, pl);
     if (!(rate > 0)) continue;
     const cur = c.condition[g.id] != null ? c.condition[g.id] : 100;
     const next = Math.max(0, cur - rate * distanceDelta);
@@ -172,7 +177,7 @@ function tickCourier(s, rawDt) {
     const prevTr = c.travel.traveledDistance != null ? c.travel.traveledDistance : 0;
     c.travel.traveledDistance = Math.min(dist, speed * (c.travel.elapsedMs / 1000));
     const dDist = Math.max(0, c.travel.traveledDistance - prevTr);
-    if (dDist > 0) depleteCourierConditions(c, dDist);
+    if (dDist > 0) depleteCourierConditions(c, dDist, s.preserveLevel);
     if (c.travel.elapsedMs >= c.travel.durationMs) {
       const arrived = c.travel.to;
       const finalDest = c.travel.finalDest || arrived;
@@ -526,6 +531,20 @@ export function tryUpgradeCapacity(s) {
   return { ok: true, level: s.capacityLevel, capacity: s.capacity, cost };
 }
 
+/**
+ * Slice Z — Preserve rate upgrade (−12% drain per level, max 5). Cost 600×(level+1)G.
+ * @param {import('./state.js').GameState} s
+ */
+export function tryUpgradePreserve(s) {
+  if (s.travel) return { ok: false, reason: 'traveling' };
+  const level = Math.max(0, Math.min(PRESERVE_MAX_LEVEL, s.preserveLevel | 0));
+  if (level >= PRESERVE_MAX_LEVEL) return { ok: false, reason: 'max' };
+  const cost = preserveUpgradeCost(level);
+  if (s.gold < cost) return { ok: false, reason: 'gold' };
+  s.gold -= cost;
+  s.preserveLevel = level + 1;
+  return { ok: true, level: s.preserveLevel, cost };
+}
 
 /** Mid-travel stop — gated by STOP_REROUTE_UNLOCKED. Stays at travel.from. */
 export function tryStopTravel(s) {

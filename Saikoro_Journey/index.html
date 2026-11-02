@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028al" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028al" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028am" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028am" />
 </head>
 <body>
   <header class="top-row">
@@ -41,6 +41,12 @@
           <p class="hint">Starter 5000g · 5 upgrades × +20% base → max 10000g. Stub price 500×(level+1)G.</p>
           <p id="cargo-level-label" class="muted">Cargo level 0 / 5 · 5000g</p>
           <button type="button" class="primary" data-act="upgrade-cargo" id="btn-upgrade-cargo">Upgrade cargo (+20%) — 500G</button>
+        </section>
+        <section id="preserve-upgrade-panel">
+          <h2>Preserve</h2>
+          <p class="hint">Slows liquid/volatile drain. −12% of base per level · max 5 → ×0.40. Stub 600×(level+1)G.</p>
+          <p id="preserve-level-label" class="muted">Preserve level 0 / 5 · drain ×100%</p>
+          <button type="button" class="primary" data-act="upgrade-preserve" id="btn-upgrade-preserve">Upgrade preserve (−12% drain) — 600G</button>
         </section>
         <section id="character-entry">
           <h2>Character</h2>
@@ -191,6 +197,7 @@
         </div>
       </div>
       <p id="character-capacity" class="hint">Cargo level 0 / 5 · 5000g</p>
+      <p id="character-preserve" class="hint">Preserve level 0 / 5 · drain ×100%</p>
       <p id="character-gold" class="muted">Gold 0</p>
       <h3 class="subhead">Personal keys</h3>
       <ul id="character-keys" class="cargo-list personal-list"></ul>
@@ -238,6 +245,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028al"></script>
+  <script type="module" src="js/main.js?v=z1-20261028am"></script>
 </body>
 </html>
