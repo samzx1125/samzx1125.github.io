@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028am" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028am" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028an" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028an" />
 </head>
 <body>
   <header class="top-row">
@@ -47,6 +47,12 @@
           <p class="hint">Slows liquid/volatile drain. −12% of base per level · max 5 → ×0.40. Stub 600×(level+1)G.</p>
           <p id="preserve-level-label" class="muted">Preserve level 0 / 5 · drain ×100%</p>
           <button type="button" class="primary" data-act="upgrade-preserve" id="btn-upgrade-preserve">Upgrade preserve (−12% drain) — 600G</button>
+        </section>
+        <section id="speed-upgrade-panel">
+          <h2>Speed</h2>
+          <p class="hint">Faster travel. +20% of base per level · max 5 → ×2 (speed 20). Stub 550×(level+1)G.</p>
+          <p id="speed-level-label" class="muted">Speed level 0 / 5 · speed 10</p>
+          <button type="button" class="primary" data-act="upgrade-speed" id="btn-upgrade-speed">Upgrade speed (+20%) — 550G</button>
         </section>
         <section id="character-entry">
           <h2>Character</h2>
@@ -198,6 +204,7 @@
       </div>
       <p id="character-capacity" class="hint">Cargo level 0 / 5 · 5000g</p>
       <p id="character-preserve" class="hint">Preserve level 0 / 5 · drain ×100%</p>
+      <p id="character-speed" class="hint">Speed level 0 / 5 · speed 10</p>
       <p id="character-gold" class="muted">Gold 0</p>
       <h3 class="subhead">Personal keys</h3>
       <ul id="character-keys" class="cargo-list personal-list"></ul>
@@ -245,6 +252,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028am"></script>
+  <script type="module" src="js/main.js?v=z1-20261028an"></script>
 </body>
 </html>

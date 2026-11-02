@@ -1,9 +1,10 @@
 /** localStorage save/load — SAVE_VERSION bump requires migration. */
-import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028am';
-import { emptyCargoMap } from './state.js?v=z1-20261028am';
+import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028an';
+import { emptyCargoMap } from './state.js?v=z1-20261028an';
 
-export const SAVE_VERSION = 7;
-const KEY = 'saikoro_journey_z1_v7';
+export const SAVE_VERSION = 8;
+const KEY = 'saikoro_journey_z1_v8';
+const KEY_V7 = 'saikoro_journey_z1_v7';
 const KEY_V6 = 'saikoro_journey_z1_v6';
 const KEY_V5 = 'saikoro_journey_z1_v5';
 const KEY_V4 = 'saikoro_journey_z1_v4';
@@ -68,6 +69,7 @@ export function serialize(s) {
       : {},
     capacityLevel: Math.max(0, Math.min(5, s.capacityLevel | 0)),
     preserveLevel: Math.max(0, Math.min(5, s.preserveLevel | 0)),
+    speedLevel: Math.max(0, Math.min(5, s.speedLevel | 0)),
     buyMp: s.buyMp ? { ...Object.fromEntries(Object.entries(s.buyMp).map(([k, v]) => [k, { ...v }])) } : {},
     prices: s.prices
       ? Object.fromEntries(
@@ -149,8 +151,8 @@ function applyCourier(dataCourier) {
  * @param {any} data
  */
 export function applySave(s, data) {
-  // Accept v2–v7 (v7 = preserveLevel)
-  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== 6 && data.v !== 7 && data.v !== SAVE_VERSION)) return false;
+  // Accept v2–v8 (v8 = speedLevel)
+  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== 6 && data.v !== 7 && data.v !== 8 && data.v !== SAVE_VERSION)) return false;
   s.gold = data.gold;
   s.cargo = { ...data.cargo };
   s.condition = data.condition && typeof data.condition === 'object' ? { ...data.condition } : {};
@@ -197,6 +199,13 @@ export function applySave(s, data) {
     if (!Number.isFinite(pl) || pl < 0) pl = 0;
     if (pl > 5) pl = 5;
     s.preserveLevel = pl;
+  }
+  // Slice AA — speedLevel 0..5 (v8+); older → 0
+  {
+    let sl = data.v >= 8 ? Math.floor(Number(data.speedLevel)) : 0;
+    if (!Number.isFinite(sl) || sl < 0) sl = 0;
+    if (sl > 5) sl = 5;
+    s.speedLevel = sl;
   }
   s.selectedLocId = data.locationId;
   s.travel = null;
@@ -283,23 +292,27 @@ export function loadGame(s) {
   try {
     let raw = localStorage.getItem(KEY);
     if (!raw) {
-      // migrate v6 → v7
+      // migrate v7 → v8
+      raw = localStorage.getItem(KEY_V7);
+    }
+    if (!raw) {
+      // migrate v6 → v8
       raw = localStorage.getItem(KEY_V6);
     }
     if (!raw) {
-      // migrate v5 → v7
+      // migrate v5 → v8
       raw = localStorage.getItem(KEY_V5);
     }
     if (!raw) {
-      // migrate v4 → v7
+      // migrate v4 → v8
       raw = localStorage.getItem(KEY_V4);
     }
     if (!raw) {
-      // migrate v3 → v7
+      // migrate v3 → v8
       raw = localStorage.getItem(KEY_V3);
     }
     if (!raw) {
-      // migrate v2 → v7
+      // migrate v2 → v8
       raw = localStorage.getItem(KEY_V2);
     }
     if (!raw) return false;
@@ -317,6 +330,7 @@ export function loadGame(s) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(KEY_V7);
     localStorage.removeItem(KEY_V6);
     localStorage.removeItem(KEY_V5);
     localStorage.removeItem(KEY_V4);

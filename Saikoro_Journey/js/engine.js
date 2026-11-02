@@ -6,7 +6,7 @@ import {
   courierCargoUsed,
   courierGoodCondition,
   emptyCargoMap,
-} from './state.js?v=z1-20261028am';
+} from './state.js?v=z1-20261028an';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -37,8 +37,11 @@ import {
   capacityUpgradeCost,
   PRESERVE_MAX_LEVEL,
   preserveUpgradeCost,
-} from './economy-data.js?v=z1-20261028am';
-import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028am';
+  SPEED_MAX_LEVEL,
+  speedUpgradeCost,
+  effectiveSpeed,
+} from './economy-data.js?v=z1-20261028an';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028an';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -238,7 +241,8 @@ function startCourierTravel(s, c, destId) {
   if (!path || path.length < 2) return;
   const nextHop = path[1];
   const dist = distanceBetween(c.locationId, nextHop);
-  const ms = travelMsBetween(c.locationId, nextHop, TRAIN_SPEED);
+  const spd = effectiveSpeed(s.speedLevel);
+  const ms = travelMsBetween(c.locationId, nextHop, spd);
   if (dist == null || ms == null) return;
   c.travel = {
     from: c.locationId,
@@ -246,7 +250,7 @@ function startCourierTravel(s, c, destId) {
     elapsedMs: 0,
     durationMs: ms,
     distance: dist,
-    speed: TRAIN_SPEED,
+    speed: spd,
     traveledDistance: 0,
     finalDest: destId,
   };
@@ -544,6 +548,22 @@ export function tryUpgradePreserve(s) {
   s.gold -= cost;
   s.preserveLevel = level + 1;
   return { ok: true, level: s.preserveLevel, cost };
+}
+
+/**
+ * Slice AA — Speed upgrade (+20% of base TRAIN_SPEED per level, max 5). Cost 550×(level+1)G.
+ * Current in-progress travel keeps stamped speed; new trips use the new level.
+ * @param {import('./state.js').GameState} s
+ */
+export function tryUpgradeSpeed(s) {
+  if (s.travel) return { ok: false, reason: 'traveling' };
+  const level = Math.max(0, Math.min(SPEED_MAX_LEVEL, s.speedLevel | 0));
+  if (level >= SPEED_MAX_LEVEL) return { ok: false, reason: 'max' };
+  const cost = speedUpgradeCost(level);
+  if (s.gold < cost) return { ok: false, reason: 'gold' };
+  s.gold -= cost;
+  s.speedLevel = level + 1;
+  return { ok: true, level: s.speedLevel, speed: effectiveSpeed(s.speedLevel), cost };
 }
 
 /** Mid-travel stop — gated by STOP_REROUTE_UNLOCKED. Stays at travel.from. */

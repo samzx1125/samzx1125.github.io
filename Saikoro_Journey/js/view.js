@@ -1,9 +1,9 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028am';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor } from './economy-data.js?v=z1-20261028am';
-import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028am';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028am';
-import { getLastSavedAt } from './saving.js?v=z1-20261028am';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028am';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028an';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed } from './economy-data.js?v=z1-20261028an';
+import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028an';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028an';
+import { getLastSavedAt } from './saving.js?v=z1-20261028an';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028an';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -165,22 +165,23 @@ function quoteSignature(s) {
  * @param {import('./state.js').GameState} s
  */
 function destSignature(s) {
+  const spd = effectiveSpeed(s.speedLevel);
   if (s.travel) {
-    const parts = ['traveling', s.travel.from + '>' + s.travel.to, STOP_REROUTE_UNLOCKED ? 'rr1' : 'rr0'];
+    const parts = ['traveling', s.travel.from + '>' + s.travel.to, STOP_REROUTE_UNLOCKED ? 'rr1' : 'rr0', `spd${s.speedLevel|0}`];
     if (STOP_REROUTE_UNLOCKED) {
       const fromId = s.locationId;
       const neigh = neighborsOf(fromId).filter((id) => s.unlocked.includes(id) && id !== s.travel.to);
       for (const id of neigh) {
-        const ms = travelMsBetween(fromId, id) || 0;
+        const ms = travelMsBetween(fromId, id, spd) || 0;
         parts.push(id, String(Math.round(ms / 1000)));
       }
     }
     return parts.join('|');
   }
   const neigh = neighborsOf(s.locationId).filter((id) => s.unlocked.includes(id));
-  const parts = [s.locationId, 'docked'];
+  const parts = [s.locationId, 'docked', `spd${s.speedLevel|0}`];
   for (const id of neigh) {
-    const ms = travelMsBetween(s.locationId, id) || 0;
+    const ms = travelMsBetween(s.locationId, id, spd) || 0;
     parts.push(id, String(Math.round(ms / 1000)));
   }
   return parts.join('|');
@@ -539,10 +540,11 @@ export function render(s, ui = {}) {
       if (dsig !== lastDestSig) {
         lastDestSig = dsig;
         const fromId = s.locationId;
+        const spd = effectiveSpeed(s.speedLevel);
         const neigh = neighborsOf(fromId).filter((id) => s.unlocked.includes(id) && id !== s.travel.to);
         destList.innerHTML = neigh
           .map((id) => {
-            const ms = travelMsBetween(fromId, id) || 0;
+            const ms = travelMsBetween(fromId, id, spd) || 0;
             return `<li><button type="button" data-act="go" data-loc="${id}">Re-route ${locName(id)} <span class="eta">${formatEta(ms)}</span></button></li>`;
           })
           .join('');
@@ -553,10 +555,11 @@ export function render(s, ui = {}) {
       destPanel.hidden = false;
       if (dsig !== lastDestSig) {
         lastDestSig = dsig;
+        const spd = effectiveSpeed(s.speedLevel);
         const neigh = neighborsOf(s.locationId).filter((id) => s.unlocked.includes(id));
         destList.innerHTML = neigh
           .map((id) => {
-            const ms = travelMsBetween(s.locationId, id) || 0;
+            const ms = travelMsBetween(s.locationId, id, spd) || 0;
             return `<li><button type="button" data-act="go" data-loc="${id}">${locName(id)} <span class="eta">${formatEta(ms)}</span></button></li>`;
           })
           .join('');
@@ -847,6 +850,25 @@ export function render(s, ui = {}) {
     }
   }
 
+  // Slice AA — Speed upgrade (Options)
+  {
+    const level = Math.max(0, Math.min(SPEED_MAX_LEVEL, s.speedLevel | 0));
+    const spd = effectiveSpeed(level);
+    setText('speed-level-label', `Speed level ${level} / ${SPEED_MAX_LEVEL} · speed ${spd}`);
+    const cost = speedUpgradeCost(level);
+    const btn = document.getElementById('btn-upgrade-speed');
+    if (btn) {
+      const atMax = level >= SPEED_MAX_LEVEL;
+      btn.disabled = atMax || s.gold < cost;
+      btn.textContent = atMax
+        ? 'Speed maxed (×2)'
+        : `Upgrade speed (+20%) — ${cost}G`;
+      btn.title = atMax
+        ? 'Max speed level'
+        : `Stub pricing: 550×(level+1). Speed ${spd} → ${effectiveSpeed(level + 1)}`;
+    }
+  }
+
   // Slice V — character page (read-only sheet)
   {
     const panel = document.getElementById('character-panel');
@@ -865,6 +887,11 @@ export function render(s, ui = {}) {
         const pl = Math.max(0, Math.min(PRESERVE_MAX_LEVEL, s.preserveLevel | 0));
         const pct = Math.round(preserveDrainFactor(pl) * 100);
         setText('character-preserve', `Preserve level ${pl} / ${PRESERVE_MAX_LEVEL} · drain ×${pct}%`);
+      }
+      {
+        const sl = Math.max(0, Math.min(SPEED_MAX_LEVEL, s.speedLevel | 0));
+        const spd = effectiveSpeed(sl);
+        setText('character-speed', `Speed level ${sl} / ${SPEED_MAX_LEVEL} · speed ${spd}`);
       }
       setText('character-gold', `Gold ${s.gold}`);
       const keysList = document.getElementById('character-keys');

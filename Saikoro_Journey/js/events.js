@@ -1,14 +1,14 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028am';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028am';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028an';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed } from './economy-data.js?v=z1-20261028an';
 import {
-  tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryStopTravel, tryReroute,
+  tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
-} from './engine.js?v=z1-20261028am';
-import { cargoUsed } from './state.js?v=z1-20261028am';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028am';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028am';
+} from './engine.js?v=z1-20261028an';
+import { cargoUsed } from './state.js?v=z1-20261028an';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028an';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028an';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -154,8 +154,9 @@ export function bindEvents(s, opts = {}) {
         return;
       }
       const dist = distanceBetween(fromId, locId);
-      const ms = travelMsBetween(fromId, locId);
-      const r = tryReroute(state, locId, ms, { distance: dist ?? 0, speed: TRAIN_SPEED });
+      const spd = effectiveSpeed(state.speedLevel);
+      const ms = travelMsBetween(fromId, locId, spd);
+      const r = tryReroute(state, locId, ms, { distance: dist ?? 0, speed: spd });
       ui.lastMsg = r.ok
         ? (r.stopped ? 'stopped' : `re-routed → ${locName(locId)}`)
         : `cannot re-route (${r.reason})`;
@@ -180,8 +181,9 @@ export function bindEvents(s, opts = {}) {
       return;
     }
     const dist = distanceBetween(state.locationId, locId);
-    const ms = travelMsBetween(state.locationId, locId);
-    const r = tryTravel(state, locId, ms, { distance: dist ?? 0, speed: TRAIN_SPEED });
+    const spd = effectiveSpeed(state.speedLevel);
+    const ms = travelMsBetween(state.locationId, locId, spd);
+    const r = tryTravel(state, locId, ms, { distance: dist ?? 0, speed: spd });
     ui.lastMsg = r.ok ? `departing → ${locName(locId)}` : `cannot travel (${r.reason})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
@@ -480,6 +482,20 @@ export function bindEvents(s, opts = {}) {
       invalidateQuotes();
     } else {
       ui.lastMsg = `preserve upgrade failed (${r.reason})`;
+    }
+    render(state, ui);
+  });
+
+  document.getElementById('speed-upgrade-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="upgrade-speed"]');
+    if (!btn || !state) return;
+    const r = tryUpgradeSpeed(state);
+    if (r.ok) {
+      ui.lastMsg = `speed upgraded to lv${r.level} (spd ${r.speed}) −${r.cost}G`;
+      saveGame(state);
+      invalidateQuotes();
+    } else {
+      ui.lastMsg = `speed upgrade failed (${r.reason})`;
     }
     render(state, ui);
   });

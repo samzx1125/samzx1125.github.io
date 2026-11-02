@@ -1,3 +1,5 @@
+import { TRAIN_SPEED } from './map-data.js?v=z1-20261028an';
+
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number }} GoodDef */
 
 /** Naming v2 goods_aAAzZZiIII_slug — name is display label. Live MP drifts around BASE_PRICES. */
@@ -141,6 +143,26 @@ export function effectiveDepleteRate(goodId, level) {
 export function preserveUpgradeCost(level) {
   const lv = Math.max(0, Math.min(PRESERVE_MAX_LEVEL, Math.floor(Number(level) || 0)));
   return PRESERVE_UPGRADE_GOLD * (lv + 1);
+}
+
+/**
+ * Slice AA — Speed upgrades (systems.md §3.1b).
+ * effectiveSpeed = TRAIN_SPEED × (1 + 0.2×level) → 10/12/14/16/18/20 at lv 0–5 (2× at max).
+ * Stub gold: 550 × (level+1). Mid-travel upgrade leaves stamped travel.speed as-is.
+ */
+export const SPEED_MAX_LEVEL = 5;
+export const SPEED_UPGRADE_GOLD = 550;
+
+/** Effective travel speed for speedLevel (clamped 0..5). */
+export function effectiveSpeed(level) {
+  const lv = Math.max(0, Math.min(SPEED_MAX_LEVEL, Math.floor(Number(level) || 0)));
+  return TRAIN_SPEED * (1 + 0.2 * lv);
+}
+
+/** Gold cost to buy speed upgrade from current level → level+1. */
+export function speedUpgradeCost(level) {
+  const lv = Math.max(0, Math.min(SPEED_MAX_LEVEL, Math.floor(Number(level) || 0)));
+  return SPEED_UPGRADE_GOLD * (lv + 1);
 }
 
 /**
