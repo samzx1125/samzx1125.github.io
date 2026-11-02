@@ -107,7 +107,7 @@ main {
 
 #map-plane {
   position: relative;
-  width: 1600px;
+  width: 2000px;
   height: 400px;
   margin: 1rem auto;
 }
@@ -116,7 +116,7 @@ main {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1600px;
+  width: 2000px;
   height: 400px;
   pointer-events: none;
   overflow: visible;
@@ -139,7 +139,7 @@ main {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1600px;
+  width: 2000px;
   height: 400px;
 }
 .node-wrap {

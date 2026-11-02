@@ -56,6 +56,22 @@ export const BASE_PRICES = {
     goods_a01z01i002_oil_speciality: 58,
     goods_a01z01i003_water_speciality: 12,
   },
+  // Slice X — Z4 extreme oil/water (沙漠核心／關口)
+  loc_a01z04l001_dune_crown: {
+    goods_a01z01i001_dry_food: 12,
+    goods_a01z01i002_oil_speciality: 70,
+    goods_a01z01i003_water_speciality: 14,
+  },
+  loc_a01z04l002_star_gate: {
+    goods_a01z01i001_dry_food: 22,
+    goods_a01z01i002_oil_speciality: 14,
+    goods_a01z01i003_water_speciality: 85,
+  },
+  loc_a01z04l003_exit_ash: {
+    goods_a01z01i001_dry_food: 7,
+    goods_a01z01i002_oil_speciality: 65,
+    goods_a01z01i003_water_speciality: 10,
+  },
 };
 
 /** Slice L — slow MP drift around base (prototype-z1 appendix). */
@@ -102,7 +118,7 @@ export function capacityUpgradeCost(level) {
 export const CAPACITY = CAPACITY_BASE;
 
 /**
- * Slice T/W — data-driven unlocks (multi-trip deposit; starter 5000g, max 10000g).
+ * Slice T/W/X — data-driven unlocks (multi-trip deposit; starter 5000g, max 10000g).
  * Rule:
  *  1) Star Ash: oil×5 + dry×10 (fits starter; any unlocked station).
  *  2) Deep Dune (first Z2): after Star Ash — oil×25 + water×10 + dry×25 = 25000g (~2–3 trips at max cargo).
@@ -111,6 +127,9 @@ export const CAPACITY = CAPACITY_BASE;
  *  5) Rust Spur (first Z3): after Night Well — oil×30 + water×12 + dry×25 = 29000g (~2–3 trips at max).
  *  6) Ash Pump: after Rust Spur — oil×12 + dry×20 = 10000g (multi-trip deposit).
  *  7) Scrap Gate: after Ash Pump — oil×12 + water×10 = 13500g (multi-trip deposit).
+ *  8) Dune Crown (first Z4): after Scrap Gate — oil×32 + water×14 + dry×28 = 32100g (~3× max).
+ *  9) Star Gate: after Dune Crown — oil×14 + dry×22 = 11400g (multi-trip deposit).
+ * 10) Exit Ash: after Star Gate — oil×14 + water×12 = 16000g (multi-trip deposit).
  * Hand-in at any unlocked station via unlockDeposits (UI lists next available).
  * @type {{ target: string, requiresUnlocked: string[], costs: { goodId: string, qty: number }[] }[]}
  */
@@ -171,6 +190,31 @@ export const UNLOCKS = [
     costs: [
       { goodId: 'goods_a01z01i002_oil_speciality', qty: 12 },
       { goodId: 'goods_a01z01i003_water_speciality', qty: 10 },
+    ],
+  },
+  {
+    target: 'loc_a01z04l001_dune_crown',
+    requiresUnlocked: ['loc_a01z03l003_scrap_gate'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 32 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 14 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 28 },
+    ],
+  },
+  {
+    target: 'loc_a01z04l002_star_gate',
+    requiresUnlocked: ['loc_a01z04l001_dune_crown'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 14 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 22 },
+    ],
+  },
+  {
+    target: 'loc_a01z04l003_exit_ash',
+    requiresUnlocked: ['loc_a01z04l002_star_gate'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 14 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 12 },
     ],
   },
 ];
@@ -303,5 +347,12 @@ export const TRANSPORT_QUESTS = {
     goodId: 'goods_a01z01i002_oil_speciality',
     qty: 3,
     rewardGold: 110,
+  },
+  // Slice X — optional Z4 offer
+  loc_a01z04l001_dune_crown: {
+    to: 'loc_a01z04l002_star_gate',
+    goodId: 'goods_a01z01i001_dry_food',
+    qty: 5,
+    rewardGold: 120,
   },
 };

@@ -15,6 +15,10 @@ export const LOCATIONS = [
   { id: 'loc_a01z03l001_rust_spur', name: 'Rust Spur', x: 1180, y: 220 },
   { id: 'loc_a01z03l002_ash_pump', name: 'Ash Pump', x: 1340, y: 160 },
   { id: 'loc_a01z03l003_scrap_gate', name: 'Scrap Gate', x: 1480, y: 260 },
+  // Slice X — Zone 4 (沙漠核心／關口, right of Scrap Gate)
+  { id: 'loc_a01z04l001_dune_crown', name: 'Dune Crown', x: 1640, y: 200 },
+  { id: 'loc_a01z04l002_star_gate', name: 'Star Gate', x: 1800, y: 280 },
+  { id: 'loc_a01z04l003_exit_ash', name: 'Exit Ash', x: 1960, y: 180 },
 ];
 
 /** Distance units along the rail (variables — ETA = distance / TRAIN_SPEED). */
@@ -32,6 +36,11 @@ export const EDGES = [
   { a: 'loc_a01z03l001_rust_spur', b: 'loc_a01z03l002_ash_pump', distance: 160 },
   { a: 'loc_a01z03l002_ash_pump', b: 'loc_a01z03l003_scrap_gate', distance: 180 },
   { a: 'loc_a01z03l001_rust_spur', b: 'loc_a01z03l003_scrap_gate', distance: 190 },
+  // Slice X — Z3↔Z4 bridge + Z4 chain + triangle
+  { a: 'loc_a01z03l003_scrap_gate', b: 'loc_a01z04l001_dune_crown', distance: 200 },
+  { a: 'loc_a01z04l001_dune_crown', b: 'loc_a01z04l002_star_gate', distance: 180 },
+  { a: 'loc_a01z04l002_star_gate', b: 'loc_a01z04l003_exit_ash', distance: 200 },
+  { a: 'loc_a01z04l001_dune_crown', b: 'loc_a01z04l003_exit_ash', distance: 210 },
 ];
 
 /** Initial train speed (distance units per second). */
