@@ -1,9 +1,10 @@
 /** localStorage save/load — SAVE_VERSION bump requires migration. */
-import { GOODS } from './economy-data.js?v=z1-20261028af';
-import { emptyCargoMap } from './state.js?v=z1-20261028af';
+import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028ag';
+import { emptyCargoMap } from './state.js?v=z1-20261028ag';
 
-export const SAVE_VERSION = 4;
-const KEY = 'saikoro_journey_z1_v4';
+export const SAVE_VERSION = 5;
+const KEY = 'saikoro_journey_z1_v5';
+const KEY_V4 = 'saikoro_journey_z1_v4';
 const KEY_V3 = 'saikoro_journey_z1_v3';
 const KEY_V2 = 'saikoro_journey_z1_v2';
 
@@ -51,6 +52,19 @@ export function serialize(s) {
     quest: s.quest ? { ...s.quest } : null,
     locationId: s.locationId,
     unlocked: [...s.unlocked],
+    unlockDeposits: s.unlockDeposits
+      ? Object.fromEntries(
+          Object.entries(s.unlockDeposits).map(([tid, row]) => [
+            tid,
+            Object.fromEntries(
+              Object.entries(row || {})
+                .map(([gid, n]) => [gid, Math.max(0, Math.floor(Number(n) || 0))])
+                .filter(([, n]) => n > 0),
+            ),
+          ]).filter(([, row]) => Object.keys(row).length > 0),
+        )
+      : {},
+    capacityLevel: Math.max(0, Math.min(5, s.capacityLevel | 0)),
     buyMp: s.buyMp ? { ...Object.fromEntries(Object.entries(s.buyMp).map(([k, v]) => [k, { ...v }])) } : {},
     prices: s.prices
       ? Object.fromEntries(
@@ -125,8 +139,8 @@ function applyCourier(dataCourier) {
  * @param {any} data
  */
 export function applySave(s, data) {
-  // Accept v2 (no courier), v3 (courier), v4 (opening identity)
-  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== SAVE_VERSION)) return false;
+  // Accept v2 (no courier), v3 (courier), v4 (opening), v5 (deposits + capacityLevel)
+  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== SAVE_VERSION)) return false;
   s.gold = data.gold;
   s.cargo = { ...data.cargo };
   s.condition = data.condition && typeof data.condition === 'object' ? { ...data.condition } : {};
@@ -143,6 +157,30 @@ export function applySave(s, data) {
       : null;
   s.locationId = data.locationId;
   s.unlocked = [...data.unlocked];
+  // Slice T+/U — multi-trip unlock deposits (v5+); drop buckets for already-unlocked targets
+  s.unlockDeposits = {};
+  if (data.v >= 5 && data.unlockDeposits && typeof data.unlockDeposits === 'object') {
+    const unlockedSet = new Set(s.unlocked);
+    for (const tid of Object.keys(data.unlockDeposits)) {
+      if (unlockedSet.has(tid)) continue;
+      const row = data.unlockDeposits[tid];
+      if (!row || typeof row !== 'object') continue;
+      const out = {};
+      for (const gid of Object.keys(row)) {
+        const n = Math.floor(Number(row[gid]));
+        if (Number.isFinite(n) && n > 0) out[gid] = n;
+      }
+      if (Object.keys(out).length) s.unlockDeposits[tid] = out;
+    }
+  }
+  // capacityLevel 0..5; recompute capacity from level
+  {
+    let lv = data.v >= 5 ? Math.floor(Number(data.capacityLevel)) : 0;
+    if (!Number.isFinite(lv) || lv < 0) lv = 0;
+    if (lv > 5) lv = 5;
+    s.capacityLevel = lv;
+    s.capacity = effectiveCapacity(lv);
+  }
   s.selectedLocId = data.locationId;
   s.travel = null;
   s.buyMp = data.buyMp && typeof data.buyMp === 'object' ? { ...data.buyMp } : {};
@@ -219,11 +257,15 @@ export function loadGame(s) {
   try {
     let raw = localStorage.getItem(KEY);
     if (!raw) {
-      // migrate v3 → v4
+      // migrate v4 → v5
+      raw = localStorage.getItem(KEY_V4);
+    }
+    if (!raw) {
+      // migrate v3 → v5
       raw = localStorage.getItem(KEY_V3);
     }
     if (!raw) {
-      // migrate v2 → v4
+      // migrate v2 → v5
       raw = localStorage.getItem(KEY_V2);
     }
     if (!raw) return false;
@@ -241,6 +283,7 @@ export function loadGame(s) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(KEY_V4);
     localStorage.removeItem(KEY_V3);
     localStorage.removeItem(KEY_V2);
     lastSavedAt = null;

@@ -1,15 +1,17 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028af';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG, COURIER_CAPACITY } from './economy-data.js?v=z1-20261028af';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028ag';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY } from './economy-data.js?v=z1-20261028ag';
 
 /**
  * @typedef {{
  *   gold: number,
- *   capacity: number, // grams
+ *   capacity: number, // grams — synced from capacityLevel via effectiveCapacity
+ *   capacityLevel: number, // 0..5 upgrades (+20% base each → max 10000g)
  *   cargo: Record<string, number>,
  *   condition: Record<string, number>, // 0–100% for goods that deplete; absent = 100
  *   quest: null | { from: string, to: string, goodId: string, qty: number, rewardGold: number, condition: number },
  *   locationId: string,
  *   unlocked: string[],
+ *   unlockDeposits: Record<string, Record<string, number>>, // target loc id → goodId → deposited qty
  *   travel: null | { from: string, to: string, elapsedMs: number, durationMs: number, distance: number, speed: number, traveledDistance: number },
  *   prices: Record<string, Record<string, number>>,
  *   visitedPrices: Record<string, Record<string, number>>, // Slice P — last-seen MP per station
@@ -57,12 +59,14 @@ export function createInitialState() {
   /** @type {GameState} */
   const s = {
     gold: START_GOLD,
-    capacity: CAPACITY,
+    capacityLevel: 0,
+    capacity: effectiveCapacity(0),
     cargo,
     condition: {},
     quest: null,
     locationId: START_LOC,
     unlocked: [...INITIALLY_UNLOCKED],
+    unlockDeposits: {},
     travel: null,
     prices,
     visitedPrices: {},

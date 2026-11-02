@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1–Z2</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028af" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028af" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028ag" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028ag" />
 </head>
 <body>
   <header class="top-row">
@@ -35,6 +35,12 @@
           <h2>Courier</h2>
           <p class="hint">Zone1-only after Star Ash. Free hire · seed 300G · 3000g hold.</p>
           <button type="button" class="primary" data-act="hire-courier" id="btn-hire-courier">Hire Courier</button>
+        </section>
+        <section id="cargo-upgrade-panel">
+          <h2>Cargo</h2>
+          <p class="hint">Starter 5000g · 5 upgrades × +20% base → max 10000g. Stub price 500×(level+1)G.</p>
+          <p id="cargo-level-label" class="muted">Cargo level 0 / 5 · 5000g</p>
+          <button type="button" class="primary" data-act="upgrade-cargo" id="btn-upgrade-cargo">Upgrade cargo (+20%) — 500G</button>
         </section>
         <section id="save-panel">
           <h2>Save</h2>
@@ -201,6 +207,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028af"></script>
+  <script type="module" src="js/main.js?v=z1-20261028ag"></script>
 </body>
 </html>

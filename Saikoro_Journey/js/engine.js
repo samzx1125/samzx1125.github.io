@@ -6,7 +6,7 @@ import {
   courierCargoUsed,
   courierGoodCondition,
   emptyCargoMap,
-} from './state.js?v=z1-20261028af';
+} from './state.js?v=z1-20261028ag';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -31,8 +31,11 @@ import {
   COURIER_HIRE_COST,
   COURIER_SEED_GOLD,
   COURIER_CAPACITY,
-} from './economy-data.js?v=z1-20261028af';
-import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028af';
+  CAPACITY_MAX_LEVEL,
+  effectiveCapacity,
+  capacityUpgradeCost,
+} from './economy-data.js?v=z1-20261028ag';
+import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028ag';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -441,22 +444,86 @@ export function tryTravel(s, toId, durationMs, meta = {}) {
 }
 
 /**
+ * Multi-trip unlock deposit. Moves matching cargo into unlockDeposits[target];
+ * unlocks when every cost good has deposited >= qty.
  * @param {import('./state.js').GameState} s
  * @param {{ target: string, requiresUnlocked?: string[], costs: { goodId: string, qty: number }[] }} unlock
+ * @returns {{ ok: boolean, reason?: string, unlocked?: boolean }}
  */
-export function tryUnlock(s, unlock) {
+export function tryDepositUnlock(s, unlock) {
   if (s.travel) return { ok: false, reason: 'traveling' };
   if (!s.unlocked.includes(s.locationId)) return { ok: false, reason: 'locked_here' };
   if (s.unlocked.includes(unlock.target)) return { ok: false, reason: 'already' };
   for (const id of unlock.requiresUnlocked || []) {
     if (!s.unlocked.includes(id)) return { ok: false, reason: 'prereq' };
   }
+  if (!s.unlockDeposits) s.unlockDeposits = {};
+  const target = unlock.target;
+  if (!s.unlockDeposits[target]) s.unlockDeposits[target] = {};
+  const dep = s.unlockDeposits[target];
+  let depositedAny = false;
   for (const c of unlock.costs) {
-    if ((s.cargo[c.goodId] || 0) < c.qty) return { ok: false, reason: 'need_' + c.goodId };
+    const deposited = dep[c.goodId] || 0;
+    const needLeft = c.qty - deposited;
+    if (needLeft <= 0) continue;
+    const have = s.cargo[c.goodId] || 0;
+    const take = Math.min(have, needLeft);
+    if (take <= 0) continue;
+    s.cargo[c.goodId] -= take;
+    if ((s.cargo[c.goodId] || 0) <= 0) {
+      s.cargo[c.goodId] = 0;
+      if (s.condition) delete s.condition[c.goodId];
+    }
+    // Keep buyMp in sync with remaining cargo (same idea as sell)
+    if (s.buyMp?.[c.goodId]) {
+      s.buyMp[c.goodId].qty = Math.max(0, s.buyMp[c.goodId].qty - take);
+      if (s.buyMp[c.goodId].qty <= 0) delete s.buyMp[c.goodId];
+    }
+    if (s.stationBuys?.[c.goodId]) {
+      const cargoLeft = s.cargo[c.goodId] || 0;
+      const committedQty = s.buyMp?.[c.goodId]?.qty || 0;
+      const maxPend = Math.max(0, cargoLeft - committedQty);
+      if (s.stationBuys[c.goodId].qty > maxPend) {
+        const keep = maxPend;
+        if (keep <= 0) delete s.stationBuys[c.goodId];
+        else {
+          const unitAvg = s.stationBuys[c.goodId].sum / s.stationBuys[c.goodId].qty;
+          s.stationBuys[c.goodId] = { qty: keep, sum: unitAvg * keep };
+        }
+      }
+    }
+    dep[c.goodId] = deposited + take;
+    depositedAny = true;
   }
-  for (const c of unlock.costs) s.cargo[c.goodId] -= c.qty;
-  s.unlocked.push(unlock.target);
-  return { ok: true };
+  if (!depositedAny) return { ok: false, reason: 'nothing' };
+  const allMet = unlock.costs.every((c) => (dep[c.goodId] || 0) >= c.qty);
+  if (allMet) {
+    s.unlocked.push(unlock.target);
+    delete s.unlockDeposits[target];
+    return { ok: true, unlocked: true };
+  }
+  return { ok: true, unlocked: false };
+}
+
+/** Alias — deposit semantics. */
+export function tryUnlock(s, unlock) {
+  return tryDepositUnlock(s, unlock);
+}
+
+/**
+ * Stub cargo capacity upgrade (+20% of base per level, max 5). Cost 500×(level+1)G.
+ * @param {import('./state.js').GameState} s
+ */
+export function tryUpgradeCapacity(s) {
+  if (s.travel) return { ok: false, reason: 'traveling' };
+  const level = Math.max(0, Math.min(CAPACITY_MAX_LEVEL, s.capacityLevel | 0));
+  if (level >= CAPACITY_MAX_LEVEL) return { ok: false, reason: 'max' };
+  const cost = capacityUpgradeCost(level);
+  if (s.gold < cost) return { ok: false, reason: 'gold' };
+  s.gold -= cost;
+  s.capacityLevel = level + 1;
+  s.capacity = effectiveCapacity(s.capacityLevel);
+  return { ok: true, level: s.capacityLevel, capacity: s.capacity, cost };
 }
 
 

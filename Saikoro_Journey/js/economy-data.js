@@ -64,17 +64,35 @@ export const SELL_IMPACT_STEP = 0.015;
 export const IMPACT_RECOVERY_STEP = 0.01;
 
 export const START_GOLD = 200;
-/** Cargo capacity in grams (total weight). */
-export const CAPACITY = 5000;
+/** Base cargo capacity (g). Upgrades: +20% of base per level, max level 5 → 10000g. */
+export const CAPACITY_BASE = 5000;
+export const CAPACITY_MAX_LEVEL = 5;
+/** Stub gold cost for next upgrade: 500 × (level+1). */
+export const CAPACITY_UPGRADE_GOLD = 500;
+
+/** Effective capacity grams for capacityLevel 0..5 → 5k/6k/7k/8k/9k/10k. */
+export function effectiveCapacity(level) {
+  const lv = Math.max(0, Math.min(CAPACITY_MAX_LEVEL, Math.floor(Number(level) || 0)));
+  return Math.round(CAPACITY_BASE * (1 + 0.2 * lv));
+}
+
+/** Gold cost to buy upgrade from current level → level+1 (stub pricing). */
+export function capacityUpgradeCost(level) {
+  const lv = Math.max(0, Math.min(CAPACITY_MAX_LEVEL, Math.floor(Number(level) || 0)));
+  return CAPACITY_UPGRADE_GOLD * (lv + 1);
+}
+
+/** Starter cargo capacity in grams (capacityLevel 0). Synced via effectiveCapacity. */
+export const CAPACITY = CAPACITY_BASE;
 
 /**
- * Slice T — data-driven unlocks.
+ * Slice T — data-driven unlocks (multi-trip deposit; starter 5000g, max 10000g).
  * Rule:
- *  1) Star Ash: oil×5 + dry×10 (any unlocked station; no prereq beyond not already unlocked).
- *  2) Deep Dune (first Z2): after Star Ash unlocked — oil×4 + water×2 + dry×5 (≤4500g one trip).
- *  3) Salt Glass: after Deep Dune — oil×4 + dry×6 (sequential adjacent).
- *  4) Night Well: after Salt Glass — oil×4 + water×3 (≤4500g one trip; 4250g).
- * Hand-in at any unlocked station (UI lists next available).
+ *  1) Star Ash: oil×5 + dry×10 (fits starter; any unlocked station).
+ *  2) Deep Dune (first Z2): after Star Ash — oil×25 + water×10 + dry×25 = 25000g (~2–3 trips at max cargo).
+ *  3) Salt Glass: after Deep Dune — oil×10 + dry×15 = 8000g (multi-trip deposit).
+ *  4) Night Well: after Salt Glass — oil×10 + water×8 = 11000g (multi-trip deposit).
+ * Hand-in at any unlocked station via unlockDeposits (UI lists next available).
  * @type {{ target: string, requiresUnlocked: string[], costs: { goodId: string, qty: number }[] }[]}
  */
 export const UNLOCKS = [
@@ -90,25 +108,25 @@ export const UNLOCKS = [
     target: 'loc_a01z02l001_deep_dune',
     requiresUnlocked: ['loc_a01z01l003_star_ash'],
     costs: [
-      { goodId: 'goods_a01z01i002_oil_speciality', qty: 4 },
-      { goodId: 'goods_a01z01i003_water_speciality', qty: 2 },
-      { goodId: 'goods_a01z01i001_dry_food', qty: 5 },
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 25 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 10 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 25 },
     ],
   },
   {
     target: 'loc_a01z02l002_salt_glass',
     requiresUnlocked: ['loc_a01z02l001_deep_dune'],
     costs: [
-      { goodId: 'goods_a01z01i002_oil_speciality', qty: 4 },
-      { goodId: 'goods_a01z01i001_dry_food', qty: 6 },
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 10 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 15 },
     ],
   },
   {
     target: 'loc_a01z02l003_night_well',
     requiresUnlocked: ['loc_a01z02l002_salt_glass'],
     costs: [
-      { goodId: 'goods_a01z01i002_oil_speciality', qty: 4 },
-      { goodId: 'goods_a01z01i003_water_speciality', qty: 3 },
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 10 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 8 },
     ],
   },
 ];

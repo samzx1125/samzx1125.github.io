@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028af';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC } from './economy-data.js?v=z1-20261028af';
-import { getLastSavedAt } from './saving.js?v=z1-20261028af';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028af';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ag';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity } from './economy-data.js?v=z1-20261028ag';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ag';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ag';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -301,29 +301,41 @@ function renderQuotes(s) {
       } else {
         offersEl.innerHTML = offers
           .map((u) => {
+            const deposits = (s.unlockDeposits && s.unlockDeposits[u.target]) || {};
             let need = 0;
             let haveUnits = 0;
             const lis = u.costs
               .map((c) => {
                 const g = GOODS.find((x) => x.id === c.goodId);
-                const have = s.cargo[c.goodId] || 0;
+                const deposited = deposits[c.goodId] || 0;
+                const cargo = s.cargo[c.goodId] || 0;
                 need += c.qty;
-                haveUnits += Math.min(have, c.qty);
-                const ok = have >= c.qty;
-                return `<li class="${ok ? 'ok' : ''}" title="${c.goodId}">${g?.name || c.goodId} ${have}/${c.qty}</li>`;
+                haveUnits += Math.min(deposited, c.qty);
+                const ok = deposited >= c.qty;
+                const hint =
+                  cargo > 0 && deposited < c.qty
+                    ? ` <span class="muted">(+${cargo} cargo)</span>`
+                    : '';
+                return `<li class="${ok ? 'ok' : ''}" title="${c.goodId}">${g?.name || c.goodId} ${deposited}/${c.qty}${hint}</li>`;
               })
               .join('');
             const pct = need ? Math.round((haveUnits / need) * 100) : 0;
-            const can =
+            const allReady = u.costs.every((c) => (deposits[c.goodId] || 0) >= c.qty);
+            const canHandIn =
               !traveling &&
-              u.costs.every((c) => (s.cargo[c.goodId] || 0) >= c.qty);
+              u.costs.some((c) => {
+                const deposited = deposits[c.goodId] || 0;
+                return deposited < c.qty && (s.cargo[c.goodId] || 0) > 0;
+              });
+            const can = allReady ? !traveling : canHandIn;
             const name = locName(u.target);
+            const btnLabel = allReady ? `Unlock ${name}` : 'Hand in';
             return `<div class="unlock-offer" data-target="${u.target}">
               <h3 class="unlock-offer-title">Unlock ${name}</h3>
               <div class="bar" aria-label="unlock progress"><div class="bar-fill" style="width:${pct}%"></div></div>
-              <p class="muted unlock-offer-pct">${haveUnits} / ${need}</p>
+              <p class="muted unlock-offer-pct">${haveUnits} / ${need} deposited</p>
               <ul class="unlock-list">${lis}</ul>
-              <button type="button" class="primary" data-act="unlock" data-target="${u.target}" ${can ? '' : 'disabled'}>Unlock ${name}</button>
+              <button type="button" class="primary" data-act="unlock" data-target="${u.target}" ${can ? '' : 'disabled'}>${btnLabel}</button>
             </div>`;
           })
           .join('');
@@ -733,6 +745,27 @@ export function render(s, ui = {}) {
     if (unlockPanel) {
       const hasOffers = unlockPanel.dataset.hasOffers === '1' || availableUnlocks(s.unlocked).length > 0;
       unlockPanel.hidden = !hasOffers || !panelOpen;
+    }
+  }
+
+  // Capacity upgrade stub (Options)
+  {
+    const level = Math.max(0, Math.min(CAPACITY_MAX_LEVEL, s.capacityLevel | 0));
+    // keep s.capacity synced
+    const cap = effectiveCapacity(level);
+    if (s.capacity !== cap) s.capacity = cap;
+    setText('cargo-level-label', `Cargo level ${level} / ${CAPACITY_MAX_LEVEL} · ${cap}g`);
+    const cost = capacityUpgradeCost(level);
+    const btn = document.getElementById('btn-upgrade-cargo');
+    if (btn) {
+      const atMax = level >= CAPACITY_MAX_LEVEL;
+      btn.disabled = atMax || s.gold < cost;
+      btn.textContent = atMax
+        ? 'Cargo maxed (10000g)'
+        : `Upgrade cargo (+20%) — ${cost}G`;
+      btn.title = atMax
+        ? 'Max capacity level'
+        : `Stub pricing: 500×(level+1). Next: ${cap} → ${effectiveCapacity(level + 1)}g`;
     }
   }
 

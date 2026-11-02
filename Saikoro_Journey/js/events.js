@@ -1,14 +1,14 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028af';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028af';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ag';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ag';
 import {
-  tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute,
+  tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
-} from './engine.js?v=z1-20261028af';
-import { cargoUsed } from './state.js?v=z1-20261028af';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028af';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028af';
+} from './engine.js?v=z1-20261028ag';
+import { cargoUsed } from './state.js?v=z1-20261028ag';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028ag';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ag';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -253,9 +253,18 @@ export function bindEvents(s, opts = {}) {
       render(state, ui);
       return;
     }
-    const r = tryUnlock(state, unlock);
-    ui.lastMsg = r.ok ? `unlocked ${locName(unlock.target)}` : `unlock failed (${r.reason})`;
-    if (r.ok) { saveGame(state); invalidateQuotes(); flashUnlockedNode(unlock.target); }
+    const r = tryDepositUnlock(state, unlock);
+    if (r.ok && r.unlocked) {
+      ui.lastMsg = `unlocked ${locName(unlock.target)}`;
+      saveGame(state);
+      invalidateQuotes();
+      flashUnlockedNode(unlock.target);
+    } else if (r.ok) {
+      ui.lastMsg = `handed in toward ${locName(unlock.target)}`;
+      saveGame(state);
+    } else {
+      ui.lastMsg = `unlock failed (${r.reason})`;
+    }
     render(state, ui);
   });
 
@@ -407,6 +416,20 @@ export function bindEvents(s, opts = {}) {
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
     }
+  });
+
+  document.getElementById('cargo-upgrade-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="upgrade-cargo"]');
+    if (!btn || !state) return;
+    const r = tryUpgradeCapacity(state);
+    if (r.ok) {
+      ui.lastMsg = `cargo upgraded to lv${r.level} (${r.capacity}g) −${r.cost}G`;
+      saveGame(state);
+      invalidateQuotes();
+    } else {
+      ui.lastMsg = `upgrade failed (${r.reason})`;
+    }
+    render(state, ui);
   });
 
   document.getElementById('save-panel')?.addEventListener('click', (ev) => {
