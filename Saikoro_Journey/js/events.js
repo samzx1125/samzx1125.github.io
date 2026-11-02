@@ -1,19 +1,20 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028an';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed } from './economy-data.js?v=z1-20261028an';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028ao';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028ao';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
-} from './engine.js?v=z1-20261028an';
-import { cargoUsed } from './state.js?v=z1-20261028an';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028an';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028an';
+  tryWarehouseDeposit, tryWarehouseWithdraw,
+} from './engine.js?v=z1-20261028ao';
+import { cargoUsed, courierCargoUsed, warehouseUsed } from './state.js?v=z1-20261028ao';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028ao';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ao';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
 /** @type {{ lastMsg: string, panelOpen: boolean, optionsOpen: boolean, characterOpen: boolean }} */
-const ui = { lastMsg: '', panelOpen: true, optionsOpen: false, characterOpen: false };
+const ui = { lastMsg: '', panelOpen: true, optionsOpen: false, characterOpen: false, warehouseWho: 'player' };
 
 /** @param {import('./state.js').GameState} s */
 export function bindEvents(s, opts = {}) {
@@ -453,6 +454,77 @@ export function bindEvents(s, opts = {}) {
       const qty = Number(input?.value || 1);
       const r = tryTransferGood(state, good, goodToC ? 'toCourier' : 'toPlayer', qty);
       ui.lastMsg = r.ok ? `transferred ${goodName(good)} ×${qty}` : `transfer failed (${r.reason})`;
+      if (r.ok) { saveGame(state); invalidateQuotes(); }
+      render(state, ui);
+    }
+  });
+
+  document.getElementById('warehouse-panel')?.addEventListener('click', (ev) => {
+    if (!state) return;
+    const tabP = ev.target.closest('button[data-act="wh-tab-player"]');
+    const tabC = ev.target.closest('button[data-act="wh-tab-courier"]');
+    if (tabP) {
+      ui.warehouseWho = 'player';
+      render(state, ui);
+      return;
+    }
+    if (tabC) {
+      ui.warehouseWho = 'courier';
+      render(state, ui);
+      return;
+    }
+    const dep = ev.target.closest('button[data-act="wh-deposit"]');
+    const wit = ev.target.closest('button[data-act="wh-withdraw"]');
+    if (!dep && !wit) return;
+    const btn = dep || wit;
+    const good = btn.dataset.good;
+    const mode = btn.dataset.mode || 'qty';
+    const who = ui.warehouseWho === 'courier' ? 'courier' : 'player';
+    const bag = who === 'courier' ? state.courier : state;
+    if (!bag) {
+      ui.lastMsg = 'warehouse failed (no_courier)';
+      render(state, ui);
+      return;
+    }
+    let qty = 0;
+    if (dep) {
+      const have = bag.cargo[good] || 0;
+      if (mode === 'all') {
+        qty = have;
+        // also clamp to remaining warehouse cap
+        const w = goodWeightG(good);
+        if (w > 0) {
+          const freeWh = Math.max(0, AREA1_WAREHOUSE_CAP - warehouseUsed(state));
+          qty = Math.min(qty, Math.floor(freeWh / w));
+        }
+      } else {
+        const input = document.querySelector(`input[data-wh-qty="${good}"]`);
+        qty = Number(input?.value || 1);
+      }
+      const r = tryWarehouseDeposit(state, who, good, qty);
+      ui.lastMsg = r.ok
+        ? `deposited ${goodName(good)} ×${qty} → warehouse`
+        : `deposit failed (${r.reason})`;
+      if (r.ok) { saveGame(state); invalidateQuotes(); }
+      render(state, ui);
+      return;
+    }
+    if (wit) {
+      const whHave = state.warehouse?.area1?.cargo?.[good] || 0;
+      if (mode === 'max') {
+        const w = goodWeightG(good);
+        const used = who === 'courier' ? courierCargoUsed(state.courier) : cargoUsed(state);
+        const cap = who === 'courier' ? state.courier.capacity : state.capacity;
+        const free = Math.max(0, cap - used);
+        qty = w > 0 ? Math.min(whHave, Math.floor(free / w)) : 0;
+      } else {
+        const input = document.querySelector(`input[data-wh-qty="${good}"]`);
+        qty = Number(input?.value || 1);
+      }
+      const r = tryWarehouseWithdraw(state, who, good, qty);
+      ui.lastMsg = r.ok
+        ? `withdrew ${goodName(good)} ×${qty} → ${who === 'courier' ? 'courier' : 'cargo'}`
+        : `withdraw failed (${r.reason})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
     }

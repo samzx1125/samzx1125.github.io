@@ -1,9 +1,9 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028an';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed } from './economy-data.js?v=z1-20261028an';
-import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028an';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028an';
-import { getLastSavedAt } from './saving.js?v=z1-20261028an';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028an';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ao';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ao';
+import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028ao';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028ao';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ao';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse } from './state.js?v=z1-20261028ao';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -12,6 +12,7 @@ let travelRectEl = null;
 let courierEl = null;
 let lastCourierPanelSig = '';
 let lastTransferSig = '';
+let lastWarehouseSig = '';
 
 /** Persist qty across quote rebuilds. */
 /** @type {Record<string, string>} */
@@ -1051,6 +1052,95 @@ export function render(s, ui = {}) {
         }
       } else {
         lastTransferSig = '';
+      }
+    }
+  }
+
+  // Slice AB — Area1 warehouse panel (Broken Lamp hub)
+  {
+    const whPanel = document.getElementById('warehouse-panel');
+    if (whPanel) {
+      const atHub = playerAtWarehouse(s);
+      whPanel.hidden = !atHub;
+      if (atHub) {
+        ensureWarehouse(s);
+        const courierHere = courierAtWarehouse(s);
+        if (!ui.warehouseWho) ui.warehouseWho = 'player';
+        if (ui.warehouseWho === 'courier' && !courierHere) ui.warehouseWho = 'player';
+        const who = ui.warehouseWho === 'courier' && courierHere ? 'courier' : 'player';
+        ui.warehouseWho = who;
+
+        const tabs = document.getElementById('warehouse-who-tabs');
+        if (tabs) {
+          tabs.hidden = !courierHere;
+          const bp = document.getElementById('btn-wh-tab-player');
+          const bc = document.getElementById('btn-wh-tab-courier');
+          if (bp) bp.classList.toggle('active', who === 'player');
+          if (bc) bc.classList.toggle('active', who === 'courier');
+        }
+        setText(
+          'warehouse-who-label',
+          who === 'courier' ? 'Moving: courier cargo ↔ warehouse' : 'Moving: player cargo ↔ warehouse',
+        );
+
+        const used = warehouseUsed(s);
+        setText('warehouse-cap', `${used} / ${AREA1_WAREHOUSE_CAP} g`);
+
+        const bag = who === 'courier' ? s.courier : s;
+        const bagUsed = who === 'courier' ? courierCargoUsed(s.courier) : cargoUsed(s);
+        const bagCap = who === 'courier' ? s.courier.capacity : s.capacity;
+        const free = Math.max(0, bagCap - bagUsed);
+
+        const wh = s.warehouse.area1;
+        const sigParts = [
+          who,
+          used,
+          bagUsed,
+          bagCap,
+          courierHere ? 1 : 0,
+          ...GOODS.map((g) => {
+            const wN = wh.cargo[g.id] || 0;
+            const bN = bag.cargo[g.id] || 0;
+            const wC = depleteRateForGood(g.id) > 0 ? Math.round(warehouseGoodCondition(s, g.id)) : '-';
+            const bC = depleteRateForGood(g.id) > 0
+              ? Math.round(who === 'courier' ? courierGoodCondition(s.courier, g.id) : goodCondition(s, g.id))
+              : '-';
+            return `${g.id}:${wN}:${bN}:${wC}:${bC}`;
+          }),
+        ];
+        const wsig = sigParts.join('|');
+        if (wsig !== lastWarehouseSig) {
+          lastWarehouseSig = wsig;
+          const ul = document.getElementById('warehouse-list');
+          const emptyEl = document.getElementById('warehouse-empty');
+          const rows = [];
+          for (const g of GOODS) {
+            const wN = wh.cargo[g.id] || 0;
+            const bN = bag.cargo[g.id] || 0;
+            if (wN <= 0 && bN <= 0) continue;
+            const depletes = depleteRateForGood(g.id) > 0;
+            const wCond = depletes && wN > 0 ? ` · wh ${Math.round(warehouseGoodCondition(s, g.id))}%` : '';
+            const bCond = depletes && bN > 0
+              ? ` · cargo ${Math.round(who === 'courier' ? courierGoodCondition(s.courier, g.id) : goodCondition(s, g.id))}%`
+              : '';
+            const unit = g.weightG || 0;
+            const maxFit = unit > 0 ? Math.floor(free / unit) : 0;
+            rows.push(`<li data-good="${g.id}">
+              <span class="wh-meta">${g.name} · warehouse ${wN}${wCond} · ${who === 'courier' ? 'courier' : 'you'} ${bN}${bCond}</span>
+              <div class="wh-actions">
+                <input type="number" class="qty" data-wh-qty="${g.id}" min="1" value="1" />
+                <button type="button" data-act="wh-deposit" data-good="${g.id}" data-mode="qty" ${bN <= 0 ? 'disabled' : ''}>Deposit N</button>
+                <button type="button" data-act="wh-deposit" data-good="${g.id}" data-mode="all" ${bN <= 0 ? 'disabled' : ''}>Deposit all</button>
+                <button type="button" data-act="wh-withdraw" data-good="${g.id}" data-mode="qty" ${wN <= 0 ? 'disabled' : ''}>Withdraw N</button>
+                <button type="button" data-act="wh-withdraw" data-good="${g.id}" data-mode="max" ${wN <= 0 || maxFit <= 0 ? 'disabled' : ''}>Withdraw max</button>
+              </div>
+            </li>`);
+          }
+          if (ul) ul.innerHTML = rows.join('');
+          if (emptyEl) emptyEl.hidden = rows.length > 0;
+        }
+      } else {
+        lastWarehouseSig = '';
       }
     }
   }

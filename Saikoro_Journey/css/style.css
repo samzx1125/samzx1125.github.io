@@ -916,3 +916,44 @@ body.opening-active > main {
   margin: 0.35rem 0 0.15rem;
   font-size: 0.85rem;
 }
+
+/* Slice AB — Area1 warehouse panel */
+#warehouse-panel {
+  margin-bottom: 0.75rem;
+}
+.warehouse-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0;
+}
+.warehouse-tabs button.active {
+  background: #222;
+  color: #eee;
+  border-color: #111;
+}
+.warehouse-list {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+}
+.warehouse-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  margin: 0.35rem 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border, #ccc);
+  padding-bottom: 0.35rem;
+}
+.warehouse-list li .wh-meta {
+  flex: 1 1 100%;
+}
+.warehouse-list input.qty { width: 3.5rem; }
+.warehouse-list .wh-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}

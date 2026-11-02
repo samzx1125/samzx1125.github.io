@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028an';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY } from './economy-data.js?v=z1-20261028an';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028ao';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ao';
 
 /**
  * @typedef {{
@@ -28,6 +28,7 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeight
  *   chosenBodyId: string | null,
  *   openingDone: boolean,
  *   personal: Record<string, number>, // Slice U — key/consumable qty by personal id
+ *   warehouse: { area1: { cargo: Record<string, number>, condition: Record<string, number> } }, // Slice AB
  * }} GameState
  *
  * @typedef {{
@@ -86,6 +87,7 @@ export function createInitialState() {
     chosenBodyId: null,
     openingDone: false,
     personal: {},
+    warehouse: { area1: { cargo: {}, condition: {} } },
   };
   // start station counts as visited
   const startRow = prices[START_LOC] || {};
@@ -204,4 +206,47 @@ export function snapshotVisitedPrices(s, locId) {
 /** Default courier capacity constant re-export helper. */
 export function defaultCourierCapacity() {
   return COURIER_CAPACITY;
+}
+
+/** Ensure Area1 warehouse bags exist. @param {GameState} s */
+export function ensureWarehouse(s) {
+  if (!s.warehouse) s.warehouse = { area1: { cargo: {}, condition: {} } };
+  if (!s.warehouse.area1) s.warehouse.area1 = { cargo: {}, condition: {} };
+  if (!s.warehouse.area1.cargo || typeof s.warehouse.area1.cargo !== 'object') s.warehouse.area1.cargo = {};
+  if (!s.warehouse.area1.condition || typeof s.warehouse.area1.condition !== 'object') s.warehouse.area1.condition = {};
+  return s.warehouse.area1;
+}
+
+/** Total Area1 warehouse mass in grams. @param {GameState} s */
+export function warehouseUsed(s) {
+  const wh = s.warehouse?.area1;
+  if (!wh?.cargo) return 0;
+  let grams = 0;
+  for (const g of GOODS) {
+    const n = wh.cargo[g.id] || 0;
+    if (n) grams += n * (g.weightG || 0);
+  }
+  return grams;
+}
+
+/** Warehouse condition % for a good (100 if unset). */
+export function warehouseGoodCondition(s, goodId) {
+  const wh = s.warehouse?.area1;
+  if (!wh) return 0;
+  const n = wh.cargo[goodId] || 0;
+  if (n <= 0) return 0;
+  const v = wh.condition?.[goodId];
+  return v == null ? 100 : Math.max(0, Math.min(100, v));
+}
+
+/** Player docked at Area1 warehouse hub (Broken Lamp). */
+export function playerAtWarehouse(s) {
+  return !s.travel && s.locationId === AREA1_WAREHOUSE_LOC;
+}
+
+/** Courier docked at Area1 warehouse hub. */
+export function courierAtWarehouse(s) {
+  const c = s.courier;
+  if (!c || c.travel) return false;
+  return c.locationId === AREA1_WAREHOUSE_LOC;
 }

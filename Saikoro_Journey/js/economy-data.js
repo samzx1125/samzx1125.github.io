@@ -1,4 +1,4 @@
-import { TRAIN_SPEED } from './map-data.js?v=z1-20261028an';
+import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028ao';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number }} GoodDef */
 
@@ -357,6 +357,14 @@ export const COURIER_UNLOCK_LOC = 'loc_a01z01l003_star_ash';
 export const COURIER_HIRE_COST = 0;
 export const COURIER_SEED_GOLD = 300;
 export const COURIER_CAPACITY = 3000;
+
+/**
+ * Slice AB — Area1 warehouse / safe house (systems.md §4.1).
+ * Hub = Broken Lamp (START_LOC). Panel-at-hub only — no new map node.
+ * Soft cap 20000g total warehouse mass (goods only; no gold / no quest lots).
+ */
+export const AREA1_WAREHOUSE_LOC = START_LOC;
+export const AREA1_WAREHOUSE_CAP = 20000;
 
 /**
  * Slice O — A→B transport quests (economy.md §5 / systems.md §5 / map-area1 §4).

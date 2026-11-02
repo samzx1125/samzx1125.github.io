@@ -6,7 +6,11 @@ import {
   courierCargoUsed,
   courierGoodCondition,
   emptyCargoMap,
-} from './state.js?v=z1-20261028an';
+  ensureWarehouse,
+  warehouseUsed,
+  playerAtWarehouse,
+  courierAtWarehouse,
+} from './state.js?v=z1-20261028ao';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -40,8 +44,10 @@ import {
   SPEED_MAX_LEVEL,
   speedUpgradeCost,
   effectiveSpeed,
-} from './economy-data.js?v=z1-20261028an';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028an';
+  AREA1_WAREHOUSE_LOC,
+  AREA1_WAREHOUSE_CAP,
+} from './economy-data.js?v=z1-20261028ao';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028ao';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -839,6 +845,115 @@ export function tryTransferGood(s, goodId, dir, qty) {
     }
   } else {
     return { ok: false, reason: 'dir' };
+  }
+  return { ok: true };
+}
+
+
+/**
+ * Slice AB — deposit goods into Area1 warehouse (Broken Lamp hub).
+ * @param {'player'|'courier'} who
+ */
+export function tryWarehouseDeposit(s, who, goodId, qty) {
+  if (who !== 'player' && who !== 'courier') return { ok: false, reason: 'who' };
+  if (!GOODS.some((g) => g.id === goodId)) return { ok: false, reason: 'good' };
+  qty = Math.floor(Number(qty));
+  if (!(qty > 0)) return { ok: false, reason: 'qty' };
+  const w = goodWeightG(goodId);
+  if (!(w > 0)) return { ok: false, reason: 'weight' };
+
+  if (who === 'player') {
+    if (!playerAtWarehouse(s)) return { ok: false, reason: 'not_at_hub' };
+  } else {
+    if (!courierAtWarehouse(s)) return { ok: false, reason: 'not_at_hub' };
+    if (!s.courier) return { ok: false, reason: 'no_courier' };
+  }
+
+  const bag = who === 'player' ? s : s.courier;
+  const have = bag.cargo[goodId] || 0;
+  if (have < qty) return { ok: false, reason: 'stock' };
+
+  // 0% waste goods already gone — refuse if depleting and condition <= 0
+  if (depleteRateForGood(goodId) > 0) {
+    const cond = bag.condition?.[goodId] != null ? bag.condition[goodId] : 100;
+    if (cond <= 0) return { ok: false, reason: 'waste' };
+  }
+
+  const wh = ensureWarehouse(s);
+  const used = warehouseUsed(s);
+  if (used + w * qty > AREA1_WAREHOUSE_CAP) return { ok: false, reason: 'warehouse_cap' };
+
+  const hadSrc = have;
+  const hadWh = wh.cargo[goodId] || 0;
+  const srcCond = depleteRateForGood(goodId) > 0
+    ? (bag.condition?.[goodId] != null ? bag.condition[goodId] : 100)
+    : null;
+
+  bag.cargo[goodId] = hadSrc - qty;
+  if ((bag.cargo[goodId] || 0) <= 0) {
+    bag.cargo[goodId] = 0;
+    if (bag.condition) delete bag.condition[goodId];
+  }
+
+  wh.cargo[goodId] = hadWh + qty;
+  if (srcCond != null) {
+    if (!wh.condition) wh.condition = {};
+    const oldW = hadWh > 0 && wh.condition[goodId] != null ? wh.condition[goodId] : 100;
+    wh.condition[goodId] = (oldW * hadWh + srcCond * qty) / (hadWh + qty);
+  }
+  return { ok: true };
+}
+
+/**
+ * Slice AB — withdraw goods from Area1 warehouse into player or courier cargo.
+ * @param {'player'|'courier'} who
+ */
+export function tryWarehouseWithdraw(s, who, goodId, qty) {
+  if (who !== 'player' && who !== 'courier') return { ok: false, reason: 'who' };
+  if (!GOODS.some((g) => g.id === goodId)) return { ok: false, reason: 'good' };
+  qty = Math.floor(Number(qty));
+  if (!(qty > 0)) return { ok: false, reason: 'qty' };
+  const w = goodWeightG(goodId);
+  if (!(w > 0)) return { ok: false, reason: 'weight' };
+
+  if (who === 'player') {
+    if (!playerAtWarehouse(s)) return { ok: false, reason: 'not_at_hub' };
+  } else {
+    if (!courierAtWarehouse(s)) return { ok: false, reason: 'not_at_hub' };
+    if (!s.courier) return { ok: false, reason: 'no_courier' };
+  }
+
+  const wh = ensureWarehouse(s);
+  const have = wh.cargo[goodId] || 0;
+  if (have < qty) return { ok: false, reason: 'stock' };
+
+  if (depleteRateForGood(goodId) > 0) {
+    const cond = wh.condition?.[goodId] != null ? wh.condition[goodId] : 100;
+    if (cond <= 0) return { ok: false, reason: 'waste' };
+  }
+
+  const bag = who === 'player' ? s : s.courier;
+  const used = who === 'player' ? cargoUsed(s) : courierCargoUsed(s.courier);
+  const cap = who === 'player' ? s.capacity : s.courier.capacity;
+  if (used + w * qty > cap) return { ok: false, reason: 'capacity' };
+
+  const hadWh = have;
+  const hadDst = bag.cargo[goodId] || 0;
+  const whCond = depleteRateForGood(goodId) > 0
+    ? (wh.condition?.[goodId] != null ? wh.condition[goodId] : 100)
+    : null;
+
+  wh.cargo[goodId] = hadWh - qty;
+  if ((wh.cargo[goodId] || 0) <= 0) {
+    wh.cargo[goodId] = 0;
+    if (wh.condition) delete wh.condition[goodId];
+  }
+
+  bag.cargo[goodId] = hadDst + qty;
+  if (whCond != null) {
+    if (!bag.condition) bag.condition = {};
+    const oldD = hadDst > 0 && bag.condition[goodId] != null ? bag.condition[goodId] : 100;
+    bag.condition[goodId] = (oldD * hadDst + whCond * qty) / (hadDst + qty);
   }
   return { ok: true };
 }

@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028an" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028an" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028ao" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028ao" />
 </head>
 <body>
   <header class="top-row">
@@ -160,6 +160,18 @@
         <button type="button" class="primary" id="btn-travel" data-act="travel-to" disabled>Travel</button>
         <p id="station-travel-hint" class="hint"></p>
       </section>
+      <section id="warehouse-panel" hidden>
+        <h2>Area 1 Safe House / Warehouse</h2>
+        <p id="warehouse-cap" class="hint">0 / 20000 g</p>
+        <p class="hint">Broken Lamp hub · goods only · no quest lots. Soft cap 20000g.</p>
+        <div id="warehouse-who-tabs" class="warehouse-tabs" hidden>
+          <button type="button" data-act="wh-tab-player" id="btn-wh-tab-player" class="active">Player ↔ Warehouse</button>
+          <button type="button" data-act="wh-tab-courier" id="btn-wh-tab-courier">Courier ↔ Warehouse</button>
+        </div>
+        <p id="warehouse-who-label" class="muted">Moving: player cargo</p>
+        <ul id="warehouse-list" class="warehouse-list"></ul>
+        <p id="warehouse-empty" class="hint" hidden>empty · nothing in cargo either</p>
+      </section>
       <section id="quote-panel">
         <h2 id="quote-title">quotes</h2>
         <div class="loc-travel-bar">
@@ -252,6 +264,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028an"></script>
+  <script type="module" src="js/main.js?v=z1-20261028ao"></script>
 </body>
 </html>

@@ -1,9 +1,10 @@
 /** localStorage save/load — SAVE_VERSION bump requires migration. */
-import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028an';
-import { emptyCargoMap } from './state.js?v=z1-20261028an';
+import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028ao';
+import { emptyCargoMap } from './state.js?v=z1-20261028ao';
 
-export const SAVE_VERSION = 8;
-const KEY = 'saikoro_journey_z1_v8';
+export const SAVE_VERSION = 9;
+const KEY = 'saikoro_journey_z1_v9';
+const KEY_V8 = 'saikoro_journey_z1_v8';
 const KEY_V7 = 'saikoro_journey_z1_v7';
 const KEY_V6 = 'saikoro_journey_z1_v6';
 const KEY_V5 = 'saikoro_journey_z1_v5';
@@ -92,6 +93,25 @@ export function serialize(s) {
             .filter(([, n]) => n > 0),
         )
       : {},
+    warehouse: (() => {
+      const wh = s.warehouse?.area1;
+      const cargo = {};
+      const condition = {};
+      if (wh?.cargo && typeof wh.cargo === 'object') {
+        for (const g of GOODS) {
+          const n = Math.floor(Number(wh.cargo[g.id]));
+          if (Number.isFinite(n) && n > 0) cargo[g.id] = n;
+        }
+      }
+      if (wh?.condition && typeof wh.condition === 'object') {
+        for (const g of GOODS) {
+          if (!cargo[g.id]) continue;
+          const n = Number(wh.condition[g.id]);
+          if (Number.isFinite(n)) condition[g.id] = Math.max(0, Math.min(100, n));
+        }
+      }
+      return { area1: { cargo, condition } };
+    })(),
     savedAt: Date.now(),
     // stationBuys not persisted — mid-visit buffer
   };
@@ -151,8 +171,8 @@ function applyCourier(dataCourier) {
  * @param {any} data
  */
 export function applySave(s, data) {
-  // Accept v2–v8 (v8 = speedLevel)
-  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== 6 && data.v !== 7 && data.v !== 8 && data.v !== SAVE_VERSION)) return false;
+  // Accept v2–v9 (v9 = Area1 warehouse)
+  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== 6 && data.v !== 7 && data.v !== 8 && data.v !== 9 && data.v !== SAVE_VERSION)) return false;
   s.gold = data.gold;
   s.cargo = { ...data.cargo };
   s.condition = data.condition && typeof data.condition === 'object' ? { ...data.condition } : {};
@@ -271,6 +291,24 @@ export function applySave(s, data) {
       if (Number.isFinite(n) && n > 0) s.personal[id] = n;
     }
   }
+  // Slice AB — Area1 warehouse (v9+); older → empty
+  s.warehouse = { area1: { cargo: {}, condition: {} } };
+  if (data.v >= 9 && data.warehouse?.area1 && typeof data.warehouse.area1 === 'object') {
+    const src = data.warehouse.area1;
+    if (src.cargo && typeof src.cargo === 'object') {
+      for (const g of GOODS) {
+        const n = Math.floor(Number(src.cargo[g.id]));
+        if (Number.isFinite(n) && n > 0) s.warehouse.area1.cargo[g.id] = n;
+      }
+    }
+    if (src.condition && typeof src.condition === 'object') {
+      for (const g of GOODS) {
+        if (!(s.warehouse.area1.cargo[g.id] > 0)) continue;
+        const n = Number(src.condition[g.id]);
+        if (Number.isFinite(n)) s.warehouse.area1.condition[g.id] = Math.max(0, Math.min(100, n));
+      }
+    }
+  }
   lastSavedAt = typeof data.savedAt === 'number' ? data.savedAt : Date.now();
   return true;
 }
@@ -292,27 +330,31 @@ export function loadGame(s) {
   try {
     let raw = localStorage.getItem(KEY);
     if (!raw) {
-      // migrate v7 → v8
+      // migrate v8 → v9
+      raw = localStorage.getItem(KEY_V8);
+    }
+    if (!raw) {
+      // migrate v7 → v9
       raw = localStorage.getItem(KEY_V7);
     }
     if (!raw) {
-      // migrate v6 → v8
+      // migrate v6 → v9
       raw = localStorage.getItem(KEY_V6);
     }
     if (!raw) {
-      // migrate v5 → v8
+      // migrate v5 → v9
       raw = localStorage.getItem(KEY_V5);
     }
     if (!raw) {
-      // migrate v4 → v8
+      // migrate v4 → v9
       raw = localStorage.getItem(KEY_V4);
     }
     if (!raw) {
-      // migrate v3 → v8
+      // migrate v3 → v9
       raw = localStorage.getItem(KEY_V3);
     }
     if (!raw) {
-      // migrate v2 → v8
+      // migrate v2 → v9
       raw = localStorage.getItem(KEY_V2);
     }
     if (!raw) return false;
@@ -330,6 +372,7 @@ export function loadGame(s) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(KEY_V8);
     localStorage.removeItem(KEY_V7);
     localStorage.removeItem(KEY_V6);
     localStorage.removeItem(KEY_V5);
