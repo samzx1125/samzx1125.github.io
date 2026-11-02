@@ -2,9 +2,10 @@
  * Slice S — opening: name + body + mirror
  * Steps: name → body → mirror → enter game.
  */
-import { saveGame } from './saving.js?v=z1-20261028ag';
-import { createInitialState } from './state.js?v=z1-20261028ag';
-import { render } from './view.js?v=z1-20261028ag';
+import { saveGame } from './saving.js?v=z1-20261028ah';
+import { createInitialState } from './state.js?v=z1-20261028ah';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028ah';
+import { render } from './view.js?v=z1-20261028ah';
 
 export const BODY_IDS = ['body_a', 'body_b', 'body_c', 'body_d'];
 
@@ -132,6 +133,10 @@ export function mountOpening(state, ui, opts = {}) {
     state.openingDone = true;
     if (!state.playerName) state.playerName = 'Saikoro';
     if (!state.chosenBodyId) state.chosenBodyId = 'body_a';
+    if (!state.personal || typeof state.personal !== 'object') state.personal = {};
+    if (!(state.personal[KEY_MIRROR_RESIDUE] > 0)) {
+      state.personal[KEY_MIRROR_RESIDUE] = 1;
+    }
     saveGame(state);
     setOverlayVisible(false);
     if (ui) ui.lastMsg = `welcome, ${state.playerName}`;

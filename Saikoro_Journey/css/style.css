@@ -452,6 +452,10 @@ aside code {
 }
 .cargo-list li { margin: 0.15rem 0; }
 
+#personal-panel { margin-top: 0.75rem; border-top: 1px solid var(--border, #ccc); padding-top: 0.5rem; }
+.personal-list li .kind { color: var(--muted); font-size: 0.75rem; }
+.personal-list li .pdesc { display: block; color: var(--muted); font-size: 0.75rem; margin-top: 0.1rem; }
+
 .dest-list {
   list-style: none;
   margin: 0;

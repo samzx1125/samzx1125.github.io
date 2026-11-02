@@ -1,9 +1,10 @@
 /** localStorage save/load — SAVE_VERSION bump requires migration. */
-import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028ag';
-import { emptyCargoMap } from './state.js?v=z1-20261028ag';
+import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028ah';
+import { emptyCargoMap } from './state.js?v=z1-20261028ah';
 
-export const SAVE_VERSION = 5;
-const KEY = 'saikoro_journey_z1_v5';
+export const SAVE_VERSION = 6;
+const KEY = 'saikoro_journey_z1_v6';
+const KEY_V5 = 'saikoro_journey_z1_v5';
 const KEY_V4 = 'saikoro_journey_z1_v4';
 const KEY_V3 = 'saikoro_journey_z1_v3';
 const KEY_V2 = 'saikoro_journey_z1_v2';
@@ -80,6 +81,13 @@ export function serialize(s) {
     playerName: typeof s.playerName === 'string' && s.playerName.trim() ? s.playerName.trim().slice(0, 24) : 'Saikoro',
     chosenBodyId: s.chosenBodyId || 'body_a',
     openingDone: !!s.openingDone,
+    personal: s.personal && typeof s.personal === 'object'
+      ? Object.fromEntries(
+          Object.entries(s.personal)
+            .map(([id, n]) => [id, Math.max(0, Math.floor(Number(n) || 0))])
+            .filter(([, n]) => n > 0),
+        )
+      : {},
     savedAt: Date.now(),
     // stationBuys not persisted — mid-visit buffer
   };
@@ -139,8 +147,8 @@ function applyCourier(dataCourier) {
  * @param {any} data
  */
 export function applySave(s, data) {
-  // Accept v2 (no courier), v3 (courier), v4 (opening), v5 (deposits + capacityLevel)
-  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== SAVE_VERSION)) return false;
+  // Accept v2–v6 (v6 = personal inventory)
+  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== 6 && data.v !== SAVE_VERSION)) return false;
   s.gold = data.gold;
   s.cargo = { ...data.cargo };
   s.condition = data.condition && typeof data.condition === 'object' ? { ...data.condition } : {};
@@ -236,6 +244,15 @@ export function applySave(s, data) {
     s.chosenBodyId = 'body_a';
     s.openingDone = true;
   }
+  // Slice U — personal / key inventory (v6+); older → {}
+  s.personal = {};
+  if (data.v >= 6 && data.personal && typeof data.personal === 'object') {
+    for (const id of Object.keys(data.personal)) {
+      if (typeof id !== 'string' || !id) continue;
+      const n = Math.floor(Number(data.personal[id]));
+      if (Number.isFinite(n) && n > 0) s.personal[id] = n;
+    }
+  }
   lastSavedAt = typeof data.savedAt === 'number' ? data.savedAt : Date.now();
   return true;
 }
@@ -257,15 +274,19 @@ export function loadGame(s) {
   try {
     let raw = localStorage.getItem(KEY);
     if (!raw) {
-      // migrate v4 → v5
+      // migrate v5 → v6
+      raw = localStorage.getItem(KEY_V5);
+    }
+    if (!raw) {
+      // migrate v4 → v6
       raw = localStorage.getItem(KEY_V4);
     }
     if (!raw) {
-      // migrate v3 → v5
+      // migrate v3 → v6
       raw = localStorage.getItem(KEY_V3);
     }
     if (!raw) {
-      // migrate v2 → v5
+      // migrate v2 → v6
       raw = localStorage.getItem(KEY_V2);
     }
     if (!raw) return false;
@@ -283,6 +304,7 @@ export function loadGame(s) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(KEY_V5);
     localStorage.removeItem(KEY_V4);
     localStorage.removeItem(KEY_V3);
     localStorage.removeItem(KEY_V2);

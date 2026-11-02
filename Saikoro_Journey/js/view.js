@@ -1,7 +1,8 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ag';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity } from './economy-data.js?v=z1-20261028ag';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ag';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ag';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ah';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity } from './economy-data.js?v=z1-20261028ah';
+import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028ah';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ah';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ah';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -21,6 +22,7 @@ let lastQuoteSig = '';
 let lastDestSig = '';
 /** Last cargo-list signature — skip rebuild so Options click-outside sees inventory clicks. */
 let lastCargoSig = '';
+let lastPersonalSig = '';
 /** @type {ReturnType<typeof setTimeout> | null} */
 let toastTimer = null;
 let lastToastText = '';
@@ -206,6 +208,28 @@ function cargoSignature(s) {
   }
   return parts.join('|') || 'empty';
 }
+
+
+/**
+ * Personal-list signature — qty per held personal id.
+ * @param {import('./state.js').GameState} s
+ */
+function personalSignature(s) {
+  const bag = s.personal && typeof s.personal === 'object' ? s.personal : {};
+  const parts = [];
+  for (const d of PERSONAL_DEFS) {
+    const n = bag[d.id] || 0;
+    if (n > 0) parts.push(d.id, String(n));
+  }
+  // include unknown ids so debug grants still show
+  for (const id of Object.keys(bag).sort()) {
+    if (PERSONAL_DEFS.some((d) => d.id === id)) continue;
+    const n = bag[id] || 0;
+    if (n > 0) parts.push(id, String(n));
+  }
+  return parts.join('|') || 'empty';
+}
+
 
 /**
  * @param {import('./state.js').GameState} s
@@ -577,6 +601,39 @@ export function render(s, ui = {}) {
       }
       cargoList.innerHTML = rows.join('');
       if (cargoEmpty) cargoEmpty.hidden = rows.length > 0;
+    }
+  }
+
+  // Slice U — personal / key inventory (no weight)
+  {
+    const personalList = document.getElementById('personal-list');
+    const personalEmpty = document.getElementById('personal-empty');
+    if (personalList) {
+      const psig = personalSignature(s);
+      if (psig !== lastPersonalSig) {
+        lastPersonalSig = psig;
+        const bag = s.personal && typeof s.personal === 'object' ? s.personal : {};
+        const rows = [];
+        for (const d of PERSONAL_DEFS) {
+          const n = bag[d.id] || 0;
+          if (n <= 0) continue;
+          const qty = d.kind === 'key' && n === 1 ? '' : ` ×${n}`;
+          const kind = d.kind === 'key' ? 'key' : 'item';
+          rows.push(
+            `<li title="${d.id}"><strong>${d.name}</strong>${qty} <span class="kind">· ${kind}</span>` +
+              (d.desc ? `<span class="pdesc">${d.desc}</span>` : '') +
+              `</li>`,
+          );
+        }
+        for (const id of Object.keys(bag).sort()) {
+          if (PERSONAL_DEFS.some((d) => d.id === id)) continue;
+          const n = bag[id] || 0;
+          if (n <= 0) continue;
+          rows.push(`<li title="${id}">${personalName(id)} ×${n}</li>`);
+        }
+        personalList.innerHTML = rows.join('');
+        if (personalEmpty) personalEmpty.hidden = rows.length > 0;
+      }
     }
   }
 
