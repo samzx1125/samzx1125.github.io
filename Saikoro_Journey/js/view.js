@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028ac';
-import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC } from './economy-data.js?v=z1-20261028ac';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ac';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ac';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028ad';
+import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC } from './economy-data.js?v=z1-20261028ad';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ad';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ad';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -332,6 +332,8 @@ function renderQuotes(s) {
  * @param {{ lastMsg?: string }} ui
  */
 export function render(s, ui = {}) {
+  const nameEl = document.getElementById('hud-name');
+  if (nameEl) nameEl.textContent = s.playerName || 'Saikoro';
   const goldEl = document.getElementById('hud-gold');
   if (goldEl) {
     if (lastRenderedGold != null && lastRenderedGold !== s.gold) {

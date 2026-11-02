@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028ac" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028ac" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028ad" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028ad" />
 </head>
 <body>
   <header class="top-row">
     <h1>Saikoro Journey · Z1</h1>
     <div class="hud">
+      <span>name <strong id="hud-name">Saikoro</strong></span>
       <span>gold <strong id="hud-gold">0</strong></span>
       <span class="hud-cargo-wrap">cargo <strong id="hud-cargo">0 / 5000 g</strong>
         <span class="bar hud-bar" aria-hidden="true"><div id="hud-cargo-bar" class="bar-fill"></div></span>
@@ -40,6 +41,7 @@
           <p class="hint">localStorage only (this browser).</p>
           <p id="save-stamp" class="muted">never saved</p>
           <button type="button" class="primary" data-act="save">Save</button>
+          <button type="button" data-act="new-game">New game</button>
           <button type="button" data-act="reset-save">Clear save</button>
         </section>
       </div>
@@ -161,6 +163,47 @@
       <p id="toast"></p>
     </aside>
   </main>
-  <script type="module" src="js/main.js?v=z1-20261028ac"></script>
+  <div id="opening-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="opening-title">
+    <div class="opening-card">
+      <h1 id="opening-title">Saikoro Journey</h1>
+      <p class="opening-sub muted">before the rails</p>
+
+      <section id="opening-step-name">
+        <h2>Name</h2>
+        <p class="hint">What should the sand call you?</p>
+        <label class="opening-label">
+          <span class="sr-only">Player name</span>
+          <input type="text" id="opening-name" maxlength="24" value="Saikoro" autocomplete="off" />
+        </label>
+        <div class="opening-actions">
+          <button type="button" class="primary" id="opening-name-next">Next</button>
+        </div>
+      </section>
+
+      <section id="opening-step-body" hidden>
+        <h2>Body</h2>
+        <p class="hint">Pick a silhouette. This is you… right?</p>
+        <div id="opening-body-grid" class="opening-body-grid" role="group" aria-label="Body options"></div>
+        <div class="opening-actions">
+          <button type="button" id="opening-body-back">Back</button>
+          <button type="button" class="primary" id="opening-body-next">Next</button>
+        </div>
+      </section>
+
+      <section id="opening-step-mirror" hidden>
+        <h2>Mirror</h2>
+        <div class="opening-mirror-frame" aria-hidden="true">
+          <span id="opening-mirror-glyph" class="opening-silhouette opening-mirror-glyph">■</span>
+        </div>
+        <p id="opening-mirror-chosen" class="muted"></p>
+        <p id="opening-mirror-flavour" class="opening-flavour hint"></p>
+        <div class="opening-actions">
+          <button type="button" id="opening-mirror-back">Back</button>
+          <button type="button" class="primary" id="opening-enter">Enter Zone 1</button>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script type="module" src="js/main.js?v=z1-20261028ad"></script>
 </body>
 </html>

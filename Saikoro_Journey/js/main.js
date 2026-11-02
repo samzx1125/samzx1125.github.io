@@ -1,24 +1,38 @@
 /**
  * SaikoroJourney — Zone1 boot
  */
-import { createInitialState } from './state.js?v=z1-20261028ac';
-import { tick } from './engine.js?v=z1-20261028ac';
-import { mountView, render } from './view.js?v=z1-20261028ac';
-import { bindEvents, getUi } from './events.js?v=z1-20261028ac';
-import { loadGame, saveGame } from './saving.js?v=z1-20261028ac';
-import { locName } from './map-data.js?v=z1-20261028ac';
+import { createInitialState } from './state.js?v=z1-20261028ad';
+import { tick } from './engine.js?v=z1-20261028ad';
+import { mountView, render } from './view.js?v=z1-20261028ad';
+import { bindEvents, getUi } from './events.js?v=z1-20261028ad';
+import { loadGame, saveGame } from './saving.js?v=z1-20261028ad';
+import { locName } from './map-data.js?v=z1-20261028ad';
+import { mountOpening } from './opening.js?v=z1-20261028ad';
 
 const state = createInitialState();
 const loaded = loadGame(state);
 mountView();
-bindEvents(state);
 const ui = getUi();
+const opening = mountOpening(state, ui);
+bindEvents(state, { opening });
 if (loaded) ui.lastMsg = 'save loaded';
 render(state, ui);
+
+if (!state.openingDone) {
+  opening.show();
+} else {
+  opening.hide();
+}
 
 let wasTraveling = false;
 let wasCourierTraveling = false;
 function loop(now) {
+  // Pause sim while opening is up
+  if (!state.openingDone) {
+    render(state, getUi());
+    requestAnimationFrame(loop);
+    return;
+  }
   tick(state, now);
   if (wasTraveling && !state.travel) {
     saveGame(state);

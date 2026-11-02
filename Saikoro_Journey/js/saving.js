@@ -1,9 +1,10 @@
 /** localStorage save/load — SAVE_VERSION bump requires migration. */
-import { GOODS } from './economy-data.js?v=z1-20261028ac';
-import { emptyCargoMap } from './state.js?v=z1-20261028ac';
+import { GOODS } from './economy-data.js?v=z1-20261028ad';
+import { emptyCargoMap } from './state.js?v=z1-20261028ad';
 
-export const SAVE_VERSION = 3;
-const KEY = 'saikoro_journey_z1_v3';
+export const SAVE_VERSION = 4;
+const KEY = 'saikoro_journey_z1_v4';
+const KEY_V3 = 'saikoro_journey_z1_v3';
 const KEY_V2 = 'saikoro_journey_z1_v2';
 
 /** @type {number | null} */
@@ -62,6 +63,9 @@ export function serialize(s) {
         )
       : {},
     courier: serializeCourier(s.courier),
+    playerName: typeof s.playerName === 'string' && s.playerName.trim() ? s.playerName.trim().slice(0, 24) : 'Saikoro',
+    chosenBodyId: s.chosenBodyId || 'body_a',
+    openingDone: !!s.openingDone,
     savedAt: Date.now(),
     // stationBuys not persisted — mid-visit buffer
   };
@@ -121,8 +125,8 @@ function applyCourier(dataCourier) {
  * @param {any} data
  */
 export function applySave(s, data) {
-  // Accept v2 (no courier) and v3 (with courier)
-  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== SAVE_VERSION)) return false;
+  // Accept v2 (no courier), v3 (courier), v4 (opening identity)
+  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== SAVE_VERSION)) return false;
   s.gold = data.gold;
   s.cargo = { ...data.cargo };
   s.condition = data.condition && typeof data.condition === 'object' ? { ...data.condition } : {};
@@ -181,6 +185,19 @@ export function applySave(s, data) {
   s.courier = data.v >= 3 ? applyCourier(data.courier) : null;
   s.lastPriceDriftMs = 0;
   s.tradeImpact = {};
+  // Slice S — opening identity
+  // v2/v3 existing saves: skip opening (openingDone=true) with defaults
+  if (data.v >= 4) {
+    const nm = typeof data.playerName === 'string' ? data.playerName.trim().slice(0, 24) : '';
+    s.playerName = nm || 'Saikoro';
+    const bid = typeof data.chosenBodyId === 'string' ? data.chosenBodyId : 'body_a';
+    s.chosenBodyId = ['body_a', 'body_b', 'body_c', 'body_d'].includes(bid) ? bid : 'body_a';
+    s.openingDone = !!data.openingDone;
+  } else {
+    s.playerName = 'Saikoro';
+    s.chosenBodyId = 'body_a';
+    s.openingDone = true;
+  }
   lastSavedAt = typeof data.savedAt === 'number' ? data.savedAt : Date.now();
   return true;
 }
@@ -202,11 +219,20 @@ export function loadGame(s) {
   try {
     let raw = localStorage.getItem(KEY);
     if (!raw) {
-      // migrate v2 → v3 (courier null)
+      // migrate v3 → v4
+      raw = localStorage.getItem(KEY_V3);
+    }
+    if (!raw) {
+      // migrate v2 → v4
       raw = localStorage.getItem(KEY_V2);
     }
     if (!raw) return false;
-    return applySave(s, JSON.parse(raw));
+    const ok = applySave(s, JSON.parse(raw));
+    // rewrite into current key once loaded from older key
+    if (ok) {
+      try { localStorage.setItem(KEY, JSON.stringify(serialize(s))); } catch { /* ignore */ }
+    }
+    return ok;
   } catch {
     return false;
   }
@@ -215,6 +241,7 @@ export function loadGame(s) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(KEY_V3);
     localStorage.removeItem(KEY_V2);
     lastSavedAt = null;
   } catch {

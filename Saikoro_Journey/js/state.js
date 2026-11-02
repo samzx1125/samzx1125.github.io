@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028ac';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG, COURIER_CAPACITY } from './economy-data.js?v=z1-20261028ac';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028ad';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG, COURIER_CAPACITY } from './economy-data.js?v=z1-20261028ad';
 
 /**
  * @typedef {{
@@ -20,6 +20,9 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG, COURIER_CAPACITY
  *   stationBuys: Record<string, { sum: number, qty: number }>,
  *   lastPriceDriftMs: number,
  *   tradeImpact: Record<string, { buys: { t: number, qty: number }[], sells: { t: number, qty: number }[] }>,
+ *   playerName: string,
+ *   chosenBodyId: string | null,
+ *   openingDone: boolean,
  * }} GameState
  *
  * @typedef {{
@@ -70,6 +73,9 @@ export function createInitialState() {
     stationBuys: {},
     lastPriceDriftMs: 0,
     tradeImpact: {},
+    playerName: 'Saikoro',
+    chosenBodyId: null,
+    openingDone: false,
   };
   // start station counts as visited
   const startRow = prices[START_LOC] || {};

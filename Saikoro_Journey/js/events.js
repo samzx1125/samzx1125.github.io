@@ -1,14 +1,14 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ac';
-import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ac';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ad';
+import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ad';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
-} from './engine.js?v=z1-20261028ac';
-import { cargoUsed } from './state.js?v=z1-20261028ac';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028ac';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ac';
+} from './engine.js?v=z1-20261028ad';
+import { cargoUsed } from './state.js?v=z1-20261028ad';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028ad';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ad';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -16,8 +16,9 @@ let state = null;
 const ui = { lastMsg: '', panelOpen: true, optionsOpen: false };
 
 /** @param {import('./state.js').GameState} s */
-export function bindEvents(s) {
+export function bindEvents(s, opts = {}) {
   state = s;
+  const opening = opts.opening || null;
 
   const optionsBtn = document.getElementById('btn-options');
   const optionsMenu = document.getElementById('options-menu');
@@ -406,6 +407,15 @@ export function bindEvents(s) {
     if (!btn || !state) return;
     if (btn.dataset.act === 'save') {
       ui.lastMsg = saveGame(state) ? 'saved' : 'save failed';
+    } else if (btn.dataset.act === 'new-game') {
+      if (!confirm('New game? This clears the current save and restarts the opening.')) return;
+      clearSave();
+      if (opening && typeof opening.restart === 'function') {
+        opening.restart();
+        ui.lastMsg = 'new game';
+      } else {
+        ui.lastMsg = 'new game — reload page';
+      }
     } else if (btn.dataset.act === 'reset-save') {
       clearSave();
       ui.lastMsg = 'save cleared — reload page for fresh start';
