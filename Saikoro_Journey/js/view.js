@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028ay';
-import { courierLocAllowed } from './engine.js?v=z1-20261028ay';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028ay';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028ay';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028ay';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ay';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028ay';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028az';
+import { courierLocAllowed } from './engine.js?v=z1-20261028az';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028az';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028az';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028az';
+import { getLastSavedAt } from './saving.js?v=z1-20261028az';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028az';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;

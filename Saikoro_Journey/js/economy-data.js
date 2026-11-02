@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028ay';
+import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028az';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
@@ -688,5 +688,27 @@ export const TRANSPORT_QUESTS = {
     goodId: 'goods_a01z01i002_oil_speciality',
     qty: 3,
     rewardGold: 150,
+  },
+  // Slice AM — A2 specialty transport (Fog Reed / Cobalt Silk); new from-locs only
+  // Reed cheap@Iron Marsh → dear@Silk Cut
+  loc_a02z03l001_iron_marsh: {
+    to: 'loc_a02z04l002_silk_cut',
+    goodId: 'goods_a02z01i001_fog_reed',
+    qty: 7, // 1750g mid-capacity
+    rewardGold: 160,
+  },
+  // Silk cheap@Silk Cut → dear@Mist Spur
+  loc_a02z04l002_silk_cut: {
+    to: 'loc_a02z01l001_mist_spur',
+    goodId: 'goods_a02z01i002_cobalt_silk',
+    qty: 6, // 1800g
+    rewardGold: 175,
+  },
+  // Silk cheap@Cobalt Gate → dear@Quiet Pier
+  loc_a02z03l003_cobalt_gate: {
+    to: 'loc_a02z02l003_quiet_pier',
+    goodId: 'goods_a02z01i002_cobalt_silk',
+    qty: 5, // 1500g
+    rewardGold: 155,
   },
 };
