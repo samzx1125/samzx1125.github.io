@@ -107,6 +107,13 @@ main {
   /* Slice AJ — drag-to-pan; suppress text select while grabbing */
   user-select: none;
   -webkit-user-select: none;
+  /* Slice AN — de-emphasize classic scrollbars; pan (AJ) + overflow still scroll */
+  scrollbar-width: none; /* Firefox */
+  overscroll-behavior: contain;
+}
+#map-wrap::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 #map-wrap.map-dragging {
   cursor: grabbing;
