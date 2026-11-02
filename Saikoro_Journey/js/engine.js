@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028at';
+} from './state.js?v=z1-20261028au';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -57,8 +57,8 @@ import {
   AREA1_WAREHOUSE_CAP,
   AREA2_WAREHOUSE_LOC,
   WAREHOUSE_CAP,
-} from './economy-data.js?v=z1-20261028at';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028at';
+} from './economy-data.js?v=z1-20261028au';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028au';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -569,7 +569,7 @@ export function tryUnlock(s, unlock) {
  * @param {import('./state.js').GameState} s
  */
 export function tryUpgradeCapacity(s) {
-  if (s.travel) return { ok: false, reason: 'traveling' };
+  // Slice AH — allowed mid-travel; capacity takes effect immediately
   const level = Math.max(0, Math.min(CAPACITY_MAX_LEVEL, s.capacityLevel | 0));
   if (level >= CAPACITY_MAX_LEVEL) return { ok: false, reason: 'max' };
   const cost = capacityUpgradeCost(level);
@@ -585,7 +585,7 @@ export function tryUpgradeCapacity(s) {
  * @param {import('./state.js').GameState} s
  */
 export function tryUpgradePreserve(s) {
-  if (s.travel) return { ok: false, reason: 'traveling' };
+  // Slice AH — allowed mid-travel; drain factor applies on further travel deplete
   const level = Math.max(0, Math.min(PRESERVE_MAX_LEVEL, s.preserveLevel | 0));
   if (level >= PRESERVE_MAX_LEVEL) return { ok: false, reason: 'max' };
   const cost = preserveUpgradeCost(level);
@@ -596,19 +596,35 @@ export function tryUpgradePreserve(s) {
 }
 
 /**
- * Slice AA — Speed upgrade (+20% of base TRAIN_SPEED per level, max 5). Cost 550×(level+1)G.
- * Current in-progress travel keeps stamped speed; new trips use the new level.
+ * Slice AA/AH — Speed upgrade (+20% of base TRAIN_SPEED per level, max 5). Cost 550×(level+1)G.
+ * Slice AH: allowed mid-travel; remaining ETA on current leg recalced with new speed (choice A).
  * @param {import('./state.js').GameState} s
  */
 export function tryUpgradeSpeed(s) {
-  if (s.travel) return { ok: false, reason: 'traveling' };
   const level = Math.max(0, Math.min(SPEED_MAX_LEVEL, s.speedLevel | 0));
   if (level >= SPEED_MAX_LEVEL) return { ok: false, reason: 'max' };
   const cost = speedUpgradeCost(level);
   if (s.gold < cost) return { ok: false, reason: 'gold' };
   s.gold -= cost;
   s.speedLevel = level + 1;
-  return { ok: true, level: s.speedLevel, speed: effectiveSpeed(s.speedLevel), cost };
+  const speed = effectiveSpeed(s.speedLevel);
+  // Mid-travel (A): rewrite elapsed/duration so traveledDistance stays continuous under new speed
+  if (s.travel) {
+    const dist = s.travel.distance || 0;
+    const oldSpeed = s.travel.speed || 0;
+    let traveled = s.travel.traveledDistance;
+    if (traveled == null) {
+      traveled = oldSpeed > 0 ? Math.min(dist, oldSpeed * ((s.travel.elapsedMs || 0) / 1000)) : 0;
+    }
+    traveled = Math.max(0, Math.min(dist, traveled));
+    s.travel.speed = speed;
+    s.travel.traveledDistance = traveled;
+    if (speed > 0) {
+      s.travel.elapsedMs = (traveled / speed) * 1000;
+      s.travel.durationMs = (dist / speed) * 1000;
+    }
+  }
+  return { ok: true, level: s.speedLevel, speed, cost, midTravelApplied: !!s.travel };
 }
 
 /** Mid-travel stop — gated by STOP_REROUTE_UNLOCKED. Stays at travel.from. */

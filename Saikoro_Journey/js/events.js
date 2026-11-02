@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028at';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028at';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028au';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028au';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,10 +7,10 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028at';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028at';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028at';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028at';
+} from './engine.js?v=z1-20261028au';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028au';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028au';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028au';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -613,7 +613,9 @@ export function bindEvents(s, opts = {}) {
     if (!btn || !state) return;
     const r = tryUpgradeSpeed(state);
     if (r.ok) {
-      ui.lastMsg = `speed upgraded to lv${r.level} (spd ${r.speed}) −${r.cost}G`;
+      ui.lastMsg = r.midTravelApplied
+        ? `speed upgraded to lv${r.level} (spd ${r.speed}) −${r.cost}G · ETA recalced`
+        : `speed upgraded to lv${r.level} (spd ${r.speed}) −${r.cost}G`;
       saveGame(state);
       invalidateQuotes();
     } else {

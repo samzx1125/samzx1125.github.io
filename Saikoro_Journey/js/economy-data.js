@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028at';
+import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028au';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
@@ -209,7 +209,7 @@ export function preserveUpgradeCost(level) {
 /**
  * Slice AA — Speed upgrades (systems.md §3.1b).
  * effectiveSpeed = TRAIN_SPEED × (1 + 0.2×level) → 10/12/14/16/18/20 at lv 0–5 (2× at max).
- * Stub gold: 550 × (level+1). Mid-travel upgrade leaves stamped travel.speed as-is.
+ * Stub gold: 550 × (level+1). Slice AH: mid-travel upgrade recalcs remaining ETA (choice A).
  */
 export const SPEED_MAX_LEVEL = 5;
 export const SPEED_UPGRADE_GOLD = 550;
