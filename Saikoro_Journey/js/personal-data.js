@@ -1,7 +1,7 @@
 /** Slice U — personal / key-item inventory (not trade goods; no cargo weight). */
 
 /**
- * @typedef {{ id: string, name: string, kind: 'key' | 'item', desc: string }} PersonalDef
+ * @typedef {{ id: string, name: string, kind: 'key' | 'item', desc: string, description?: string, icon: string }} PersonalDef
  */
 
 /** Naming v2: key_a01k001_<slug> / item_a01i001_<slug> */
@@ -12,6 +12,8 @@ export const PERSONAL_DEFS = [
     name: 'Mirror Residue',
     kind: 'key',
     desc: 'A flake of glass that won’t forget the wrong face.',
+    description: 'A flake of glass that won’t forget the wrong face.',
+    icon: '◈',
   },
 ];
 
@@ -25,4 +27,16 @@ export function personalName(id) {
 /** @param {string} id */
 export function personalDef(id) {
   return PERSONAL_DEFS.find((d) => d.id === id) || null;
+}
+
+/** @param {string} id */
+export function personalIcon(id) {
+  return PERSONAL_DEFS.find((d) => d.id === id)?.icon || '○';
+}
+
+/** Hover description (falls back to desc). @param {string} id */
+export function personalDescription(id) {
+  const d = PERSONAL_DEFS.find((x) => x.id === id);
+  if (!d) return '';
+  return d.description || d.desc || '';
 }

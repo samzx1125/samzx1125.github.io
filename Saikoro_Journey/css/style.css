@@ -452,6 +452,83 @@ aside code {
 }
 .cargo-list li { margin: 0.15rem 0; }
 
+/* Slice AE — icon inventory cells (mono light grey/black) */
+.cargo-list.inv-icons {
+  list-style: none;
+  padding-left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+.inv-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 3.4rem;
+  min-height: 3.4rem;
+  padding: 0.3rem 0.2rem 0.25rem;
+  border: 1px solid #000;
+  background: #f2f2f2;
+  color: #111;
+  position: relative;
+  margin: 0;
+  box-sizing: border-box;
+}
+.inv-stack.quest-lot {
+  border-style: dashed;
+  background: #e8e8e8;
+}
+.inv-icon {
+  font-size: 1.35rem;
+  line-height: 1.1;
+  color: #111;
+  user-select: none;
+}
+.inv-icon.inline {
+  font-size: 1rem;
+  margin-right: 0.15rem;
+  vertical-align: middle;
+}
+.inv-qty {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: #222;
+  margin-top: 0.1rem;
+}
+.inv-badge {
+  font-size: 0.62rem;
+  color: #444;
+  background: #fff;
+  border: 1px solid #888;
+  padding: 0 0.2rem;
+  margin-top: 0.12rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inv-cond {
+  position: absolute;
+  top: 0.05rem;
+  right: 0.1rem;
+  font-size: 0.55rem;
+  color: #333;
+  font-variant-numeric: tabular-nums;
+}
+.stack-pick {
+  max-width: 6.5rem;
+  font-size: 0.75rem;
+  margin: 0 0.15rem;
+}
+.wh-stack .wh-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
 #personal-panel { margin-top: 0.75rem; border-top: 1px solid var(--border, #ccc); padding-top: 0.5rem; }
 .personal-list li .kind { color: var(--muted); font-size: 0.75rem; }
 .personal-list li .pdesc { display: block; color: var(--muted); font-size: 0.75rem; margin-top: 0.1rem; }

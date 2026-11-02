@@ -1,13 +1,13 @@
-import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028aq';
+import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028ar';
 
-/** @typedef {{ id: string, name: string, tags: string[], weightG: number }} GoodDef */
+/** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
 /** Naming v2 goods_aAAzZZiIII_slug — name is display label. Live MP drifts around BASE_PRICES. */
 /** @type {GoodDef[]} */
 export const GOODS = [
-  { id: 'goods_a01z01i001_dry_food', name: 'Dry Food', tags: [], weightG: 200 },
-  { id: 'goods_a01z01i002_oil_speciality', name: 'Oil Speciality', tags: ['volatile'], weightG: 500 },
-  { id: 'goods_a01z01i003_water_speciality', name: 'Water Speciality', tags: ['liquid'], weightG: 750 },
+  { id: 'goods_a01z01i001_dry_food', name: 'Dry Food', tags: [], weightG: 200, icon: '▣', description: 'Hardtack crates that keep on dusty rails.' },
+  { id: 'goods_a01z01i002_oil_speciality', name: 'Oil Speciality', tags: ['volatile'], weightG: 500, icon: '◆', description: 'Sealed oil drums — volatile; condition drains on travel.' },
+  { id: 'goods_a01z01i003_water_speciality', name: 'Water Speciality', tags: ['liquid'], weightG: 750, icon: '◇', description: 'Cistern water — liquid; condition drains on travel.' },
 ];
 
 export const BASE_PRICES = {
@@ -297,6 +297,21 @@ export function goodWeightG(id) {
 /** @param {string} id */
 export function goodTags(id) {
   return GOODS.find((g) => g.id === id)?.tags || [];
+}
+
+/** @param {string} id */
+export function goodDescription(id) {
+  return GOODS.find((g) => g.id === id)?.description || '';
+}
+
+/** Mono glyph icon for a good. @param {string} id */
+export function goodIcon(id) {
+  return GOODS.find((g) => g.id === id)?.icon || '□';
+}
+
+/** Full GoodDef or null. @param {string} id */
+export function goodDef(id) {
+  return GOODS.find((g) => g.id === id) || null;
 }
 
 /**

@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028aq';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028aq';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028ar';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028ar';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,10 +7,10 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028aq';
-import { cargoUsed, courierCargoUsed, warehouseUsed } from './state.js?v=z1-20261028aq';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028aq';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028aq';
+} from './engine.js?v=z1-20261028ar';
+import { cargoUsed, courierCargoUsed, warehouseUsed, stacksQtyOf, findStack } from './state.js?v=z1-20261028ar';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028ar';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ar';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -277,9 +277,21 @@ export function bindEvents(s, opts = {}) {
       if (r.ok) { saveGame(state); invalidateQuotes(); focusQtyAfterTrade(good); flashTradedRow(good); }
     } else if (act === 'sell' || act === 'sell-all') {
       let n = qty;
-      if (act === 'sell-all') n = state.cargo[good] || 0;
-      const r = trySell(state, loc, good, n);
-      ui.lastMsg = r.ok ? `sold ${goodName(good)} ×${n}` : `sell failed (${r.reason})`;
+      const stackPick =
+        row?.querySelector(`select[data-stack-pick="${good}"]`) ||
+        row?.querySelector(`input[data-stack-pick="${good}"]`);
+      const stackId = stackPick?.value || null;
+      if (act === 'sell-all') {
+        if (stackId) {
+          n = findStack(state.cargoStacks, stackId)?.qty || 0;
+        } else {
+          n = stacksQtyOf(state.cargoStacks, good);
+        }
+      }
+      // sell-all without stackId sells FIFO across all price stacks of that good
+      const r = trySell(state, loc, good, n, act === 'sell-all' && !stackId ? undefined : stackId || undefined);
+      const sold = r.sold != null ? r.sold : n;
+      ui.lastMsg = r.ok ? `sold ${goodName(good)} ×${sold}` : `sell failed (${r.reason})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); focusQtyAfterTrade(good); flashTradedRow(good); }
     }
     render(state, ui);
@@ -458,10 +470,14 @@ export function bindEvents(s, opts = {}) {
       return;
     }
     if (goodToC || goodToP) {
-      const good = (goodToC || goodToP).dataset.good;
-      const input = document.querySelector(`input[data-xfer-good="${good}"]`);
+      const btn = goodToC || goodToP;
+      const good = btn.dataset.good;
+      const stackId = btn.dataset.stackId || null;
+      const input = stackId
+        ? document.querySelector(`input[data-xfer-stack="${stackId}"]`)
+        : document.querySelector(`input[data-xfer-good="${good}"]`);
       const qty = Number(input?.value || 1);
-      const r = tryTransferGood(state, good, goodToC ? 'toCourier' : 'toPlayer', qty);
+      const r = tryTransferGood(state, good, goodToC ? 'toCourier' : 'toPlayer', qty, stackId || undefined);
       ui.lastMsg = r.ok ? `transferred ${goodName(good)} ×${qty}` : `transfer failed (${r.reason})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
@@ -487,6 +503,7 @@ export function bindEvents(s, opts = {}) {
     if (!dep && !wit) return;
     const btn = dep || wit;
     const good = btn.dataset.good;
+    const stackId = btn.dataset.stackId || null;
     const mode = btn.dataset.mode || 'qty';
     const who = ui.warehouseWho === 'courier' ? 'courier' : 'player';
     const bag = who === 'courier' ? state.courier : state;
@@ -495,22 +512,25 @@ export function bindEvents(s, opts = {}) {
       render(state, ui);
       return;
     }
+    const bagStacks = who === 'courier' ? (state.courier?.cargoStacks || []) : (state.cargoStacks || []);
     let qty = 0;
     if (dep) {
-      const have = bag.cargo[good] || 0;
+      const st = stackId ? findStack(bagStacks, stackId) : null;
+      const have = st ? (st.qty | 0) : stacksQtyOf(bagStacks, good);
       if (mode === 'all') {
         qty = have;
-        // also clamp to remaining warehouse cap
         const w = goodWeightG(good);
         if (w > 0) {
           const freeWh = Math.max(0, AREA1_WAREHOUSE_CAP - warehouseUsed(state));
           qty = Math.min(qty, Math.floor(freeWh / w));
         }
       } else {
-        const input = document.querySelector(`input[data-wh-qty="${good}"]`);
+        const input = stackId
+          ? document.querySelector(`input[data-wh-stack-qty="${stackId}"]`)
+          : document.querySelector(`input[data-wh-qty="${good}"]`);
         qty = Number(input?.value || 1);
       }
-      const r = tryWarehouseDeposit(state, who, good, qty);
+      const r = tryWarehouseDeposit(state, who, good, qty, stackId || undefined);
       ui.lastMsg = r.ok
         ? `deposited ${goodName(good)} ×${qty} → warehouse`
         : `deposit failed (${r.reason})`;
@@ -519,7 +539,9 @@ export function bindEvents(s, opts = {}) {
       return;
     }
     if (wit) {
-      const whHave = state.warehouse?.area1?.cargo?.[good] || 0;
+      const whStacks = state.warehouse?.area1?.stacks || [];
+      const st = stackId ? findStack(whStacks, stackId) : null;
+      const whHave = st ? (st.qty | 0) : stacksQtyOf(whStacks, good);
       if (mode === 'max') {
         const w = goodWeightG(good);
         const used = who === 'courier' ? courierCargoUsed(state.courier) : cargoUsed(state);
@@ -527,10 +549,12 @@ export function bindEvents(s, opts = {}) {
         const free = Math.max(0, cap - used);
         qty = w > 0 ? Math.min(whHave, Math.floor(free / w)) : 0;
       } else {
-        const input = document.querySelector(`input[data-wh-qty="${good}"]`);
+        const input = stackId
+          ? document.querySelector(`input[data-wh-stack-qty="${stackId}"]`)
+          : document.querySelector(`input[data-wh-qty="${good}"]`);
         qty = Number(input?.value || 1);
       }
-      const r = tryWarehouseWithdraw(state, who, good, qty);
+      const r = tryWarehouseWithdraw(state, who, good, qty, stackId || undefined);
       ui.lastMsg = r.ok
         ? `withdrew ${goodName(good)} ×${qty} → ${who === 'courier' ? 'courier' : 'cargo'}`
         : `withdraw failed (${r.reason})`;

@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028aq';
-import { courierLocAllowed } from './engine.js?v=z1-20261028aq';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028aq';
-import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028aq';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028aq';
-import { getLastSavedAt } from './saving.js?v=z1-20261028aq';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse } from './state.js?v=z1-20261028aq';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028ar';
+import { courierLocAllowed } from './engine.js?v=z1-20261028ar';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ar';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028ar';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028ar';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ar';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028ar';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -143,8 +143,9 @@ function quoteSignature(s) {
   const parts = [quoteLoc, s.locationId, atStation ? '1' : '0', mem ? 'mem' : 'live', s.gold];
   for (const g of GOODS) {
     const avg = effectiveBuyAvg(s, g.id);
+    const have = stacksQtyOf(s.cargoStacks, g.id);
     const cond =
-      (s.cargo[g.id] || 0) > 0 && depleteRateForGood(g.id) > 0
+      have > 0 && depleteRateForGood(g.id) > 0
         ? Math.round(goodCondition(s, g.id))
         : '';
     const shown = atStation
@@ -153,10 +154,15 @@ function quoteSignature(s) {
     parts.push(
       g.id,
       String(shown ?? ''),
-      String(s.cargo[g.id] || 0),
+      String(have),
       avg == null ? '' : avg.toFixed(2),
       String(cond),
     );
+  }
+  // include stack unit prices so split stacks refresh quotes
+  for (const st of s.cargoStacks || []) {
+    if (!st) continue;
+    parts.push(st.id, String(st.unitPrice), String(st.qty));
   }
   parts.push(s.unlocked.join(','));
   return parts.join('|');
@@ -195,11 +201,10 @@ function destSignature(s) {
  */
 function cargoSignature(s) {
   const parts = [];
-  for (const g of GOODS) {
-    const n = s.cargo[g.id] || 0;
-    if (n <= 0) continue;
-    const c = depleteRateForGood(g.id) > 0 ? Math.round(goodCondition(s, g.id)) : '';
-    parts.push(g.id, String(n), String(g.weightG || 0), String(c));
+  for (const st of s.cargoStacks || []) {
+    if (!st || !(st.qty > 0)) continue;
+    const c = depleteRateForGood(st.goodId) > 0 ? Math.round(st.condition ?? 100) : '';
+    parts.push(st.id, st.goodId, String(st.qty), String(st.unitPrice), String(c));
   }
   if (s.quest && s.quest.qty > 0) {
     parts.push(
@@ -218,6 +223,21 @@ function cargoSignature(s) {
  * Personal-list signature — qty per held personal id.
  * @param {import('./state.js').GameState} s
  */
+
+/** Hover title for a trade stack icon. */
+function stackHoverTitle(st) {
+  const g = GOODS.find((x) => x.id === st.goodId);
+  const name = g?.name || st.goodId;
+  const desc = g?.description || '';
+  const w = g?.weightG || 0;
+  const buy = st.unitPrice != null ? ` · buy ${st.unitPrice}G` : '';
+  const cond =
+    depleteRateForGood(st.goodId) > 0
+      ? ` · ${Math.round(st.condition ?? 100)}%`
+      : '';
+  return `${name} — ${desc}${buy}${cond} · ${w}g each`.trim();
+}
+
 function personalSignature(s) {
   const bag = s.personal && typeof s.personal === 'object' ? s.personal : {};
   const parts = [];
@@ -282,7 +302,7 @@ function renderQuotes(s) {
         ? `loc MP ${price} vs buy avg ${avgShown}`
         : `mem MP ${price} vs buy avg ${avgShown}`;
     }
-    const have = s.cargo[g.id] || 0;
+    const have = stacksQtyOf(s.cargoStacks, g.id);
     let priceCell;
     let priceTitle;
     if (price == null) {
@@ -302,8 +322,25 @@ function renderQuotes(s) {
       priceCell = `<span class="mem-price" title="last seen MP">mem ${price}</span>`;
       priceTitle = `remembered MP ${price} (not live)`;
     }
+    const nameTitle = `${g.name} — ${g.description || ''}`.replace(/"/g, '&quot;');
+    // stack picker for sell (split by unit buy price)
+    const stacksOf = (s.cargoStacks || []).filter((st) => st && st.goodId === g.id && st.qty > 0);
+    let stackSel = '';
+    if (stacksOf.length > 1) {
+      stackSel =
+        `<select class="stack-pick" data-stack-pick="${g.id}" title="sell from stack">` +
+        stacksOf
+          .map(
+            (st) =>
+              `<option value="${st.id}">${st.unitPrice}G ×${st.qty}</option>`,
+          )
+          .join('') +
+        `</select>`;
+    } else if (stacksOf.length === 1) {
+      stackSel = `<input type="hidden" data-stack-pick="${g.id}" value="${stacksOf[0].id}" />`;
+    }
     tr.innerHTML = `
-      <td title="${g.id}">${g.name}</td>
+      <td title="${nameTitle}"><span class="inv-icon inline" aria-hidden="true">${g.icon || '□'}</span> ${g.name}</td>
       <td class="num" title="${priceTitle}">${priceCell}</td>
       <td class="num delta" title="${deltaTitle}">${deltaHtml}</td>
       <td class="num">${have}</td>
@@ -311,8 +348,9 @@ function renderQuotes(s) {
         <button type="button" data-act="buy" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>buy</button>
         <button type="button" data-act="buy-max" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>Buy max</button>
         <input type="number" min="1" value="${qtyVal}" data-qty="${g.id}" class="qty" ${atStation ? '' : 'disabled'} />
-        <button type="button" data-act="sell" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>sell</button>
-        <button type="button" data-act="sell-all" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation ? '' : 'disabled'}>Sell all</button>
+        ${stackSel}
+        <button type="button" data-act="sell" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation && have > 0 ? '' : 'disabled'}>sell</button>
+        <button type="button" data-act="sell-all" data-good="${g.id}" data-loc="${quoteLoc}" ${atStation && have > 0 ? '' : 'disabled'}>Sell all</button>
       </td>`;
     tbody.appendChild(tr);
   }
@@ -336,7 +374,7 @@ function renderQuotes(s) {
               .map((c) => {
                 const g = GOODS.find((x) => x.id === c.goodId);
                 const deposited = deposits[c.goodId] || 0;
-                const cargo = s.cargo[c.goodId] || 0;
+                const cargo = stacksQtyOf(s.cargoStacks, c.goodId);
                 need += c.qty;
                 haveUnits += Math.min(deposited, c.qty);
                 const ok = deposited >= c.qty;
@@ -353,7 +391,7 @@ function renderQuotes(s) {
               !traveling &&
               u.costs.some((c) => {
                 const deposited = deposits[c.goodId] || 0;
-                return deposited < c.qty && (s.cargo[c.goodId] || 0) > 0;
+                return deposited < c.qty && stacksQtyOf(s.cargoStacks, c.goodId) > 0;
               });
             const can = allReady ? !traveling : canHandIn;
             const name = locName(u.target);
@@ -586,23 +624,30 @@ export function render(s, ui = {}) {
     const csig = cargoSignature(s);
     if (csig !== lastCargoSig) {
       lastCargoSig = csig;
-      const rows = GOODS.map((g) => {
-        const n = s.cargo[g.id] || 0;
-        if (n <= 0) return '';
-        const lineG = n * (g.weightG || 0);
-        const depletes = depleteRateForGood(g.id) > 0;
-        const cond = depletes ? Math.round(goodCondition(s, g.id)) : null;
-        const condHtml = cond == null ? '' : ` <span class="cond" title="condition">· ${cond}%</span>`;
-        return `<li title="${g.id} · ${g.weightG}g each">${g.name} ×${n}${condHtml} <span class="muted">(${lineG}g)</span></li>`;
-      }).filter(Boolean);
+      cargoList.classList.add('inv-icons');
+      const rows = [];
       if (s.quest && s.quest.qty > 0) {
         const q = s.quest;
-        const lineG = q.qty * (goodWeightG(q.goodId) || 0);
         const depletes = depleteRateForGood(q.goodId) > 0;
         const cond = depletes ? Math.round(q.condition ?? 100) : null;
-        const condHtml = cond == null ? '' : ` <span class="cond">· ${cond}%</span>`;
-        rows.unshift(
-          `<li class="quest-lot" title="quest cargo (not sellable)">Quest ${goodName(q.goodId)} ×${q.qty}${condHtml} <span class="muted">(${lineG}g)</span></li>`,
+        const title = `Quest ${goodName(q.goodId)} — dedicated lot (not sellable)${cond != null ? ` · ${cond}%` : ''}`;
+        rows.push(
+          `<li class="inv-stack quest-lot" title="${title}">` +
+            `<span class="inv-icon" aria-hidden="true">${goodIcon(q.goodId)}</span>` +
+            `<span class="inv-qty">×${q.qty}</span>` +
+            `<span class="inv-badge">Q</span></li>`,
+        );
+      }
+      for (const st of s.cargoStacks || []) {
+        if (!st || !(st.qty > 0)) continue;
+        const depletes = depleteRateForGood(st.goodId) > 0;
+        const cond = depletes ? Math.round(st.condition ?? 100) : null;
+        const condBadge = cond == null ? '' : `<span class="inv-cond">${cond}%</span>`;
+        rows.push(
+          `<li class="inv-stack" data-stack-id="${st.id}" data-good="${st.goodId}" title="${stackHoverTitle(st)}">` +
+            `<span class="inv-icon" aria-hidden="true">${goodIcon(st.goodId)}</span>` +
+            `<span class="inv-qty">×${st.qty}</span>` +
+            `<span class="inv-badge">${st.unitPrice}G</span>${condBadge}</li>`,
         );
       }
       cargoList.innerHTML = rows.join('');
@@ -619,23 +664,30 @@ export function render(s, ui = {}) {
       if (psig !== lastPersonalSig) {
         lastPersonalSig = psig;
         const bag = s.personal && typeof s.personal === 'object' ? s.personal : {};
+        personalList.classList.add('inv-icons');
         const rows = [];
         for (const d of PERSONAL_DEFS) {
           const n = bag[d.id] || 0;
           if (n <= 0) continue;
-          const qty = d.kind === 'key' && n === 1 ? '' : ` ×${n}`;
-          const kind = d.kind === 'key' ? 'key' : 'item';
+          const desc = personalDescription(d.id) || d.desc || '';
+          const title = `${d.name} — ${desc}`;
+          const qty = d.kind === 'key' && n === 1 ? '' : `×${n}`;
           rows.push(
-            `<li title="${d.id}"><strong>${d.name}</strong>${qty} <span class="kind">· ${kind}</span>` +
-              (d.desc ? `<span class="pdesc">${d.desc}</span>` : '') +
-              `</li>`,
+            `<li class="inv-stack" data-personal="${d.id}" title="${title}">` +
+              `<span class="inv-icon" aria-hidden="true">${personalIcon(d.id)}</span>` +
+              (qty ? `<span class="inv-qty">${qty}</span>` : '') +
+              `<span class="inv-badge">${d.kind}</span></li>`,
           );
         }
         for (const id of Object.keys(bag).sort()) {
           if (PERSONAL_DEFS.some((d) => d.id === id)) continue;
           const n = bag[id] || 0;
           if (n <= 0) continue;
-          rows.push(`<li title="${id}">${personalName(id)} ×${n}</li>`);
+          rows.push(
+            `<li class="inv-stack" title="${id}">` +
+              `<span class="inv-icon" aria-hidden="true">○</span>` +
+              `<span class="inv-qty">×${n}</span></li>`,
+          );
         }
         personalList.innerHTML = rows.join('');
         if (personalEmpty) personalEmpty.hidden = rows.length > 0;
@@ -907,23 +959,30 @@ export function render(s, ui = {}) {
       if (keysList) {
         const bag = s.personal && typeof s.personal === 'object' ? s.personal : {};
         const rows = [];
+        keysList.classList.add('inv-icons');
         for (const d of PERSONAL_DEFS) {
           const n = bag[d.id] || 0;
           if (n <= 0) continue;
           if (d.kind !== 'key') continue;
-          const qty = n === 1 ? '' : ` ×${n}`;
+          const desc = personalDescription(d.id) || d.desc || '';
+          const title = `${d.name} — ${desc}`;
+          const qty = n === 1 ? '' : `×${n}`;
           rows.push(
-            `<li title="${d.id}"><strong>${d.name}</strong>${qty}` +
-              (d.desc ? `<span class="pdesc">${d.desc}</span>` : '') +
-              `</li>`,
+            `<li class="inv-stack" title="${title}">` +
+              `<span class="inv-icon" aria-hidden="true">${personalIcon(d.id)}</span>` +
+              (qty ? `<span class="inv-qty">${qty}</span>` : '') +
+              `<span class="inv-badge">key</span></li>`,
           );
         }
-        // unknown key-like ids
         for (const id of Object.keys(bag).sort()) {
           if (PERSONAL_DEFS.some((d) => d.id === id)) continue;
           const n = bag[id] || 0;
           if (n <= 0) continue;
-          rows.push(`<li title="${id}">${personalName(id)} ×${n}</li>`);
+          rows.push(
+            `<li class="inv-stack" title="${id}">` +
+              `<span class="inv-icon" aria-hidden="true">○</span>` +
+              `<span class="inv-qty">×${n}</span></li>`,
+          );
         }
         keysList.innerHTML = rows.join('');
         if (keysEmpty) keysEmpty.hidden = rows.length > 0;
@@ -966,17 +1025,23 @@ export function render(s, ui = {}) {
         if (pauseBtn) pauseBtn.hidden = !!c.paused;
         if (resumeBtn) resumeBtn.hidden = !c.paused;
 
-        // Slice R — cargo list with condition %
+        // Slice R/AE — courier cargo stacks as icons
         const cargoUl = document.getElementById('courier-cargo-list');
         if (cargoUl) {
-          const rows = GOODS.map((g) => {
-            const n = c.cargo[g.id] || 0;
-            if (n <= 0) return '';
-            const depletes = depleteRateForGood(g.id) > 0;
-            const cond = depletes ? Math.round(courierGoodCondition(c, g.id)) : null;
-            const condHtml = cond == null ? '' : ` <span class="cond" title="condition">· ${cond}%</span>`;
-            return `<li>${g.name} ×${n}${condHtml}</li>`;
-          }).filter(Boolean);
+          cargoUl.classList.add('inv-icons');
+          const rows = [];
+          for (const st of c.cargoStacks || []) {
+            if (!st || !(st.qty > 0)) continue;
+            const depletes = depleteRateForGood(st.goodId) > 0;
+            const cond = depletes ? Math.round(st.condition ?? 100) : null;
+            const condBadge = cond == null ? '' : `<span class="inv-cond">${cond}%</span>`;
+            rows.push(
+              `<li class="inv-stack" data-stack-id="${st.id}" data-good="${st.goodId}" title="${stackHoverTitle(st)}">` +
+                `<span class="inv-icon" aria-hidden="true">${goodIcon(st.goodId)}</span>` +
+                `<span class="inv-qty">×${st.qty}</span>` +
+                `<span class="inv-badge">${st.unitPrice}G</span>${condBadge}</li>`,
+            );
+          }
           cargoUl.innerHTML = rows.length ? rows.join('') : '<li class="muted">empty</li>';
         }
 
@@ -1044,25 +1109,39 @@ export function render(s, ui = {}) {
       const showX = courierCoLocated(s);
       xPanel.hidden = !showX;
       if (showX && c) {
+        const pStacks = (s.cargoStacks || []).filter((st) => st && st.qty > 0);
+        const cStacks = (c.cargoStacks || []).filter((st) => st && st.qty > 0);
         const tsig = [
           s.gold,
           c.gold,
-          ...GOODS.map((g) => `${g.id}:${s.cargo[g.id] || 0}:${c.cargo[g.id] || 0}`),
+          ...pStacks.map((st) => `p:${st.id}:${st.qty}:${st.unitPrice}`),
+          ...cStacks.map((st) => `c:${st.id}:${st.qty}:${st.unitPrice}`),
         ].join('|');
         if (tsig !== lastTransferSig) {
           lastTransferSig = tsig;
           const ul = document.getElementById('transfer-goods');
           if (ul) {
-            ul.innerHTML = GOODS.map((g) => {
-              const pN = s.cargo[g.id] || 0;
-              const cN = c.cargo[g.id] || 0;
-              return `<li data-good="${g.id}">
-                <span>${g.name} · you ${pN} / C ${cN}</span>
-                <input type="number" class="qty" data-xfer-good="${g.id}" min="1" value="1" />
-                <button type="button" data-act="xfer-good-to-courier" data-good="${g.id}">→ C</button>
-                <button type="button" data-act="xfer-good-to-player" data-good="${g.id}">→ You</button>
-              </li>`;
-            }).join('');
+            const rows = [];
+            for (const st of pStacks) {
+              rows.push(`<li data-stack-id="${st.id}" data-good="${st.goodId}" data-side="player">
+                <span class="inv-icon inline" title="${stackHoverTitle(st)}">${goodIcon(st.goodId)}</span>
+                <span>you · ${goodName(st.goodId)} @${st.unitPrice}G ×${st.qty}</span>
+                <input type="number" class="qty" data-xfer-stack="${st.id}" min="1" value="1" />
+                <button type="button" data-act="xfer-good-to-courier" data-good="${st.goodId}" data-stack-id="${st.id}">→ C</button>
+              </li>`);
+            }
+            for (const st of cStacks) {
+              rows.push(`<li data-stack-id="${st.id}" data-good="${st.goodId}" data-side="courier">
+                <span class="inv-icon inline" title="${stackHoverTitle(st)}">${goodIcon(st.goodId)}</span>
+                <span>C · ${goodName(st.goodId)} @${st.unitPrice}G ×${st.qty}</span>
+                <input type="number" class="qty" data-xfer-stack="${st.id}" min="1" value="1" />
+                <button type="button" data-act="xfer-good-to-player" data-good="${st.goodId}" data-stack-id="${st.id}">→ You</button>
+              </li>`);
+            }
+            if (!rows.length) {
+              rows.push('<li class="muted">no stacks to move</li>');
+            }
+            ul.innerHTML = rows.join('');
           }
         }
       } else {
@@ -1101,27 +1180,21 @@ export function render(s, ui = {}) {
         const used = warehouseUsed(s);
         setText('warehouse-cap', `${used} / ${AREA1_WAREHOUSE_CAP} g`);
 
-        const bag = who === 'courier' ? s.courier : s;
+        const bagStacks = who === 'courier' ? (s.courier.cargoStacks || []) : (s.cargoStacks || []);
         const bagUsed = who === 'courier' ? courierCargoUsed(s.courier) : cargoUsed(s);
         const bagCap = who === 'courier' ? s.courier.capacity : s.capacity;
         const free = Math.max(0, bagCap - bagUsed);
 
         const wh = s.warehouse.area1;
+        const whStacks = wh.stacks || [];
         const sigParts = [
           who,
           used,
           bagUsed,
           bagCap,
           courierHere ? 1 : 0,
-          ...GOODS.map((g) => {
-            const wN = wh.cargo[g.id] || 0;
-            const bN = bag.cargo[g.id] || 0;
-            const wC = depleteRateForGood(g.id) > 0 ? Math.round(warehouseGoodCondition(s, g.id)) : '-';
-            const bC = depleteRateForGood(g.id) > 0
-              ? Math.round(who === 'courier' ? courierGoodCondition(s.courier, g.id) : goodCondition(s, g.id))
-              : '-';
-            return `${g.id}:${wN}:${bN}:${wC}:${bC}`;
-          }),
+          ...whStacks.map((st) => `w:${st.id}:${st.qty}:${st.unitPrice}:${Math.round(st.condition ?? 100)}`),
+          ...bagStacks.map((st) => `b:${st.id}:${st.qty}:${st.unitPrice}:${Math.round(st.condition ?? 100)}`),
         ];
         const wsig = sigParts.join('|');
         if (wsig !== lastWarehouseSig) {
@@ -1129,25 +1202,36 @@ export function render(s, ui = {}) {
           const ul = document.getElementById('warehouse-list');
           const emptyEl = document.getElementById('warehouse-empty');
           const rows = [];
-          for (const g of GOODS) {
-            const wN = wh.cargo[g.id] || 0;
-            const bN = bag.cargo[g.id] || 0;
-            if (wN <= 0 && bN <= 0) continue;
-            const depletes = depleteRateForGood(g.id) > 0;
-            const wCond = depletes && wN > 0 ? ` · wh ${Math.round(warehouseGoodCondition(s, g.id))}%` : '';
-            const bCond = depletes && bN > 0
-              ? ` · cargo ${Math.round(who === 'courier' ? courierGoodCondition(s.courier, g.id) : goodCondition(s, g.id))}%`
-              : '';
-            const unit = g.weightG || 0;
-            const maxFit = unit > 0 ? Math.floor(free / unit) : 0;
-            rows.push(`<li data-good="${g.id}">
-              <span class="wh-meta">${g.name} · warehouse ${wN}${wCond} · ${who === 'courier' ? 'courier' : 'you'} ${bN}${bCond}</span>
+          // bag stacks → deposit
+          for (const st of bagStacks) {
+            if (!st || !(st.qty > 0)) continue;
+            const g = GOODS.find((x) => x.id === st.goodId);
+            const unit = g?.weightG || 0;
+            const depletes = depleteRateForGood(st.goodId) > 0;
+            const cond = depletes ? ` · ${Math.round(st.condition ?? 100)}%` : '';
+            rows.push(`<li class="wh-stack" data-stack-id="${st.id}" data-good="${st.goodId}" data-side="bag">
+              <span class="wh-meta"><span class="inv-icon inline">${goodIcon(st.goodId)}</span> ${g?.name || st.goodId} @${st.unitPrice}G ×${st.qty}${cond} · ${who === 'courier' ? 'courier' : 'you'}</span>
               <div class="wh-actions">
-                <input type="number" class="qty" data-wh-qty="${g.id}" min="1" value="1" />
-                <button type="button" data-act="wh-deposit" data-good="${g.id}" data-mode="qty" ${bN <= 0 ? 'disabled' : ''}>Deposit N</button>
-                <button type="button" data-act="wh-deposit" data-good="${g.id}" data-mode="all" ${bN <= 0 ? 'disabled' : ''}>Deposit all</button>
-                <button type="button" data-act="wh-withdraw" data-good="${g.id}" data-mode="qty" ${wN <= 0 ? 'disabled' : ''}>Withdraw N</button>
-                <button type="button" data-act="wh-withdraw" data-good="${g.id}" data-mode="max" ${wN <= 0 || maxFit <= 0 ? 'disabled' : ''}>Withdraw max</button>
+                <input type="number" class="qty" data-wh-stack-qty="${st.id}" min="1" value="1" />
+                <button type="button" data-act="wh-deposit" data-good="${st.goodId}" data-stack-id="${st.id}" data-mode="qty">Deposit N</button>
+                <button type="button" data-act="wh-deposit" data-good="${st.goodId}" data-stack-id="${st.id}" data-mode="all">Deposit all</button>
+              </div>
+            </li>`);
+          }
+          // warehouse stacks → withdraw
+          for (const st of whStacks) {
+            if (!st || !(st.qty > 0)) continue;
+            const g = GOODS.find((x) => x.id === st.goodId);
+            const unit = g?.weightG || 0;
+            const maxFit = unit > 0 ? Math.floor(free / unit) : 0;
+            const depletes = depleteRateForGood(st.goodId) > 0;
+            const cond = depletes ? ` · ${Math.round(st.condition ?? 100)}%` : '';
+            rows.push(`<li class="wh-stack" data-stack-id="${st.id}" data-good="${st.goodId}" data-side="wh">
+              <span class="wh-meta"><span class="inv-icon inline">${goodIcon(st.goodId)}</span> ${g?.name || st.goodId} @${st.unitPrice}G ×${st.qty}${cond} · warehouse</span>
+              <div class="wh-actions">
+                <input type="number" class="qty" data-wh-stack-qty="${st.id}" min="1" value="1" />
+                <button type="button" data-act="wh-withdraw" data-good="${st.goodId}" data-stack-id="${st.id}" data-mode="qty">Withdraw N</button>
+                <button type="button" data-act="wh-withdraw" data-good="${st.goodId}" data-stack-id="${st.id}" data-mode="max" ${maxFit <= 0 ? 'disabled' : ''}>Withdraw max</button>
               </div>
             </li>`);
           }

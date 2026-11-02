@@ -5,12 +5,19 @@ import {
   snapshotVisitedPrices,
   courierCargoUsed,
   courierGoodCondition,
-  emptyCargoMap,
+  emptyStacks,
   ensureWarehouse,
   warehouseUsed,
   playerAtWarehouse,
   courierAtWarehouse,
-} from './state.js?v=z1-20261028aq';
+  allocStackId,
+  addToStacks,
+  removeFromStack,
+  removeFromStacksFifo,
+  stacksQtyOf,
+  findStack,
+  normalizeUnitPrice,
+} from './state.js?v=z1-20261028ar';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -47,36 +54,43 @@ import {
   effectiveSpeed,
   AREA1_WAREHOUSE_LOC,
   AREA1_WAREHOUSE_CAP,
-} from './economy-data.js?v=z1-20261028aq';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028aq';
+} from './economy-data.js?v=z1-20261028ar';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028ar';
 
 /**
  * @param {import('./state.js').GameState} s
  * @param {number} nowMs
  */
 
-/** Slice N/Z — deplete liquid/volatile condition by distance; preserveLevel slows drain. */
+/** Slice N/Z/AE — deplete liquid/volatile condition per stack; preserveLevel slows drain. */
 function depleteConditions(s, distanceDelta) {
   if (!(distanceDelta > 0)) return;
-  if (!s.condition) s.condition = {};
+  if (!Array.isArray(s.cargoStacks)) s.cargoStacks = [];
   const wasted = [];
   const pl = s.preserveLevel | 0;
-  for (const g of GOODS) {
-    const qty = s.cargo[g.id] || 0;
-    if (qty <= 0) continue;
-    const rate = effectiveDepleteRate(g.id, pl);
-    if (!(rate > 0)) continue;
-    const cur = s.condition[g.id] != null ? s.condition[g.id] : 100;
-    const next = Math.max(0, cur - rate * distanceDelta);
-    s.condition[g.id] = next;
-    if (next <= 0) {
-      s.cargo[g.id] = 0;
-      delete s.condition[g.id];
-      if (s.buyMp?.[g.id]) delete s.buyMp[g.id];
-      if (s.stationBuys?.[g.id]) delete s.stationBuys[g.id];
-      wasted.push(g.name);
+  const names = new Set();
+  for (let i = 0; i < s.cargoStacks.length; ) {
+    const st = s.cargoStacks[i];
+    if (!st || !(st.qty > 0)) {
+      s.cargoStacks.splice(i, 1);
+      continue;
     }
+    const rate = effectiveDepleteRate(st.goodId, pl);
+    if (!(rate > 0)) {
+      i += 1;
+      continue;
+    }
+    const cur = st.condition != null ? st.condition : 100;
+    const next = Math.max(0, cur - rate * distanceDelta);
+    st.condition = next;
+    if (next <= 0) {
+      names.add(goodName(st.goodId));
+      s.cargoStacks.splice(i, 1);
+      continue;
+    }
+    i += 1;
   }
+  for (const n of names) wasted.push(n);
   // Slice O — quest lot depletes separately; 0% fails quest
   if (s.quest && s.quest.qty > 0) {
     const rate = effectiveDepleteRate(s.quest.goodId, pl);
@@ -91,23 +105,30 @@ function depleteConditions(s, distanceDelta) {
   if (wasted.length) s._conditionWaste = wasted;
 }
 
-/** Deplete courier cargo (Slice Q/N/Z). Uses player preserveLevel (shared train tech). */
+/** Deplete courier cargo stacks (Slice Q/N/Z/AE). Uses player preserveLevel. */
 function depleteCourierConditions(c, distanceDelta, preserveLevel) {
   if (!c || !(distanceDelta > 0)) return;
-  if (!c.condition) c.condition = {};
+  if (!Array.isArray(c.cargoStacks)) c.cargoStacks = [];
   const pl = preserveLevel | 0;
-  for (const g of GOODS) {
-    const qty = c.cargo[g.id] || 0;
-    if (qty <= 0) continue;
-    const rate = effectiveDepleteRate(g.id, pl);
-    if (!(rate > 0)) continue;
-    const cur = c.condition[g.id] != null ? c.condition[g.id] : 100;
-    const next = Math.max(0, cur - rate * distanceDelta);
-    c.condition[g.id] = next;
-    if (next <= 0) {
-      c.cargo[g.id] = 0;
-      delete c.condition[g.id];
+  for (let i = 0; i < c.cargoStacks.length; ) {
+    const st = c.cargoStacks[i];
+    if (!st || !(st.qty > 0)) {
+      c.cargoStacks.splice(i, 1);
+      continue;
     }
+    const rate = effectiveDepleteRate(st.goodId, pl);
+    if (!(rate > 0)) {
+      i += 1;
+      continue;
+    }
+    const cur = st.condition != null ? st.condition : 100;
+    const next = Math.max(0, cur - rate * distanceDelta);
+    st.condition = next;
+    if (next <= 0) {
+      c.cargoStacks.splice(i, 1);
+      continue;
+    }
+    i += 1;
   }
 }
 
@@ -215,11 +236,11 @@ function tickCourier(s, rawDt) {
 function runCourierStopTrades(s, c) {
   const locId = c.locationId;
   const perStop = c.trade?.[locId] || {};
-  // sell first so gold frees for buys
+  // sell first so gold frees for buys — FIFO per good across stacks
   for (const g of GOODS) {
     const flags = perStop[g.id];
     if (!flags || !flags.sell) continue;
-    const qty = c.cargo[g.id] || 0;
+    const qty = stacksQtyOf(c.cargoStacks, g.id);
     if (qty > 0) courierTrySell(s, c, locId, g.id, qty);
   }
   for (const g of GOODS) {
@@ -268,15 +289,34 @@ function courierTrySell(s, c, locId, goodId, qty) {
   if (price == null) return;
   qty = Math.floor(qty);
   if (qty <= 0) return;
-  if ((c.cargo[goodId] || 0) < qty) return;
-  const cond = courierGoodCondition(c, goodId);
-  const mul = sellMulFromCondition(cond);
-  if (mul <= 0) return;
-  const unit = Math.max(0, Math.round(price * mul));
-  c.cargo[goodId] -= qty;
-  c.gold += unit * qty;
-  if ((c.cargo[goodId] || 0) <= 0 && c.condition) delete c.condition[goodId];
-  recordTradeImpact(s, locId, goodId, qty, 'sell');
+  if (!Array.isArray(c.cargoStacks)) c.cargoStacks = [];
+  if (stacksQtyOf(c.cargoStacks, goodId) < qty) return;
+  // Sell FIFO stacks; each stack uses its own condition for MP mul
+  let left = qty;
+  let sold = 0;
+  while (left > 0) {
+    const st = (c.cargoStacks || []).find((x) => x && x.goodId === goodId && x.qty > 0);
+    if (!st) break;
+    const take = Math.min(st.qty | 0, left);
+    const cond = st.condition != null ? st.condition : 100;
+    const mul = sellMulFromCondition(cond);
+    if (mul <= 0) {
+      // waste stack — drop it
+      const idx = c.cargoStacks.indexOf(st);
+      if (idx >= 0) c.cargoStacks.splice(idx, 1);
+      continue;
+    }
+    const unit = Math.max(0, Math.round(price * mul));
+    c.gold += unit * take;
+    st.qty = (st.qty | 0) - take;
+    if (st.qty <= 0) {
+      const idx = c.cargoStacks.indexOf(st);
+      if (idx >= 0) c.cargoStacks.splice(idx, 1);
+    }
+    sold += take;
+    left -= take;
+  }
+  if (sold > 0) recordTradeImpact(s, locId, goodId, sold, 'sell');
 }
 
 function courierBuyMax(s, c, locId, goodId) {
@@ -290,13 +330,9 @@ function courierBuyMax(s, c, locId, goodId) {
   if (qty <= 0) return;
   const cost = price * qty;
   c.gold -= cost;
-  const had = c.cargo[goodId] || 0;
-  if (!c.condition) c.condition = {};
-  if (depleteRateForGood(goodId) > 0) {
-    const oldC = had > 0 && c.condition[goodId] != null ? c.condition[goodId] : 100;
-    c.condition[goodId] = had + qty > 0 ? (oldC * had + 100 * qty) / (had + qty) : 100;
-  }
-  c.cargo[goodId] = had + qty;
+  if (!Array.isArray(c.cargoStacks)) c.cargoStacks = [];
+  // Courier shares player's nextStackId allocator via game state
+  addToStacks(c.cargoStacks, { goodId, unitPrice: price, qty, condition: 100 }, () => allocStackId(s));
   recordTradeImpact(s, locId, goodId, qty, 'buy');
 }
 
@@ -364,37 +400,33 @@ export function tryBuy(s, locId, goodId, qty) {
   if (price == null) return { ok: false, reason: 'no_quote' };
   qty = Math.floor(qty);
   if (qty <= 0) return { ok: false, reason: 'qty' };
-  const cost = price * qty;
+  const unitPrice = normalizeUnitPrice(price);
+  const cost = unitPrice * qty;
   if (s.gold < cost) return { ok: false, reason: 'gold' };
   const w = goodWeightG(goodId);
   if (!(w > 0)) return { ok: false, reason: 'weight' };
   if (cargoUsed(s) + w * qty > s.capacity) return { ok: false, reason: 'capacity' };
   s.gold -= cost;
-  const had = s.cargo[goodId] || 0;
-  if (!s.condition) s.condition = {};
-  if (depleteRateForGood(goodId) > 0) {
-    const oldC = had > 0 && s.condition[goodId] != null ? s.condition[goodId] : 100;
-    const newC = had + qty > 0 ? (oldC * had + 100 * qty) / (had + qty) : 100;
-    s.condition[goodId] = newC;
-  }
-  s.cargo[goodId] = had + qty;
-  // Slice G: save buy MP into this station visit (avg committed on leave)
-  if (!s.stationBuys) s.stationBuys = {};
-  const sb = s.stationBuys[goodId] || { sum: 0, qty: 0 };
-  sb.sum += price * qty;
-  sb.qty += qty;
-  s.stationBuys[goodId] = sb;
+  if (!Array.isArray(s.cargoStacks)) s.cargoStacks = [];
+  // Slice AE: commit unitPrice into stack immediately (merge only same goodId+unitPrice)
+  addToStacks(
+    s.cargoStacks,
+    { goodId, unitPrice, qty, condition: 100 },
+    () => allocStackId(s),
+  );
   recordTradeImpact(s, locId, goodId, qty, 'buy');
   return { ok: true };
 }
 
 /**
+ * Sell from a specific stack (preferred) or FIFO by goodId when stackId omitted.
  * @param {import('./state.js').GameState} s
  * @param {string} locId
  * @param {string} goodId
  * @param {number} qty
+ * @param {string} [stackId]
  */
-export function trySell(s, locId, goodId, qty) {
+export function trySell(s, locId, goodId, qty, stackId) {
   if (s.travel) return { ok: false, reason: 'traveling' };
   if (s.locationId !== locId) return { ok: false, reason: 'not_here' };
   if (!s.unlocked.includes(locId)) return { ok: false, reason: 'locked' };
@@ -402,34 +434,50 @@ export function trySell(s, locId, goodId, qty) {
   if (price == null) return { ok: false, reason: 'no_quote' };
   qty = Math.floor(qty);
   if (qty <= 0) return { ok: false, reason: 'qty' };
-  if ((s.cargo[goodId] || 0) < qty) return { ok: false, reason: 'stock' };
-  const cond = goodCondition(s, goodId);
-  const mul = sellMulFromCondition(cond);
-  if (mul <= 0) return { ok: false, reason: 'waste' };
-  const unit = Math.max(0, Math.round(price * mul));
-  s.cargo[goodId] -= qty;
-  s.gold += unit * qty;
-  if ((s.cargo[goodId] || 0) <= 0 && s.condition) delete s.condition[goodId];
-  // Keep buyMp in sync with remaining cargo (FIFO-ish qty shrink)
-  if (s.buyMp?.[goodId]) {
-    s.buyMp[goodId].qty = Math.max(0, s.buyMp[goodId].qty - qty);
-    if (s.buyMp[goodId].qty <= 0) delete s.buyMp[goodId];
-  }
-  if (s.stationBuys?.[goodId]) {
-    const cargoLeft = s.cargo[goodId] || 0;
-    const committedQty = s.buyMp?.[goodId]?.qty || 0;
-    const maxPend = Math.max(0, cargoLeft - committedQty);
-    if (s.stationBuys[goodId].qty > maxPend) {
-      const keep = maxPend;
-      if (keep <= 0) delete s.stationBuys[goodId];
-      else {
-        const unitAvg = s.stationBuys[goodId].sum / s.stationBuys[goodId].qty;
-        s.stationBuys[goodId] = { qty: keep, sum: unitAvg * keep };
+  if (!Array.isArray(s.cargoStacks)) s.cargoStacks = [];
+
+  let sold = 0;
+  let goldGain = 0;
+
+  if (stackId) {
+    const st = findStack(s.cargoStacks, stackId);
+    if (!st || st.goodId !== goodId) return { ok: false, reason: 'stack' };
+    if ((st.qty | 0) < qty) return { ok: false, reason: 'stock' };
+    const cond = st.condition != null ? st.condition : 100;
+    const mul = sellMulFromCondition(cond);
+    if (mul <= 0) return { ok: false, reason: 'waste' };
+    const unit = Math.max(0, Math.round(price * mul));
+    const removed = removeFromStack(s.cargoStacks, stackId, qty);
+    if (!removed) return { ok: false, reason: 'stock' };
+    sold = qty;
+    goldGain = unit * qty;
+  } else {
+    // FIFO by stack order — each stack sells at its own condition (no price averaging)
+    let left = qty;
+    if (stacksQtyOf(s.cargoStacks, goodId) < qty) return { ok: false, reason: 'stock' };
+    while (left > 0) {
+      const st = s.cargoStacks.find((x) => x && x.goodId === goodId && x.qty > 0);
+      if (!st) break;
+      const take = Math.min(st.qty | 0, left);
+      const cond = st.condition != null ? st.condition : 100;
+      const mul = sellMulFromCondition(cond);
+      if (mul <= 0) {
+        const idx = s.cargoStacks.indexOf(st);
+        if (idx >= 0) s.cargoStacks.splice(idx, 1);
+        continue;
       }
+      const unit = Math.max(0, Math.round(price * mul));
+      removeFromStack(s.cargoStacks, st.id, take);
+      goldGain += unit * take;
+      sold += take;
+      left -= take;
     }
+    if (sold <= 0) return { ok: false, reason: 'waste' };
   }
-  recordTradeImpact(s, locId, goodId, qty, 'sell');
-  return { ok: true };
+
+  s.gold += goldGain;
+  if (sold > 0) recordTradeImpact(s, locId, goodId, sold, 'sell');
+  return { ok: true, sold, gold: goldGain };
 }
 
 /**
@@ -478,37 +526,18 @@ export function tryDepositUnlock(s, unlock) {
   if (!s.unlockDeposits[target]) s.unlockDeposits[target] = {};
   const dep = s.unlockDeposits[target];
   let depositedAny = false;
+  if (!Array.isArray(s.cargoStacks)) s.cargoStacks = [];
   for (const c of unlock.costs) {
     const deposited = dep[c.goodId] || 0;
     const needLeft = c.qty - deposited;
     if (needLeft <= 0) continue;
-    const have = s.cargo[c.goodId] || 0;
+    const have = stacksQtyOf(s.cargoStacks, c.goodId);
     const take = Math.min(have, needLeft);
     if (take <= 0) continue;
-    s.cargo[c.goodId] -= take;
-    if ((s.cargo[c.goodId] || 0) <= 0) {
-      s.cargo[c.goodId] = 0;
-      if (s.condition) delete s.condition[c.goodId];
-    }
-    // Keep buyMp in sync with remaining cargo (same idea as sell)
-    if (s.buyMp?.[c.goodId]) {
-      s.buyMp[c.goodId].qty = Math.max(0, s.buyMp[c.goodId].qty - take);
-      if (s.buyMp[c.goodId].qty <= 0) delete s.buyMp[c.goodId];
-    }
-    if (s.stationBuys?.[c.goodId]) {
-      const cargoLeft = s.cargo[c.goodId] || 0;
-      const committedQty = s.buyMp?.[c.goodId]?.qty || 0;
-      const maxPend = Math.max(0, cargoLeft - committedQty);
-      if (s.stationBuys[c.goodId].qty > maxPend) {
-        const keep = maxPend;
-        if (keep <= 0) delete s.stationBuys[c.goodId];
-        else {
-          const unitAvg = s.stationBuys[c.goodId].sum / s.stationBuys[c.goodId].qty;
-          s.stationBuys[c.goodId] = { qty: keep, sum: unitAvg * keep };
-        }
-      }
-    }
-    dep[c.goodId] = deposited + take;
+    // FIFO by stack order (document: unlock deposits consume stacks in array order)
+    const { taken } = removeFromStacksFifo(s.cargoStacks, c.goodId, take);
+    if (taken <= 0) continue;
+    dep[c.goodId] = deposited + taken;
     depositedAny = true;
   }
   if (!depositedAny) return { ok: false, reason: 'nothing' };
@@ -704,8 +733,7 @@ export function tryHireCourier(s) {
     locationId: startLoc,
     gold: COURIER_SEED_GOLD,
     capacity: COURIER_CAPACITY,
-    cargo: emptyCargoMap(),
-    condition: {},
+    cargoStacks: emptyStacks(),
     route: [...route],
     routeIndex: 0,
     trade,
@@ -823,7 +851,14 @@ export function tryTransferGold(s, dir, amount) {
  * Transfer goods either way when co-located docked.
  * @param {'toCourier'|'toPlayer'} dir
  */
-export function tryTransferGood(s, goodId, dir, qty) {
+/**
+ * Transfer goods either way when co-located docked.
+ * Prefer stackId (moves from that stack / merges by unitPrice on dest).
+ * Without stackId: FIFO by stack order for goodId.
+ * @param {'toCourier'|'toPlayer'} dir
+ * @param {string} [stackId]
+ */
+export function tryTransferGood(s, goodId, dir, qty, stackId) {
   const c = s.courier;
   if (!c) return { ok: false, reason: 'no_courier' };
   if (s.travel || c.travel) return { ok: false, reason: 'traveling' };
@@ -833,40 +868,62 @@ export function tryTransferGood(s, goodId, dir, qty) {
   if (!(qty > 0)) return { ok: false, reason: 'qty' };
   const w = goodWeightG(goodId);
   if (!(w > 0)) return { ok: false, reason: 'weight' };
+  if (!Array.isArray(s.cargoStacks)) s.cargoStacks = [];
+  if (!Array.isArray(c.cargoStacks)) c.cargoStacks = [];
+
+  const idGen = () => allocStackId(s);
+
+  function takeFrom(stacks, want) {
+    if (stackId) {
+      const st = findStack(stacks, stackId);
+      if (!st || st.goodId !== goodId) return null;
+      return removeFromStack(stacks, stackId, want);
+    }
+    const { removed, taken } = removeFromStacksFifo(stacks, goodId, want);
+    if (taken <= 0) return null;
+    // collapse to one chunk only if same unitPrice+condition — otherwise move piece by piece
+    if (removed.length === 1) return removed[0];
+    return { multi: removed, qty: taken };
+  }
+
+  function putChunks(destStacks, chunk) {
+    if (chunk.multi) {
+      for (const part of chunk.multi) {
+        addToStacks(destStacks, {
+          goodId: part.goodId,
+          unitPrice: part.unitPrice,
+          qty: part.qty,
+          condition: part.condition,
+        }, idGen);
+      }
+      return;
+    }
+    addToStacks(destStacks, {
+      goodId: chunk.goodId,
+      unitPrice: chunk.unitPrice,
+      qty: chunk.qty,
+      condition: chunk.condition,
+    }, idGen);
+  }
 
   if (dir === 'toCourier') {
-    if ((s.cargo[goodId] || 0) < qty) return { ok: false, reason: 'stock' };
+    const have = stackId
+      ? (findStack(s.cargoStacks, stackId)?.qty || 0)
+      : stacksQtyOf(s.cargoStacks, goodId);
+    if (have < qty) return { ok: false, reason: 'stock' };
     if (courierCargoUsed(c) + w * qty > c.capacity) return { ok: false, reason: 'capacity' };
-    // move with blended condition
-    const hadP = s.cargo[goodId] || 0;
-    const hadC = c.cargo[goodId] || 0;
-    const pCond = depleteRateForGood(goodId) > 0
-      ? (s.condition?.[goodId] != null ? s.condition[goodId] : 100)
-      : null;
-    s.cargo[goodId] = hadP - qty;
-    if ((s.cargo[goodId] || 0) <= 0 && s.condition) delete s.condition[goodId];
-    c.cargo[goodId] = hadC + qty;
-    if (pCond != null) {
-      if (!c.condition) c.condition = {};
-      const oldC = hadC > 0 && c.condition[goodId] != null ? c.condition[goodId] : 100;
-      c.condition[goodId] = (oldC * hadC + pCond * qty) / (hadC + qty);
-    }
+    const chunk = takeFrom(s.cargoStacks, qty);
+    if (!chunk) return { ok: false, reason: 'stock' };
+    putChunks(c.cargoStacks, chunk);
   } else if (dir === 'toPlayer') {
-    if ((c.cargo[goodId] || 0) < qty) return { ok: false, reason: 'stock' };
+    const have = stackId
+      ? (findStack(c.cargoStacks, stackId)?.qty || 0)
+      : stacksQtyOf(c.cargoStacks, goodId);
+    if (have < qty) return { ok: false, reason: 'stock' };
     if (cargoUsed(s) + w * qty > s.capacity) return { ok: false, reason: 'capacity' };
-    const hadC = c.cargo[goodId] || 0;
-    const hadP = s.cargo[goodId] || 0;
-    const cCond = depleteRateForGood(goodId) > 0
-      ? (c.condition?.[goodId] != null ? c.condition[goodId] : 100)
-      : null;
-    c.cargo[goodId] = hadC - qty;
-    if ((c.cargo[goodId] || 0) <= 0 && c.condition) delete c.condition[goodId];
-    s.cargo[goodId] = hadP + qty;
-    if (cCond != null) {
-      if (!s.condition) s.condition = {};
-      const oldP = hadP > 0 && s.condition[goodId] != null ? s.condition[goodId] : 100;
-      s.condition[goodId] = (oldP * hadP + cCond * qty) / (hadP + qty);
-    }
+    const chunk = takeFrom(c.cargoStacks, qty);
+    if (!chunk) return { ok: false, reason: 'stock' };
+    putChunks(s.cargoStacks, chunk);
   } else {
     return { ok: false, reason: 'dir' };
   }
@@ -875,10 +932,11 @@ export function tryTransferGood(s, goodId, dir, qty) {
 
 
 /**
- * Slice AB — deposit goods into Area1 warehouse (Broken Lamp hub).
+ * Slice AB/AE — deposit from a cargo stack into Area1 warehouse.
  * @param {'player'|'courier'} who
+ * @param {string} [stackId] source stack; omit → FIFO by goodId
  */
-export function tryWarehouseDeposit(s, who, goodId, qty) {
+export function tryWarehouseDeposit(s, who, goodId, qty, stackId) {
   if (who !== 'player' && who !== 'courier') return { ok: false, reason: 'who' };
   if (!GOODS.some((g) => g.id === goodId)) return { ok: false, reason: 'good' };
   qty = Math.floor(Number(qty));
@@ -893,46 +951,54 @@ export function tryWarehouseDeposit(s, who, goodId, qty) {
     if (!s.courier) return { ok: false, reason: 'no_courier' };
   }
 
-  const bag = who === 'player' ? s : s.courier;
-  const have = bag.cargo[goodId] || 0;
+  const bagStacks = who === 'player' ? (s.cargoStacks || (s.cargoStacks = [])) : (s.courier.cargoStacks || (s.courier.cargoStacks = []));
+  const have = stackId
+    ? (findStack(bagStacks, stackId)?.qty || 0)
+    : stacksQtyOf(bagStacks, goodId);
   if (have < qty) return { ok: false, reason: 'stock' };
-
-  // 0% waste goods already gone — refuse if depleting and condition <= 0
-  if (depleteRateForGood(goodId) > 0) {
-    const cond = bag.condition?.[goodId] != null ? bag.condition[goodId] : 100;
-    if (cond <= 0) return { ok: false, reason: 'waste' };
-  }
 
   const wh = ensureWarehouse(s);
   const used = warehouseUsed(s);
   if (used + w * qty > AREA1_WAREHOUSE_CAP) return { ok: false, reason: 'warehouse_cap' };
 
-  const hadSrc = have;
-  const hadWh = wh.cargo[goodId] || 0;
-  const srcCond = depleteRateForGood(goodId) > 0
-    ? (bag.condition?.[goodId] != null ? bag.condition[goodId] : 100)
-    : null;
-
-  bag.cargo[goodId] = hadSrc - qty;
-  if ((bag.cargo[goodId] || 0) <= 0) {
-    bag.cargo[goodId] = 0;
-    if (bag.condition) delete bag.condition[goodId];
+  const idGen = () => allocStackId(s);
+  /** @type {{ goodId: string, unitPrice: number, qty: number, condition: number }[]} */
+  let parts = [];
+  if (stackId) {
+    const removed = removeFromStack(bagStacks, stackId, qty);
+    if (!removed) return { ok: false, reason: 'stock' };
+    if (removed.condition <= 0 && depleteRateForGood(goodId) > 0) {
+      // put back? treat as waste refuse — restore
+      addToStacks(bagStacks, removed, idGen);
+      return { ok: false, reason: 'waste' };
+    }
+    parts = [removed];
+  } else {
+    const { removed, taken } = removeFromStacksFifo(bagStacks, goodId, qty);
+    if (taken < qty) {
+      // restore (shouldn't happen after have check)
+      for (const part of removed) addToStacks(bagStacks, part, idGen);
+      return { ok: false, reason: 'stock' };
+    }
+    parts = removed;
   }
-
-  wh.cargo[goodId] = hadWh + qty;
-  if (srcCond != null) {
-    if (!wh.condition) wh.condition = {};
-    const oldW = hadWh > 0 && wh.condition[goodId] != null ? wh.condition[goodId] : 100;
-    wh.condition[goodId] = (oldW * hadWh + srcCond * qty) / (hadWh + qty);
+  for (const part of parts) {
+    addToStacks(wh.stacks, {
+      goodId: part.goodId,
+      unitPrice: part.unitPrice,
+      qty: part.qty,
+      condition: part.condition,
+    }, idGen);
   }
   return { ok: true };
 }
 
 /**
- * Slice AB — withdraw goods from Area1 warehouse into player or courier cargo.
+ * Slice AB/AE — withdraw a warehouse stack into player or courier cargo.
  * @param {'player'|'courier'} who
+ * @param {string} [stackId] warehouse stack; omit → FIFO by goodId
  */
-export function tryWarehouseWithdraw(s, who, goodId, qty) {
+export function tryWarehouseWithdraw(s, who, goodId, qty, stackId) {
   if (who !== 'player' && who !== 'courier') return { ok: false, reason: 'who' };
   if (!GOODS.some((g) => g.id === goodId)) return { ok: false, reason: 'good' };
   qty = Math.floor(Number(qty));
@@ -948,36 +1014,42 @@ export function tryWarehouseWithdraw(s, who, goodId, qty) {
   }
 
   const wh = ensureWarehouse(s);
-  const have = wh.cargo[goodId] || 0;
+  const have = stackId
+    ? (findStack(wh.stacks, stackId)?.qty || 0)
+    : stacksQtyOf(wh.stacks, goodId);
   if (have < qty) return { ok: false, reason: 'stock' };
 
-  if (depleteRateForGood(goodId) > 0) {
-    const cond = wh.condition?.[goodId] != null ? wh.condition[goodId] : 100;
-    if (cond <= 0) return { ok: false, reason: 'waste' };
-  }
-
-  const bag = who === 'player' ? s : s.courier;
+  const bagStacks = who === 'player' ? (s.cargoStacks || (s.cargoStacks = [])) : (s.courier.cargoStacks || (s.courier.cargoStacks = []));
   const used = who === 'player' ? cargoUsed(s) : courierCargoUsed(s.courier);
   const cap = who === 'player' ? s.capacity : s.courier.capacity;
   if (used + w * qty > cap) return { ok: false, reason: 'capacity' };
 
-  const hadWh = have;
-  const hadDst = bag.cargo[goodId] || 0;
-  const whCond = depleteRateForGood(goodId) > 0
-    ? (wh.condition?.[goodId] != null ? wh.condition[goodId] : 100)
-    : null;
-
-  wh.cargo[goodId] = hadWh - qty;
-  if ((wh.cargo[goodId] || 0) <= 0) {
-    wh.cargo[goodId] = 0;
-    if (wh.condition) delete wh.condition[goodId];
+  const idGen = () => allocStackId(s);
+  /** @type {{ goodId: string, unitPrice: number, qty: number, condition: number }[]} */
+  let parts = [];
+  if (stackId) {
+    const removed = removeFromStack(wh.stacks, stackId, qty);
+    if (!removed) return { ok: false, reason: 'stock' };
+    if (removed.condition <= 0 && depleteRateForGood(goodId) > 0) {
+      addToStacks(wh.stacks, removed, idGen);
+      return { ok: false, reason: 'waste' };
+    }
+    parts = [removed];
+  } else {
+    const { removed, taken } = removeFromStacksFifo(wh.stacks, goodId, qty);
+    if (taken < qty) {
+      for (const part of removed) addToStacks(wh.stacks, part, idGen);
+      return { ok: false, reason: 'stock' };
+    }
+    parts = removed;
   }
-
-  bag.cargo[goodId] = hadDst + qty;
-  if (whCond != null) {
-    if (!bag.condition) bag.condition = {};
-    const oldD = hadDst > 0 && bag.condition[goodId] != null ? bag.condition[goodId] : 100;
-    bag.condition[goodId] = (oldD * hadDst + whCond * qty) / (hadDst + qty);
+  for (const part of parts) {
+    addToStacks(bagStacks, {
+      goodId: part.goodId,
+      unitPrice: part.unitPrice,
+      qty: part.qty,
+      condition: part.condition,
+    }, idGen);
   }
   return { ok: true };
 }

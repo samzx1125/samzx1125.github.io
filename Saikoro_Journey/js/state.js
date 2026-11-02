@@ -1,43 +1,43 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028aq';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028aq';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028ar';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ar';
 
 /**
+ * Slice AE — price-split cargo stacks.
+ * @typedef {{ id: string, goodId: string, unitPrice: number, qty: number, condition: number }} CargoStack
+ *
  * @typedef {{
  *   gold: number,
- *   capacity: number, // grams — synced from capacityLevel via effectiveCapacity
- *   capacityLevel: number, // 0..5 upgrades (+20% base each → max 10000g)
- *   preserveLevel: number, // 0..5 — slows liquid/volatile drain (1−0.12×lv)
- *   speedLevel: number, // 0..5 — travel speed +20% base each (TRAIN_SPEED→2× at max)
- *   cargo: Record<string, number>,
- *   condition: Record<string, number>, // 0–100% for goods that deplete; absent = 100
+ *   capacity: number,
+ *   capacityLevel: number,
+ *   preserveLevel: number,
+ *   speedLevel: number,
+ *   cargoStacks: CargoStack[],
+ *   nextStackId: number,
  *   quest: null | { from: string, to: string, goodId: string, qty: number, rewardGold: number, condition: number },
  *   locationId: string,
  *   unlocked: string[],
- *   unlockDeposits: Record<string, Record<string, number>>, // target loc id → goodId → deposited qty
+ *   unlockDeposits: Record<string, Record<string, number>>,
  *   travel: null | { from: string, to: string, elapsedMs: number, durationMs: number, distance: number, speed: number, traveledDistance: number },
  *   prices: Record<string, Record<string, number>>,
- *   visitedPrices: Record<string, Record<string, number>>, // Slice P — last-seen MP per station
+ *   visitedPrices: Record<string, Record<string, number>>,
  *   courier: null | CourierState,
  *   selectedLocId: string | null,
  *   nowMs: number,
- *   buyMp: Record<string, { avg: number, qty: number }>,
- *   stationBuys: Record<string, { sum: number, qty: number }>,
  *   lastPriceDriftMs: number,
  *   tradeImpact: Record<string, { buys: { t: number, qty: number }[], sells: { t: number, qty: number }[] }>,
  *   playerName: string,
  *   chosenBodyId: string | null,
  *   openingDone: boolean,
- *   personal: Record<string, number>, // Slice U — key/consumable qty by personal id
- *   warehouse: { area1: { cargo: Record<string, number>, condition: Record<string, number> } }, // Slice AB
- *   universalCourierUnlocked: boolean, // Slice AD — Scrap Gate unlocks Area1-wide courier routes
+ *   personal: Record<string, number>,
+ *   warehouse: { area1: { stacks: CargoStack[] } },
+ *   universalCourierUnlocked: boolean,
  * }} GameState
  *
  * @typedef {{
  *   locationId: string,
  *   gold: number,
  *   capacity: number,
- *   cargo: Record<string, number>,
- *   condition: Record<string, number>,
+ *   cargoStacks: CargoStack[],
  *   route: string[],
  *   routeIndex: number,
  *   trade: Record<string, Record<string, { buy: boolean, sell: boolean }>>,
@@ -45,6 +45,165 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeight
  *   paused: boolean,
  * }} CourierState
  */
+
+/** Round unit buy price to integer G. */
+export function normalizeUnitPrice(p) {
+  const n = Math.round(Number(p));
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Allocate next stable stack id on game state (`stk_N`). */
+export function allocStackId(s) {
+  if (!s.nextStackId || s.nextStackId < 1) s.nextStackId = 1;
+  const id = `stk_${s.nextStackId}`;
+  s.nextStackId += 1;
+  return id;
+}
+
+/** Total qty of goodId across stacks. */
+export function stacksQtyOf(stacks, goodId) {
+  let n = 0;
+  for (const st of stacks || []) {
+    if (st && st.goodId === goodId) n += Math.max(0, st.qty | 0);
+  }
+  return n;
+}
+
+/** Find stack by id. */
+export function findStack(stacks, stackId) {
+  if (!stackId) return null;
+  return (stacks || []).find((st) => st && st.id === stackId) || null;
+}
+
+/**
+ * Add qty into stacks — merge only when same goodId AND same unitPrice.
+ * Condition blends within the matched stack only.
+ * @param {CargoStack[]} stacks
+ * @param {{ goodId: string, unitPrice: number, qty: number, condition?: number }} opts
+ * @param {() => string} idGen
+ */
+export function addToStacks(stacks, opts, idGen) {
+  const goodId = opts.goodId;
+  const unitPrice = normalizeUnitPrice(opts.unitPrice);
+  const qty = Math.floor(Number(opts.qty) || 0);
+  if (!goodId || qty <= 0) return stacks;
+  const condIn = opts.condition == null ? 100 : Math.max(0, Math.min(100, Number(opts.condition)));
+  const existing = stacks.find(
+    (st) => st && st.goodId === goodId && normalizeUnitPrice(st.unitPrice) === unitPrice,
+  );
+  if (existing) {
+    const oldQ = existing.qty | 0;
+    const oldC = existing.condition != null ? existing.condition : 100;
+    existing.qty = oldQ + qty;
+    existing.condition = oldQ + qty > 0 ? (oldC * oldQ + condIn * qty) / (oldQ + qty) : condIn;
+    existing.unitPrice = unitPrice;
+  } else {
+    stacks.push({
+      id: idGen(),
+      goodId,
+      unitPrice,
+      qty,
+      condition: condIn,
+    });
+  }
+  return stacks;
+}
+
+/**
+ * Remove qty from a specific stack. Returns removed chunk or null.
+ * @returns {null | { goodId: string, unitPrice: number, qty: number, condition: number }}
+ */
+export function removeFromStack(stacks, stackId, qty) {
+  const idx = (stacks || []).findIndex((st) => st && st.id === stackId);
+  if (idx < 0) return null;
+  const st = stacks[idx];
+  qty = Math.floor(Number(qty) || 0);
+  if (qty <= 0 || (st.qty | 0) < qty) return null;
+  const out = {
+    goodId: st.goodId,
+    unitPrice: normalizeUnitPrice(st.unitPrice),
+    qty,
+    condition: st.condition != null ? st.condition : 100,
+  };
+  st.qty = (st.qty | 0) - qty;
+  if (st.qty <= 0) stacks.splice(idx, 1);
+  return out;
+}
+
+/**
+ * Remove qty of goodId FIFO by stack array order (Slice AE unlock / sell-all).
+ * @returns {{ removed: { goodId: string, unitPrice: number, qty: number, condition: number }[], taken: number }}
+ */
+export function removeFromStacksFifo(stacks, goodId, qty) {
+  qty = Math.floor(Number(qty) || 0);
+  /** @type {{ goodId: string, unitPrice: number, qty: number, condition: number }[]} */
+  const removed = [];
+  let left = qty;
+  if (!(left > 0)) return { removed, taken: 0 };
+  for (let i = 0; i < stacks.length && left > 0; ) {
+    const st = stacks[i];
+    if (!st || st.goodId !== goodId) {
+      i += 1;
+      continue;
+    }
+    const take = Math.min(st.qty | 0, left);
+    if (take <= 0) {
+      i += 1;
+      continue;
+    }
+    removed.push({
+      goodId: st.goodId,
+      unitPrice: normalizeUnitPrice(st.unitPrice),
+      qty: take,
+      condition: st.condition != null ? st.condition : 100,
+    });
+    st.qty = (st.qty | 0) - take;
+    left -= take;
+    if (st.qty <= 0) stacks.splice(i, 1);
+    else i += 1;
+  }
+  return { removed, taken: qty - left };
+}
+
+/**
+ * Migrate legacy cargo map (+ optional buyMp avg / condition map) → stacks.
+ * One stack per good with qty>0 at Math.round(buyMp.avg || 0).
+ */
+export function migrateCargoMapToStacks(cargo, buyMp, condition, idGen) {
+  /** @type {CargoStack[]} */
+  const stacks = [];
+  if (!cargo || typeof cargo !== 'object') return stacks;
+  for (const g of GOODS) {
+    const qty = Math.floor(Number(cargo[g.id]) || 0);
+    if (qty <= 0) continue;
+    const unitPrice = Math.round(Number(buyMp?.[g.id]?.avg) || 0);
+    const rawC = condition?.[g.id];
+    const cond = rawC == null || !Number.isFinite(Number(rawC)) ? 100 : Math.max(0, Math.min(100, Number(rawC)));
+    stacks.push({
+      id: idGen(),
+      goodId: g.id,
+      unitPrice,
+      qty,
+      condition: cond,
+    });
+  }
+  return stacks;
+}
+
+/** Normalize a persisted stack row. */
+export function sanitizeStack(raw, idGen) {
+  if (!raw || typeof raw !== 'object') return null;
+  const goodId = typeof raw.goodId === 'string' ? raw.goodId : '';
+  if (!GOODS.some((g) => g.id === goodId)) return null;
+  const qty = Math.floor(Number(raw.qty) || 0);
+  if (qty <= 0) return null;
+  const unitPrice = normalizeUnitPrice(raw.unitPrice);
+  const cond = raw.condition == null || !Number.isFinite(Number(raw.condition))
+    ? 100
+    : Math.max(0, Math.min(100, Number(raw.condition)));
+  const id = typeof raw.id === 'string' && raw.id ? raw.id : idGen();
+  return { id, goodId, unitPrice, qty, condition: cond };
+}
 
 /** @returns {GameState} */
 export function createInitialState() {
@@ -57,9 +216,6 @@ export function createInitialState() {
       if (base[g.id] != null) prices[loc.id][g.id] = base[g.id];
     }
   }
-  /** @type {Record<string, number>} */
-  const cargo = {};
-  for (const g of GOODS) cargo[g.id] = 0;
 
   /** @type {GameState} */
   const s = {
@@ -68,8 +224,8 @@ export function createInitialState() {
     capacity: effectiveCapacity(0),
     preserveLevel: 0,
     speedLevel: 0,
-    cargo,
-    condition: {},
+    cargoStacks: [],
+    nextStackId: 1,
     quest: null,
     locationId: START_LOC,
     unlocked: [...INITIALLY_UNLOCKED],
@@ -80,18 +236,15 @@ export function createInitialState() {
     courier: null,
     selectedLocId: START_LOC,
     nowMs: performance.now(),
-    buyMp: {},
-    stationBuys: {},
     lastPriceDriftMs: 0,
     tradeImpact: {},
     playerName: 'Saikoro',
     chosenBodyId: null,
     openingDone: false,
     personal: {},
-    warehouse: { area1: { cargo: {}, condition: {} } },
+    warehouse: { area1: { stacks: [] } },
     universalCourierUnlocked: false,
   };
-  // start station counts as visited
   const startRow = prices[START_LOC] || {};
   const startSnap = {};
   for (const g of GOODS) {
@@ -102,40 +255,33 @@ export function createInitialState() {
   return s;
 }
 
-/** Pending + committed buy MP average for a good (null if none). */
+/** Weighted avg buy unit price across stacks of goodId (null if none). */
 export function effectiveBuyAvg(s, goodId) {
-  const committed = s.buyMp?.[goodId];
-  const pending = s.stationBuys?.[goodId];
-  const cQty = committed?.qty || 0;
-  const pQty = pending?.qty || 0;
-  if (cQty + pQty <= 0) return null;
-  const cSum = (committed?.avg || 0) * cQty;
-  const pSum = pending?.sum || 0;
-  return (cSum + pSum) / (cQty + pQty);
-}
-
-/** Fold stationBuys into buyMp (call when leaving a station). */
-export function commitStationBuys(s) {
-  if (!s.stationBuys) s.stationBuys = {};
-  if (!s.buyMp) s.buyMp = {};
-  for (const goodId of Object.keys(s.stationBuys)) {
-    const pend = s.stationBuys[goodId];
-    if (!pend || !pend.qty) continue;
-    const cur = s.buyMp[goodId] || { avg: 0, qty: 0 };
-    const newQty = cur.qty + pend.qty;
-    const newAvg = newQty > 0 ? (cur.avg * cur.qty + pend.sum) / newQty : 0;
-    s.buyMp[goodId] = { avg: newAvg, qty: newQty };
+  let sum = 0;
+  let qty = 0;
+  for (const st of s.cargoStacks || []) {
+    if (!st || st.goodId !== goodId) continue;
+    const q = st.qty | 0;
+    if (q <= 0) continue;
+    sum += normalizeUnitPrice(st.unitPrice) * q;
+    qty += q;
   }
-  s.stationBuys = {};
+  if (qty <= 0) return null;
+  return sum / qty;
 }
 
+/** No-op kept for leave-station call sites (buy commits into stacks immediately). */
+export function commitStationBuys(_s) {
+  /* Slice AE: unitPrice lands on stacks at buy time; nothing to fold. */
+}
 
 /** Total cargo weight in grams. @param {GameState} s */
 export function cargoUsed(s) {
   let grams = 0;
-  for (const g of GOODS) {
-    const n = s.cargo[g.id] || 0;
-    if (n) grams += n * (g.weightG || 0);
+  for (const st of s.cargoStacks || []) {
+    if (!st) continue;
+    const n = st.qty | 0;
+    if (n) grams += n * (goodWeightG(st.goodId) || 0);
   }
   if (s.quest && s.quest.qty > 0) {
     grams += s.quest.qty * (goodWeightG(s.quest.goodId) || 0);
@@ -147,14 +293,20 @@ export function cargoUsed(s) {
 export function courierCargoUsed(c) {
   if (!c) return 0;
   let grams = 0;
-  for (const g of GOODS) {
-    const n = c.cargo[g.id] || 0;
-    if (n) grams += n * (g.weightG || 0);
+  for (const st of c.cargoStacks || []) {
+    if (!st) continue;
+    const n = st.qty | 0;
+    if (n) grams += n * (goodWeightG(st.goodId) || 0);
   }
   return grams;
 }
 
-/** Empty cargo map for a new courier. */
+/** Empty stacks for a new courier. */
+export function emptyStacks() {
+  return [];
+}
+
+/** @deprecated Slice AE — use emptyStacks(); kept for migration imports. */
 export function emptyCargoMap() {
   /** @type {Record<string, number>} */
   const cargo = {};
@@ -175,21 +327,37 @@ export function courierCoLocated(s) {
   return c.locationId === s.locationId;
 }
 
-/** Condition % for a good (100 if unset / non-depleting stock). */
+/** Weighted condition % across stacks of goodId (0 if none). */
 export function goodCondition(s, goodId) {
-  const n = s.cargo[goodId] || 0;
-  if (n <= 0) return 0;
-  const c = s.condition?.[goodId];
-  return c == null ? 100 : Math.max(0, Math.min(100, c));
+  let sum = 0;
+  let qty = 0;
+  for (const st of s.cargoStacks || []) {
+    if (!st || st.goodId !== goodId) continue;
+    const q = st.qty | 0;
+    if (q <= 0) continue;
+    const c = st.condition != null ? st.condition : 100;
+    sum += c * q;
+    qty += q;
+  }
+  if (qty <= 0) return 0;
+  return Math.max(0, Math.min(100, sum / qty));
 }
 
-/** Courier condition % for a good. */
+/** Courier weighted condition % for a good. */
 export function courierGoodCondition(c, goodId) {
   if (!c) return 0;
-  const n = c.cargo[goodId] || 0;
-  if (n <= 0) return 0;
-  const v = c.condition?.[goodId];
-  return v == null ? 100 : Math.max(0, Math.min(100, v));
+  let sum = 0;
+  let qty = 0;
+  for (const st of c.cargoStacks || []) {
+    if (!st || st.goodId !== goodId) continue;
+    const q = st.qty | 0;
+    if (q <= 0) continue;
+    const v = st.condition != null ? st.condition : 100;
+    sum += v * q;
+    qty += q;
+  }
+  if (qty <= 0) return 0;
+  return Math.max(0, Math.min(100, sum / qty));
 }
 
 /** Copy live MP for loc into visitedPrices (Slice P). */
@@ -210,35 +378,43 @@ export function defaultCourierCapacity() {
   return COURIER_CAPACITY;
 }
 
-/** Ensure Area1 warehouse bags exist. @param {GameState} s */
+/** Ensure Area1 warehouse bags exist (stacks). @param {GameState} s */
 export function ensureWarehouse(s) {
-  if (!s.warehouse) s.warehouse = { area1: { cargo: {}, condition: {} } };
-  if (!s.warehouse.area1) s.warehouse.area1 = { cargo: {}, condition: {} };
-  if (!s.warehouse.area1.cargo || typeof s.warehouse.area1.cargo !== 'object') s.warehouse.area1.cargo = {};
-  if (!s.warehouse.area1.condition || typeof s.warehouse.area1.condition !== 'object') s.warehouse.area1.condition = {};
+  if (!s.warehouse) s.warehouse = { area1: { stacks: [] } };
+  if (!s.warehouse.area1) s.warehouse.area1 = { stacks: [] };
+  if (!Array.isArray(s.warehouse.area1.stacks)) s.warehouse.area1.stacks = [];
   return s.warehouse.area1;
 }
 
 /** Total Area1 warehouse mass in grams. @param {GameState} s */
 export function warehouseUsed(s) {
   const wh = s.warehouse?.area1;
-  if (!wh?.cargo) return 0;
+  if (!wh?.stacks) return 0;
   let grams = 0;
-  for (const g of GOODS) {
-    const n = wh.cargo[g.id] || 0;
-    if (n) grams += n * (g.weightG || 0);
+  for (const st of wh.stacks) {
+    if (!st) continue;
+    const n = st.qty | 0;
+    if (n) grams += n * (goodWeightG(st.goodId) || 0);
   }
   return grams;
 }
 
-/** Warehouse condition % for a good (100 if unset). */
+/** Warehouse weighted condition % for a good (100 if unset). */
 export function warehouseGoodCondition(s, goodId) {
   const wh = s.warehouse?.area1;
-  if (!wh) return 0;
-  const n = wh.cargo[goodId] || 0;
-  if (n <= 0) return 0;
-  const v = wh.condition?.[goodId];
-  return v == null ? 100 : Math.max(0, Math.min(100, v));
+  if (!wh?.stacks) return 0;
+  let sum = 0;
+  let qty = 0;
+  for (const st of wh.stacks) {
+    if (!st || st.goodId !== goodId) continue;
+    const q = st.qty | 0;
+    if (q <= 0) continue;
+    const v = st.condition != null ? st.condition : 100;
+    sum += v * q;
+    qty += q;
+  }
+  if (qty <= 0) return 0;
+  return Math.max(0, Math.min(100, sum / qty));
 }
 
 /** Player docked at Area1 warehouse hub (Broken Lamp). */

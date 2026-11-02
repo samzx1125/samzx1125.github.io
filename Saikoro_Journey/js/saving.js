@@ -1,9 +1,14 @@
 /** localStorage save/load — SAVE_VERSION bump requires migration. */
-import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028aq';
-import { emptyCargoMap } from './state.js?v=z1-20261028aq';
+import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028ar';
+import {
+  migrateCargoMapToStacks,
+  sanitizeStack,
+  emptyCargoMap,
+} from './state.js?v=z1-20261028ar';
 
-export const SAVE_VERSION = 10;
-const KEY = 'saikoro_journey_z1_v10';
+export const SAVE_VERSION = 11;
+const KEY = 'saikoro_journey_z1_v11';
+const KEY_V10 = 'saikoro_journey_z1_v10';
 const KEY_V9 = 'saikoro_journey_z1_v9';
 const KEY_V8 = 'saikoro_journey_z1_v8';
 const KEY_V7 = 'saikoro_journey_z1_v7';
@@ -20,14 +25,32 @@ export function getLastSavedAt() {
   return lastSavedAt;
 }
 
+function serializeStacks(stacks) {
+  if (!Array.isArray(stacks)) return [];
+  return stacks
+    .map((st) => {
+      if (!st || typeof st !== 'object') return null;
+      const qty = Math.floor(Number(st.qty) || 0);
+      if (qty <= 0) return null;
+      if (!GOODS.some((g) => g.id === st.goodId)) return null;
+      return {
+        id: String(st.id || ''),
+        goodId: st.goodId,
+        unitPrice: Math.round(Number(st.unitPrice) || 0),
+        qty,
+        condition: Math.max(0, Math.min(100, Number(st.condition) || 100)),
+      };
+    })
+    .filter(Boolean);
+}
+
 function serializeCourier(c) {
   if (!c) return null;
   return {
     locationId: c.locationId,
     gold: c.gold,
     capacity: c.capacity,
-    cargo: { ...c.cargo },
-    condition: c.condition ? { ...c.condition } : {},
+    cargoStacks: serializeStacks(c.cargoStacks),
     route: [...c.route],
     routeIndex: c.routeIndex | 0,
     trade: c.trade
@@ -52,8 +75,8 @@ export function serialize(s) {
   return {
     v: SAVE_VERSION,
     gold: s.gold,
-    cargo: { ...s.cargo },
-    condition: s.condition ? { ...s.condition } : {},
+    cargoStacks: serializeStacks(s.cargoStacks),
+    nextStackId: Math.max(1, s.nextStackId | 0),
     quest: s.quest ? { ...s.quest } : null,
     locationId: s.locationId,
     unlocked: [...s.unlocked],
@@ -72,7 +95,6 @@ export function serialize(s) {
     capacityLevel: Math.max(0, Math.min(5, s.capacityLevel | 0)),
     preserveLevel: Math.max(0, Math.min(5, s.preserveLevel | 0)),
     speedLevel: Math.max(0, Math.min(5, s.speedLevel | 0)),
-    buyMp: s.buyMp ? { ...Object.fromEntries(Object.entries(s.buyMp).map(([k, v]) => [k, { ...v }])) } : {},
     prices: s.prices
       ? Object.fromEntries(
           Object.entries(s.prices).map(([loc, row]) => [loc, { ...row }]),
@@ -94,47 +116,44 @@ export function serialize(s) {
             .filter(([, n]) => n > 0),
         )
       : {},
-    warehouse: (() => {
-      const wh = s.warehouse?.area1;
-      const cargo = {};
-      const condition = {};
-      if (wh?.cargo && typeof wh.cargo === 'object') {
-        for (const g of GOODS) {
-          const n = Math.floor(Number(wh.cargo[g.id]));
-          if (Number.isFinite(n) && n > 0) cargo[g.id] = n;
-        }
-      }
-      if (wh?.condition && typeof wh.condition === 'object') {
-        for (const g of GOODS) {
-          if (!cargo[g.id]) continue;
-          const n = Number(wh.condition[g.id]);
-          if (Number.isFinite(n)) condition[g.id] = Math.max(0, Math.min(100, n));
-        }
-      }
-      return { area1: { cargo, condition } };
-    })(),
+    warehouse: {
+      area1: {
+        stacks: serializeStacks(s.warehouse?.area1?.stacks),
+      },
+    },
     universalCourierUnlocked: !!s.universalCourierUnlocked,
     savedAt: Date.now(),
-    // stationBuys not persisted — mid-visit buffer
   };
 }
 
-function applyCourier(dataCourier) {
+function makeIdGen(startRef) {
+  return () => {
+    const id = `stk_${startRef.n}`;
+    startRef.n += 1;
+    return id;
+  };
+}
+
+function applyCourier(dataCourier, idGen) {
   if (!dataCourier || typeof dataCourier !== 'object') return null;
-  const cargo = emptyCargoMap();
-  if (dataCourier.cargo && typeof dataCourier.cargo === 'object') {
-    for (const g of GOODS) {
-      const n = Number(dataCourier.cargo[g.id]);
-      if (Number.isFinite(n) && n > 0) cargo[g.id] = Math.floor(n);
+
+  /** @type {import('./state.js').CargoStack[]} */
+  let cargoStacks = [];
+  if (Array.isArray(dataCourier.cargoStacks)) {
+    for (const raw of dataCourier.cargoStacks) {
+      const st = sanitizeStack(raw, idGen);
+      if (st) cargoStacks.push(st);
     }
+  } else if (dataCourier.cargo && typeof dataCourier.cargo === 'object') {
+    // v≤10 courier: cargo map + condition, no buy price → unitPrice 0
+    cargoStacks = migrateCargoMapToStacks(
+      dataCourier.cargo,
+      {},
+      dataCourier.condition && typeof dataCourier.condition === 'object' ? dataCourier.condition : {},
+      idGen,
+    );
   }
-  const condition = {};
-  if (dataCourier.condition && typeof dataCourier.condition === 'object') {
-    for (const g of GOODS) {
-      const n = Number(dataCourier.condition[g.id]);
-      if (Number.isFinite(n)) condition[g.id] = Math.max(0, Math.min(100, n));
-    }
-  }
+
   const route = Array.isArray(dataCourier.route)
     ? dataCourier.route.filter((id) => typeof id === 'string')
     : [];
@@ -158,8 +177,7 @@ function applyCourier(dataCourier) {
     locationId: String(dataCourier.locationId || ''),
     gold: Math.max(0, Math.floor(Number(dataCourier.gold) || 0)),
     capacity: Math.max(1, Math.floor(Number(dataCourier.capacity) || 3000)),
-    cargo,
-    condition,
+    cargoStacks,
     route,
     routeIndex: Math.max(0, Math.floor(Number(dataCourier.routeIndex) || 0)),
     trade,
@@ -173,11 +191,42 @@ function applyCourier(dataCourier) {
  * @param {any} data
  */
 export function applySave(s, data) {
-  // Accept v2–v10 (v10 = universal courier)
-  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== 6 && data.v !== 7 && data.v !== 8 && data.v !== 9 && data.v !== 10 && data.v !== SAVE_VERSION)) return false;
+  // Accept v2–v11 (v11 = price-split stacks)
+  if (
+    !data ||
+    (data.v !== 2 &&
+      data.v !== 3 &&
+      data.v !== 4 &&
+      data.v !== 5 &&
+      data.v !== 6 &&
+      data.v !== 7 &&
+      data.v !== 8 &&
+      data.v !== 9 &&
+      data.v !== 10 &&
+      data.v !== 11 &&
+      data.v !== SAVE_VERSION)
+  ) {
+    return false;
+  }
   s.gold = data.gold;
-  s.cargo = { ...data.cargo };
-  s.condition = data.condition && typeof data.condition === 'object' ? { ...data.condition } : {};
+
+  const idRef = { n: Math.max(1, Math.floor(Number(data.nextStackId) || 1)) };
+  const idGen = makeIdGen(idRef);
+
+  // Slice AE — cargoStacks (v11) or migrate cargo+buyMp+condition (v≤10)
+  if (data.v >= 11 && Array.isArray(data.cargoStacks)) {
+    s.cargoStacks = [];
+    for (const raw of data.cargoStacks) {
+      const st = sanitizeStack(raw, idGen);
+      if (st) s.cargoStacks.push(st);
+    }
+  } else {
+    const cargo = data.cargo && typeof data.cargo === 'object' ? data.cargo : emptyCargoMap();
+    const buyMp = data.buyMp && typeof data.buyMp === 'object' ? data.buyMp : {};
+    const condition = data.condition && typeof data.condition === 'object' ? data.condition : {};
+    s.cargoStacks = migrateCargoMapToStacks(cargo, buyMp, condition, idGen);
+  }
+
   s.quest =
     data.quest && typeof data.quest === 'object'
       ? {
@@ -191,7 +240,6 @@ export function applySave(s, data) {
       : null;
   s.locationId = data.locationId;
   s.unlocked = [...data.unlocked];
-  // Slice T+/U — multi-trip unlock deposits (v5+); drop buckets for already-unlocked targets
   s.unlockDeposits = {};
   if (data.v >= 5 && data.unlockDeposits && typeof data.unlockDeposits === 'object') {
     const unlockedSet = new Set(s.unlocked);
@@ -207,7 +255,6 @@ export function applySave(s, data) {
       if (Object.keys(out).length) s.unlockDeposits[tid] = out;
     }
   }
-  // capacityLevel 0..5; recompute capacity from level
   {
     let lv = data.v >= 5 ? Math.floor(Number(data.capacityLevel)) : 0;
     if (!Number.isFinite(lv) || lv < 0) lv = 0;
@@ -215,14 +262,12 @@ export function applySave(s, data) {
     s.capacityLevel = lv;
     s.capacity = effectiveCapacity(lv);
   }
-  // Slice Z — preserveLevel 0..5 (v7+); older → 0
   {
     let pl = data.v >= 7 ? Math.floor(Number(data.preserveLevel)) : 0;
     if (!Number.isFinite(pl) || pl < 0) pl = 0;
     if (pl > 5) pl = 5;
     s.preserveLevel = pl;
   }
-  // Slice AA — speedLevel 0..5 (v8+); older → 0
   {
     let sl = data.v >= 8 ? Math.floor(Number(data.speedLevel)) : 0;
     if (!Number.isFinite(sl) || sl < 0) sl = 0;
@@ -231,8 +276,6 @@ export function applySave(s, data) {
   }
   s.selectedLocId = data.locationId;
   s.travel = null;
-  s.buyMp = data.buyMp && typeof data.buyMp === 'object' ? { ...data.buyMp } : {};
-  s.stationBuys = {};
   if (data.prices && typeof data.prices === 'object') {
     for (const locId of Object.keys(data.prices)) {
       if (!s.prices[locId]) s.prices[locId] = {};
@@ -256,7 +299,6 @@ export function applySave(s, data) {
       }
     }
   }
-  // ensure current station has a memory snapshot
   if (s.locationId && s.prices?.[s.locationId]) {
     if (!s.visitedPrices[s.locationId]) {
       const snap = {};
@@ -267,12 +309,9 @@ export function applySave(s, data) {
       s.visitedPrices[s.locationId] = snap;
     }
   }
-  // Slice Q — courier (null on v2 / missing)
-  s.courier = data.v >= 3 ? applyCourier(data.courier) : null;
+  s.courier = data.v >= 3 ? applyCourier(data.courier, idGen) : null;
   s.lastPriceDriftMs = 0;
   s.tradeImpact = {};
-  // Slice S — opening identity
-  // v2/v3 existing saves: skip opening (openingDone=true) with defaults
   if (data.v >= 4) {
     const nm = typeof data.playerName === 'string' ? data.playerName.trim().slice(0, 24) : '';
     s.playerName = nm || 'Saikoro';
@@ -284,7 +323,6 @@ export function applySave(s, data) {
     s.chosenBodyId = 'body_a';
     s.openingDone = true;
   }
-  // Slice U — personal / key inventory (v6+); older → {}
   s.personal = {};
   if (data.v >= 6 && data.personal && typeof data.personal === 'object') {
     for (const id of Object.keys(data.personal)) {
@@ -293,25 +331,26 @@ export function applySave(s, data) {
       if (Number.isFinite(n) && n > 0) s.personal[id] = n;
     }
   }
-  // Slice AB — Area1 warehouse (v9+); older → empty
-  s.warehouse = { area1: { cargo: {}, condition: {} } };
-  if (data.v >= 9 && data.warehouse?.area1 && typeof data.warehouse.area1 === 'object') {
+  // Slice AB/AE — warehouse stacks
+  s.warehouse = { area1: { stacks: [] } };
+  if (data.v >= 11 && data.warehouse?.area1 && typeof data.warehouse.area1 === 'object') {
     const src = data.warehouse.area1;
-    if (src.cargo && typeof src.cargo === 'object') {
-      for (const g of GOODS) {
-        const n = Math.floor(Number(src.cargo[g.id]));
-        if (Number.isFinite(n) && n > 0) s.warehouse.area1.cargo[g.id] = n;
+    if (Array.isArray(src.stacks)) {
+      for (const raw of src.stacks) {
+        const st = sanitizeStack(raw, idGen);
+        if (st) s.warehouse.area1.stacks.push(st);
       }
     }
-    if (src.condition && typeof src.condition === 'object') {
-      for (const g of GOODS) {
-        if (!(s.warehouse.area1.cargo[g.id] > 0)) continue;
-        const n = Number(src.condition[g.id]);
-        if (Number.isFinite(n)) s.warehouse.area1.condition[g.id] = Math.max(0, Math.min(100, n));
-      }
-    }
+  } else if (data.v >= 9 && data.warehouse?.area1 && typeof data.warehouse.area1 === 'object') {
+    const src = data.warehouse.area1;
+    // migrate cargo/condition maps → unitPrice 0 stacks
+    s.warehouse.area1.stacks = migrateCargoMapToStacks(
+      src.cargo && typeof src.cargo === 'object' ? src.cargo : {},
+      {},
+      src.condition && typeof src.condition === 'object' ? src.condition : {},
+      idGen,
+    );
   }
-  // Slice AD — universal courier (v10+). Older / missing: true if Scrap Gate already unlocked.
   {
     const SCRAP_GATE = 'loc_a01z03l003_scrap_gate';
     if (data.v >= 10 && typeof data.universalCourierUnlocked === 'boolean') {
@@ -320,6 +359,20 @@ export function applySave(s, data) {
       s.universalCourierUnlocked = s.unlocked.includes(SCRAP_GATE);
     }
   }
+
+  // bump nextStackId past any loaded ids
+  let maxN = idRef.n;
+  const scan = (stacks) => {
+    for (const st of stacks || []) {
+      const m = typeof st?.id === 'string' && /^stk_(\d+)$/.exec(st.id);
+      if (m) maxN = Math.max(maxN, Number(m[1]) + 1);
+    }
+  };
+  scan(s.cargoStacks);
+  scan(s.warehouse.area1.stacks);
+  if (s.courier) scan(s.courier.cargoStacks);
+  s.nextStackId = Math.max(1, maxN);
+
   lastSavedAt = typeof data.savedAt === 'number' ? data.savedAt : Date.now();
   return true;
 }
@@ -340,43 +393,23 @@ export function saveGame(s) {
 export function loadGame(s) {
   try {
     let raw = localStorage.getItem(KEY);
-    if (!raw) {
-      // migrate v9 → v10
-      raw = localStorage.getItem(KEY_V9);
-    }
-    if (!raw) {
-      // migrate v8 → v10
-      raw = localStorage.getItem(KEY_V8);
-    }
-    if (!raw) {
-      // migrate v7 → v10
-      raw = localStorage.getItem(KEY_V7);
-    }
-    if (!raw) {
-      // migrate v6 → v10
-      raw = localStorage.getItem(KEY_V6);
-    }
-    if (!raw) {
-      // migrate v5 → v10
-      raw = localStorage.getItem(KEY_V5);
-    }
-    if (!raw) {
-      // migrate v4 → v10
-      raw = localStorage.getItem(KEY_V4);
-    }
-    if (!raw) {
-      // migrate v3 → v10
-      raw = localStorage.getItem(KEY_V3);
-    }
-    if (!raw) {
-      // migrate v2 → v10
-      raw = localStorage.getItem(KEY_V2);
-    }
+    if (!raw) raw = localStorage.getItem(KEY_V10);
+    if (!raw) raw = localStorage.getItem(KEY_V9);
+    if (!raw) raw = localStorage.getItem(KEY_V8);
+    if (!raw) raw = localStorage.getItem(KEY_V7);
+    if (!raw) raw = localStorage.getItem(KEY_V6);
+    if (!raw) raw = localStorage.getItem(KEY_V5);
+    if (!raw) raw = localStorage.getItem(KEY_V4);
+    if (!raw) raw = localStorage.getItem(KEY_V3);
+    if (!raw) raw = localStorage.getItem(KEY_V2);
     if (!raw) return false;
     const ok = applySave(s, JSON.parse(raw));
-    // rewrite into current key once loaded from older key
     if (ok) {
-      try { localStorage.setItem(KEY, JSON.stringify(serialize(s))); } catch { /* ignore */ }
+      try {
+        localStorage.setItem(KEY, JSON.stringify(serialize(s)));
+      } catch {
+        /* ignore */
+      }
     }
     return ok;
   } catch {
@@ -387,6 +420,7 @@ export function loadGame(s) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(KEY_V10);
     localStorage.removeItem(KEY_V9);
     localStorage.removeItem(KEY_V8);
     localStorage.removeItem(KEY_V7);
