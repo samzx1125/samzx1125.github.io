@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028ax';
+import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028ay';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
@@ -8,6 +8,9 @@ export const GOODS = [
   { id: 'goods_a01z01i001_dry_food', name: 'Dry Food', tags: [], weightG: 200, icon: '▣', description: 'Hardtack crates that keep on dusty rails.' },
   { id: 'goods_a01z01i002_oil_speciality', name: 'Oil Speciality', tags: ['volatile'], weightG: 500, icon: '◆', description: 'Sealed oil drums — volatile; condition drains on travel.' },
   { id: 'goods_a01z01i003_water_speciality', name: 'Water Speciality', tags: ['liquid'], weightG: 750, icon: '◇', description: 'Cistern water — liquid; condition drains on travel.' },
+  // Slice AL — Area2 specialty goods
+  { id: 'goods_a02z01i001_fog_reed', name: 'Fog Reed', tags: [], weightG: 250, icon: '▤', description: 'Baled marsh reed for packing and weave.' },
+  { id: 'goods_a02z01i002_cobalt_silk', name: 'Cobalt Silk', tags: [], weightG: 300, icon: '✦', description: 'Cobalt-dyed silk bolts from the loom road.' },
 ];
 
 export const BASE_PRICES = {
@@ -15,6 +18,9 @@ export const BASE_PRICES = {
     goods_a01z01i001_dry_food: 8,
     goods_a01z01i002_oil_speciality: 40,
     goods_a01z01i003_water_speciality: 55,
+    // Slice AL — sparse A1 import (cross-Area arb)
+    goods_a02z01i001_fog_reed: 42,
+    goods_a02z01i002_cobalt_silk: 110,
   },
   loc_a01z01l002_drywind_depot: {
     goods_a01z01i001_dry_food: 12,
@@ -68,72 +74,101 @@ export const BASE_PRICES = {
     goods_a01z01i001_dry_food: 22,
     goods_a01z01i002_oil_speciality: 14,
     goods_a01z01i003_water_speciality: 85,
+    goods_a02z01i001_fog_reed: 48,
+    goods_a02z01i002_cobalt_silk: 100,
   },
   loc_a01z04l003_exit_ash: {
     goods_a01z01i001_dry_food: 7,
     goods_a01z01i002_oil_speciality: 65,
     goods_a01z01i003_water_speciality: 10,
+    goods_a02z01i001_fog_reed: 50,
+    goods_a02z01i002_cobalt_silk: 105,
   },
   // Slice AG — Area2 wider oil/water spreads
   loc_a02z01l001_mist_spur: {
     goods_a01z01i001_dry_food: 10,
     goods_a01z01i002_oil_speciality: 72,
     goods_a01z01i003_water_speciality: 16,
+    // Slice AL — Fog Reed mid-source; Cobalt Silk expensive import
+    goods_a02z01i001_fog_reed: 28,
+    goods_a02z01i002_cobalt_silk: 95,
   },
   loc_a02z01l002_fog_well: {
     goods_a01z01i001_dry_food: 19,
     goods_a01z01i002_oil_speciality: 15,
     goods_a01z01i003_water_speciality: 88,
+    goods_a02z01i001_fog_reed: 18,
+    goods_a02z01i002_cobalt_silk: 88,
   },
   loc_a02z01l003_pale_lamp: {
     goods_a01z01i001_dry_food: 8,
     goods_a01z01i002_oil_speciality: 68,
     goods_a01z01i003_water_speciality: 11,
+    goods_a02z01i001_fog_reed: 32,
+    goods_a02z01i002_cobalt_silk: 82,
   },
   loc_a02z02l001_reed_bank: {
     goods_a01z01i001_dry_food: 13,
     goods_a01z01i002_oil_speciality: 74,
     goods_a01z01i003_water_speciality: 13,
+    goods_a02z01i001_fog_reed: 16,
+    goods_a02z01i002_cobalt_silk: 75,
   },
   loc_a02z02l002_glass_fen: {
     goods_a01z01i001_dry_food: 21,
     goods_a01z01i002_oil_speciality: 13,
     goods_a01z01i003_water_speciality: 90,
+    goods_a02z01i001_fog_reed: 35,
+    goods_a02z01i002_cobalt_silk: 70,
   },
   loc_a02z02l003_quiet_pier: {
     goods_a01z01i001_dry_food: 7,
     goods_a01z01i002_oil_speciality: 70,
     goods_a01z01i003_water_speciality: 9,
+    goods_a02z01i001_fog_reed: 42,
+    goods_a02z01i002_cobalt_silk: 92,
   },
   loc_a02z03l001_iron_marsh: {
     goods_a01z01i001_dry_food: 14,
     goods_a01z01i002_oil_speciality: 78,
     goods_a01z01i003_water_speciality: 12,
+    goods_a02z01i001_fog_reed: 22,
+    goods_a02z01i002_cobalt_silk: 65,
   },
   loc_a02z03l002_drift_yard: {
     goods_a01z01i001_dry_food: 23,
     goods_a01z01i002_oil_speciality: 12,
     goods_a01z01i003_water_speciality: 92,
+    goods_a02z01i001_fog_reed: 38,
+    goods_a02z01i002_cobalt_silk: 55,
   },
   loc_a02z03l003_cobalt_gate: {
     goods_a01z01i001_dry_food: 6,
     goods_a01z01i002_oil_speciality: 76,
     goods_a01z01i003_water_speciality: 8,
+    goods_a02z01i001_fog_reed: 48,
+    goods_a02z01i002_cobalt_silk: 42,
   },
   loc_a02z04l001_high_loom: {
     goods_a01z01i001_dry_food: 15,
     goods_a01z01i002_oil_speciality: 80,
     goods_a01z01i003_water_speciality: 11,
+    goods_a02z01i001_fog_reed: 55,
+    goods_a02z01i002_cobalt_silk: 38,
   },
   loc_a02z04l002_silk_cut: {
     goods_a01z01i001_dry_food: 24,
     goods_a01z01i002_oil_speciality: 11,
     goods_a01z01i003_water_speciality: 95,
+    goods_a02z01i001_fog_reed: 62,
+    goods_a02z01i002_cobalt_silk: 35,
   },
   loc_a02z04l003_far_beacon: {
     goods_a01z01i001_dry_food: 6,
     goods_a01z01i002_oil_speciality: 82,
     goods_a01z01i003_water_speciality: 7,
+    goods_a02z01i001_fog_reed: 58,
+    goods_a02z01i002_cobalt_silk: 48,
   },
 };
 
