@@ -1,19 +1,19 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ah';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ah';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ai';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ai';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
-} from './engine.js?v=z1-20261028ah';
-import { cargoUsed } from './state.js?v=z1-20261028ah';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028ah';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ah';
+} from './engine.js?v=z1-20261028ai';
+import { cargoUsed } from './state.js?v=z1-20261028ai';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028ai';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ai';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
-/** @type {{ lastMsg: string, panelOpen: boolean, optionsOpen: boolean }} */
-const ui = { lastMsg: '', panelOpen: true, optionsOpen: false };
+/** @type {{ lastMsg: string, panelOpen: boolean, optionsOpen: boolean, characterOpen: boolean }} */
+const ui = { lastMsg: '', panelOpen: true, optionsOpen: false, characterOpen: false };
 
 /** @param {import('./state.js').GameState} s */
 export function bindEvents(s, opts = {}) {
@@ -23,10 +23,21 @@ export function bindEvents(s, opts = {}) {
   const optionsBtn = document.getElementById('btn-options');
   const optionsMenu = document.getElementById('options-menu');
 
+  const characterPanel = document.getElementById('character-panel');
+
   function setOptionsOpen(open) {
     ui.optionsOpen = !!open;
     if (optionsMenu) optionsMenu.hidden = !ui.optionsOpen;
     if (optionsBtn) optionsBtn.setAttribute('aria-expanded', ui.optionsOpen ? 'true' : 'false');
+  }
+
+  function setCharacterOpen(open) {
+    ui.characterOpen = !!open;
+    if (characterPanel) characterPanel.hidden = !ui.characterOpen;
+    if (ui.characterOpen) {
+      setOptionsOpen(false);
+      if (state) render(state, ui);
+    }
   }
 
   /** Close location/unlock panels + clear toast (Esc / blank map). */
@@ -48,17 +59,43 @@ export function bindEvents(s, opts = {}) {
 
   optionsBtn?.addEventListener('click', (ev) => {
     ev.stopPropagation();
+    if (ui.characterOpen) {
+      setCharacterOpen(false);
+      return;
+    }
     setOptionsOpen(!ui.optionsOpen);
+  });
+
+  document.getElementById('character-entry')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="character"]');
+    if (!btn) return;
+    ev.stopPropagation();
+    setCharacterOpen(true);
+  });
+
+  document.getElementById('btn-character-close')?.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    setCharacterOpen(false);
+  });
+
+  characterPanel?.addEventListener('click', (ev) => {
+    // backdrop click closes; clicks inside card stay open
+    if (ev.target === characterPanel) setCharacterOpen(false);
   });
 
   document.addEventListener('click', (ev) => {
     if (!ui.optionsOpen) return;
     if (ev.target.closest('.options-wrap')) return;
+    if (ev.target.closest('#character-panel')) return;
     setOptionsOpen(false);
   });
 
   document.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Escape') return;
+    if (ui.characterOpen) {
+      setCharacterOpen(false);
+      return;
+    }
     if (ui.optionsOpen) {
       setOptionsOpen(false);
       return;
@@ -70,6 +107,7 @@ export function bindEvents(s, opts = {}) {
   document.getElementById('map-wrap')?.addEventListener('click', (ev) => {
     if (ev.target.closest('.node')) return;
     if (ev.target.closest('button[data-act="travel-to"]')) return;
+    if (ui.characterOpen) setCharacterOpen(false);
     if (ui.optionsOpen) setOptionsOpen(false);
     closePanelsAndToast();
   });

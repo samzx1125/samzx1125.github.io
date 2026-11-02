@@ -859,3 +859,60 @@ body.opening-active > main {
 .unlock-offer { margin-bottom: 0.85rem; }
 .unlock-offer-title { font-size: 0.95rem; margin: 0.35rem 0; font-weight: 600; }
 .unlock-offer-pct { margin: 0.2rem 0; }
+
+
+/* Slice V — character page */
+.character-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #00000055;
+  padding: 1rem;
+}
+.character-panel[hidden] { display: none !important; }
+.character-card {
+  width: min(360px, 94vw);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 24px #00000033;
+  padding: 1rem 1.1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  font-family: ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
+}
+.character-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.character-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.character-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.25rem 0 0.15rem;
+}
+.character-id-text { min-width: 0; }
+.character-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+#character-keys {
+  max-height: 10rem;
+  overflow: auto;
+  margin: 0;
+}
+#character-panel .subhead {
+  margin: 0.35rem 0 0.15rem;
+  font-size: 0.85rem;
+}

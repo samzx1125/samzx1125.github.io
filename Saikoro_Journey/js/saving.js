@@ -1,6 +1,6 @@
 /** localStorage save/load — SAVE_VERSION bump requires migration. */
-import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028ah';
-import { emptyCargoMap } from './state.js?v=z1-20261028ah';
+import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028ai';
+import { emptyCargoMap } from './state.js?v=z1-20261028ai';
 
 export const SAVE_VERSION = 6;
 const KEY = 'saikoro_journey_z1_v6';

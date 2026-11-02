@@ -1,8 +1,9 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ah';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity } from './economy-data.js?v=z1-20261028ah';
-import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028ah';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ah';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ah';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ai';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity } from './economy-data.js?v=z1-20261028ai';
+import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028ai';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028ai';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ai';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ai';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -823,6 +824,52 @@ export function render(s, ui = {}) {
       btn.title = atMax
         ? 'Max capacity level'
         : `Stub pricing: 500×(level+1). Next: ${cap} → ${effectiveCapacity(level + 1)}g`;
+    }
+  }
+
+  // Slice V — character page (read-only sheet)
+  {
+    const panel = document.getElementById('character-panel');
+    if (panel && ui.characterOpen) {
+      panel.hidden = false;
+      const bodyId = s.chosenBodyId || 'body_a';
+      const glyph = BODY_GLYPH[bodyId] || BODY_GLYPH.body_a || '■';
+      const glyphEl = document.getElementById('character-glyph');
+      if (glyphEl) glyphEl.textContent = glyph;
+      setText('character-name', s.playerName || 'Saikoro');
+      setText('character-body-label', bodyId);
+      const level = Math.max(0, Math.min(CAPACITY_MAX_LEVEL, s.capacityLevel | 0));
+      const cap = effectiveCapacity(level);
+      setText('character-capacity', `Cargo level ${level} / ${CAPACITY_MAX_LEVEL} · ${cap}g`);
+      setText('character-gold', `Gold ${s.gold}`);
+      const keysList = document.getElementById('character-keys');
+      const keysEmpty = document.getElementById('character-keys-empty');
+      if (keysList) {
+        const bag = s.personal && typeof s.personal === 'object' ? s.personal : {};
+        const rows = [];
+        for (const d of PERSONAL_DEFS) {
+          const n = bag[d.id] || 0;
+          if (n <= 0) continue;
+          if (d.kind !== 'key') continue;
+          const qty = n === 1 ? '' : ` ×${n}`;
+          rows.push(
+            `<li title="${d.id}"><strong>${d.name}</strong>${qty}` +
+              (d.desc ? `<span class="pdesc">${d.desc}</span>` : '') +
+              `</li>`,
+          );
+        }
+        // unknown key-like ids
+        for (const id of Object.keys(bag).sort()) {
+          if (PERSONAL_DEFS.some((d) => d.id === id)) continue;
+          const n = bag[id] || 0;
+          if (n <= 0) continue;
+          rows.push(`<li title="${id}">${personalName(id)} ×${n}</li>`);
+        }
+        keysList.innerHTML = rows.join('');
+        if (keysEmpty) keysEmpty.hidden = rows.length > 0;
+      }
+    } else if (panel && !ui.characterOpen) {
+      panel.hidden = true;
     }
   }
 

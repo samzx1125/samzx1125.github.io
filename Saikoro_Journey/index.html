@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Z1–Z2</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028ah" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028ah" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028ai" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028ai" />
 </head>
 <body>
   <header class="top-row">
@@ -41,6 +41,11 @@
           <p class="hint">Starter 5000g · 5 upgrades × +20% base → max 10000g. Stub price 500×(level+1)G.</p>
           <p id="cargo-level-label" class="muted">Cargo level 0 / 5 · 5000g</p>
           <button type="button" class="primary" data-act="upgrade-cargo" id="btn-upgrade-cargo">Upgrade cargo (+20%) — 500G</button>
+        </section>
+        <section id="character-entry">
+          <h2>Character</h2>
+          <p class="hint">Name, body silhouette, capacity, personal keys — read-only.</p>
+          <button type="button" class="primary" data-act="character" id="btn-character">Character</button>
         </section>
         <section id="save-panel">
           <h2>Save</h2>
@@ -172,6 +177,26 @@
       <p id="toast"></p>
     </aside>
   </main>
+  <div id="character-panel" class="character-panel" hidden role="dialog" aria-modal="true" aria-labelledby="character-title">
+    <div class="character-card">
+      <div class="character-head">
+        <h2 id="character-title">Character</h2>
+        <button type="button" id="btn-character-close" data-act="character-close">Close</button>
+      </div>
+      <div class="character-identity">
+        <span id="character-glyph" class="opening-silhouette" aria-hidden="true">■</span>
+        <div class="character-id-text">
+          <p id="character-name" class="character-name">Saikoro</p>
+          <p id="character-body-label" class="muted">body_a</p>
+        </div>
+      </div>
+      <p id="character-capacity" class="hint">Cargo level 0 / 5 · 5000g</p>
+      <p id="character-gold" class="muted">Gold 0</p>
+      <h3 class="subhead">Personal keys</h3>
+      <ul id="character-keys" class="cargo-list personal-list"></ul>
+      <p id="character-keys-empty" class="hint" hidden>none</p>
+    </div>
+  </div>
   <div id="opening-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="opening-title">
     <div class="opening-card">
       <h1 id="opening-title">Saikoro Journey</h1>
@@ -213,6 +238,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028ah"></script>
+  <script type="module" src="js/main.js?v=z1-20261028ai"></script>
 </body>
 </html>
