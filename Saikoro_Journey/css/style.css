@@ -103,6 +103,29 @@ main {
   overflow: auto;
   background: var(--bg);
   min-height: 420px;
+  cursor: grab;
+  /* Slice AJ — drag-to-pan; suppress text select while grabbing */
+  user-select: none;
+  -webkit-user-select: none;
+}
+#map-wrap.map-dragging {
+  cursor: grabbing;
+}
+#map-wrap.map-dragging * {
+  cursor: grabbing !important;
+}
+/* Interactive chips keep pointer cursor over grab */
+#map-wrap .node,
+#map-wrap .map-travel,
+#map-wrap button {
+  cursor: pointer;
+  user-select: auto;
+  -webkit-user-select: auto;
+}
+#map-wrap .node.locked,
+#map-wrap .node[aria-disabled="true"],
+#map-wrap .node:disabled {
+  cursor: not-allowed;
 }
 
 #map-plane {

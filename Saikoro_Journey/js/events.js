@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028av';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028av';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028aw';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028aw';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,10 +7,10 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028av';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028av';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028av';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028av';
+} from './engine.js?v=z1-20261028aw';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028aw';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028aw';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028aw';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -106,7 +106,75 @@ export function bindEvents(s, opts = {}) {
   });
 
   // Blank map click closes panels (same as Esc); node clicks keep panel open
-  document.getElementById('map-wrap')?.addEventListener('click', (ev) => {
+  const mapWrap = document.getElementById('map-wrap');
+  /** Set when a map drag exceeded the click threshold — suppresses the trailing click. */
+  let mapDidPan = false;
+  const MAP_DRAG_THRESHOLD_PX = 5;
+
+  function isMapInteractiveTarget(el) {
+    if (!el || typeof el.closest !== 'function') return false;
+    return !!(
+      el.closest('.node') ||
+      el.closest('.map-travel') ||
+      el.closest('button') ||
+      el.closest('a') ||
+      el.closest('input') ||
+      el.closest('select') ||
+      el.closest('textarea') ||
+      el.closest('[data-act]')
+    );
+  }
+
+  /** Slice AJ — drag map background to pan (#map-wrap scrollLeft/Top). */
+  let mapDrag = null; // { pointerId, startX, startY, scrollLeft, scrollTop, moved }
+  mapWrap?.addEventListener('pointerdown', (ev) => {
+    // Mouse/pen only — touch keeps native overflow scroll
+    if (ev.pointerType === 'touch') return;
+    if (ev.button != null && ev.button !== 0) return;
+    if (isMapInteractiveTarget(ev.target)) return;
+    mapDrag = {
+      pointerId: ev.pointerId,
+      startX: ev.clientX,
+      startY: ev.clientY,
+      scrollLeft: mapWrap.scrollLeft,
+      scrollTop: mapWrap.scrollTop,
+      moved: false,
+    };
+    mapDidPan = false;
+    try { mapWrap.setPointerCapture(ev.pointerId); } catch (_) { /* ignore */ }
+    mapWrap.classList.add('map-dragging');
+    ev.preventDefault();
+  });
+  mapWrap?.addEventListener('pointermove', (ev) => {
+    if (!mapDrag || mapDrag.pointerId !== ev.pointerId) return;
+    const dx = ev.clientX - mapDrag.startX;
+    const dy = ev.clientY - mapDrag.startY;
+    if (!mapDrag.moved && (Math.abs(dx) >= MAP_DRAG_THRESHOLD_PX || Math.abs(dy) >= MAP_DRAG_THRESHOLD_PX)) {
+      mapDrag.moved = true;
+      mapDidPan = true;
+    }
+    if (!mapDrag.moved) return;
+    mapWrap.scrollLeft = mapDrag.scrollLeft - dx;
+    mapWrap.scrollTop = mapDrag.scrollTop - dy;
+    ev.preventDefault();
+  });
+  function endMapDrag(ev) {
+    if (!mapDrag) return;
+    if (ev && mapDrag.pointerId !== ev.pointerId) return;
+    const moved = mapDrag.moved;
+    mapDrag = null;
+    mapWrap?.classList.remove('map-dragging');
+    if (moved) mapDidPan = true;
+  }
+  mapWrap?.addEventListener('pointerup', endMapDrag);
+  mapWrap?.addEventListener('pointercancel', endMapDrag);
+  mapWrap?.addEventListener('lostpointercapture', endMapDrag);
+
+  mapWrap?.addEventListener('click', (ev) => {
+    if (mapDidPan) {
+      mapDidPan = false;
+      return;
+    }
     if (ev.target.closest('.node')) return;
     if (ev.target.closest('button[data-act="travel-to"]')) return;
     if (ui.characterOpen) setCharacterOpen(false);
