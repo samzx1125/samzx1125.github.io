@@ -71,9 +71,9 @@ export const CAPACITY = 5000;
  * Slice T — data-driven unlocks.
  * Rule:
  *  1) Star Ash: oil×5 + dry×10 (any unlocked station; no prereq beyond not already unlocked).
- *  2) Deep Dune (first Z2): after Star Ash unlocked — oil×8 + water×5 + dry×12.
+ *  2) Deep Dune (first Z2): after Star Ash unlocked — oil×4 + water×2 + dry×5 (≤4500g one trip).
  *  3) Salt Glass: after Deep Dune — oil×4 + dry×6 (sequential adjacent).
- *  4) Night Well: after Salt Glass — oil×4 + water×4.
+ *  4) Night Well: after Salt Glass — oil×4 + water×3 (≤4500g one trip; 4250g).
  * Hand-in at any unlocked station (UI lists next available).
  * @type {{ target: string, requiresUnlocked: string[], costs: { goodId: string, qty: number }[] }[]}
  */
@@ -90,9 +90,9 @@ export const UNLOCKS = [
     target: 'loc_a01z02l001_deep_dune',
     requiresUnlocked: ['loc_a01z01l003_star_ash'],
     costs: [
-      { goodId: 'goods_a01z01i002_oil_speciality', qty: 8 },
-      { goodId: 'goods_a01z01i003_water_speciality', qty: 5 },
-      { goodId: 'goods_a01z01i001_dry_food', qty: 12 },
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 4 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 2 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 5 },
     ],
   },
   {
@@ -108,7 +108,7 @@ export const UNLOCKS = [
     requiresUnlocked: ['loc_a01z02l002_salt_glass'],
     costs: [
       { goodId: 'goods_a01z01i002_oil_speciality', qty: 4 },
-      { goodId: 'goods_a01z01i003_water_speciality', qty: 4 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 3 },
     ],
   },
 ];
