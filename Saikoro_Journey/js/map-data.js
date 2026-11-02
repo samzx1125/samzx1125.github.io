@@ -19,6 +19,19 @@ export const LOCATIONS = [
   { id: 'loc_a01z04l001_dune_crown', name: 'Dune Crown', x: 1640, y: 200 },
   { id: 'loc_a01z04l002_star_gate', name: 'Star Gate', x: 1800, y: 280 },
   { id: 'loc_a01z04l003_exit_ash', name: 'Exit Ash', x: 1960, y: 180 },
+  // Slice AG — Area 2 stub (right of Exit Ash); mist placeholders, English short names
+  { id: 'loc_a02z01l001_mist_spur', name: 'Mist Spur', x: 2140, y: 200 },
+  { id: 'loc_a02z01l002_fog_well', name: 'Fog Well', x: 2280, y: 280 },
+  { id: 'loc_a02z01l003_pale_lamp', name: 'Pale Lamp', x: 2420, y: 160 },
+  { id: 'loc_a02z02l001_reed_bank', name: 'Reed Bank', x: 2580, y: 220 },
+  { id: 'loc_a02z02l002_glass_fen', name: 'Glass Fen', x: 2720, y: 150 },
+  { id: 'loc_a02z02l003_quiet_pier', name: 'Quiet Pier', x: 2860, y: 260 },
+  { id: 'loc_a02z03l001_iron_marsh', name: 'Iron Marsh', x: 3020, y: 200 },
+  { id: 'loc_a02z03l002_drift_yard', name: 'Drift Yard', x: 3160, y: 280 },
+  { id: 'loc_a02z03l003_cobalt_gate', name: 'Cobalt Gate', x: 3300, y: 170 },
+  { id: 'loc_a02z04l001_high_loom', name: 'High Loom', x: 3460, y: 220 },
+  { id: 'loc_a02z04l002_silk_cut', name: 'Silk Cut', x: 3600, y: 150 },
+  { id: 'loc_a02z04l003_far_beacon', name: 'Far Beacon', x: 3740, y: 250 },
 ];
 
 /** Distance units along the rail (variables — ETA = distance / TRAIN_SPEED). */
@@ -41,6 +54,23 @@ export const EDGES = [
   { a: 'loc_a01z04l001_dune_crown', b: 'loc_a01z04l002_star_gate', distance: 180 },
   { a: 'loc_a01z04l002_star_gate', b: 'loc_a01z04l003_exit_ash', distance: 200 },
   { a: 'loc_a01z04l001_dune_crown', b: 'loc_a01z04l003_exit_ash', distance: 210 },
+  // Slice AG — Exit Ash ↔ Mist Spur + A2 zone chains + triangles
+  { a: 'loc_a01z04l003_exit_ash', b: 'loc_a02z01l001_mist_spur', distance: 180 },
+  { a: 'loc_a02z01l001_mist_spur', b: 'loc_a02z01l002_fog_well', distance: 150 },
+  { a: 'loc_a02z01l002_fog_well', b: 'loc_a02z01l003_pale_lamp', distance: 160 },
+  { a: 'loc_a02z01l001_mist_spur', b: 'loc_a02z01l003_pale_lamp', distance: 170 },
+  { a: 'loc_a02z01l003_pale_lamp', b: 'loc_a02z02l001_reed_bank', distance: 170 },
+  { a: 'loc_a02z02l001_reed_bank', b: 'loc_a02z02l002_glass_fen', distance: 150 },
+  { a: 'loc_a02z02l002_glass_fen', b: 'loc_a02z02l003_quiet_pier', distance: 160 },
+  { a: 'loc_a02z02l001_reed_bank', b: 'loc_a02z02l003_quiet_pier', distance: 175 },
+  { a: 'loc_a02z02l003_quiet_pier', b: 'loc_a02z03l001_iron_marsh', distance: 180 },
+  { a: 'loc_a02z03l001_iron_marsh', b: 'loc_a02z03l002_drift_yard', distance: 155 },
+  { a: 'loc_a02z03l002_drift_yard', b: 'loc_a02z03l003_cobalt_gate', distance: 165 },
+  { a: 'loc_a02z03l001_iron_marsh', b: 'loc_a02z03l003_cobalt_gate', distance: 180 },
+  { a: 'loc_a02z03l003_cobalt_gate', b: 'loc_a02z04l001_high_loom', distance: 185 },
+  { a: 'loc_a02z04l001_high_loom', b: 'loc_a02z04l002_silk_cut', distance: 160 },
+  { a: 'loc_a02z04l002_silk_cut', b: 'loc_a02z04l003_far_beacon', distance: 170 },
+  { a: 'loc_a02z04l001_high_loom', b: 'loc_a02z04l003_far_beacon', distance: 190 },
 ];
 
 /** Initial train speed (distance units per second). */
@@ -51,6 +81,20 @@ export const INITIALLY_UNLOCKED = [
   'loc_a01z01l001_broken_lamp',
   'loc_a01z01l002_drywind_depot',
 ];
+
+/** Area number from loc id (loc_a01… → 1, loc_a02… → 2). @returns {number|null} */
+export function areaOfLoc(id) {
+  if (typeof id !== 'string') return null;
+  const m = /^loc_a(\d+)/.exec(id);
+  return m ? Number(m[1]) : null;
+}
+
+/** Zone number from loc id (z01 → 1 … z04 → 4). @returns {number|null} */
+export function zoneOfLoc(id) {
+  if (typeof id !== 'string') return null;
+  const m = /loc_a\d+z(\d+)/.exec(id);
+  return m ? Number(m[1]) : null;
+}
 
 /** Zone1-only helper (courier routing). Matches loc_a##z01… */
 export function isZone1Loc(id) {

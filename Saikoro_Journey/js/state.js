@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028as';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028as';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028at';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028at';
 
 /**
  * Slice AE — price-split cargo stacks.
@@ -29,7 +29,7 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeight
  *   chosenBodyId: string | null,
  *   openingDone: boolean,
  *   personal: Record<string, number>,
- *   warehouse: { area1: { stacks: CargoStack[] } },
+ *   warehouse: { area1: { stacks: CargoStack[] }, area2: { stacks: CargoStack[] } },
  *   universalCourierUnlocked: boolean,
  * }} GameState
  *
@@ -242,7 +242,7 @@ export function createInitialState() {
     chosenBodyId: null,
     openingDone: false,
     personal: {},
-    warehouse: { area1: { stacks: [] } },
+    warehouse: { area1: { stacks: [] }, area2: { stacks: [] } },
     universalCourierUnlocked: false,
   };
   const startRow = prices[START_LOC] || {};
@@ -378,17 +378,37 @@ export function defaultCourierCapacity() {
   return COURIER_CAPACITY;
 }
 
-/** Ensure Area1 warehouse bags exist (stacks). @param {GameState} s */
-export function ensureWarehouse(s) {
-  if (!s.warehouse) s.warehouse = { area1: { stacks: [] } };
-  if (!s.warehouse.area1) s.warehouse.area1 = { stacks: [] };
-  if (!Array.isArray(s.warehouse.area1.stacks)) s.warehouse.area1.stacks = [];
-  return s.warehouse.area1;
+/** Map hub loc → warehouse area key. @returns {'area1'|'area2'|null} */
+export function warehouseKeyForLoc(locId) {
+  if (locId === AREA1_WAREHOUSE_LOC) return 'area1';
+  if (locId === AREA2_WAREHOUSE_LOC) return 'area2';
+  return null;
 }
 
-/** Total Area1 warehouse mass in grams. @param {GameState} s */
-export function warehouseUsed(s) {
-  const wh = s.warehouse?.area1;
+/** Active warehouse key from player dock (or null). */
+export function warehouseKeyAtPlayer(s) {
+  if (s.travel) return null;
+  return warehouseKeyForLoc(s.locationId);
+}
+
+/**
+ * Ensure warehouse bags exist (area1 + area2 stacks).
+ * @param {GameState} s
+ * @param {'area1'|'area2'|null} [key] bag to return; default area1, or current hub if docked.
+ */
+export function ensureWarehouse(s, key = null) {
+  if (!s.warehouse) s.warehouse = { area1: { stacks: [] }, area2: { stacks: [] } };
+  if (!s.warehouse.area1) s.warehouse.area1 = { stacks: [] };
+  if (!Array.isArray(s.warehouse.area1.stacks)) s.warehouse.area1.stacks = [];
+  if (!s.warehouse.area2) s.warehouse.area2 = { stacks: [] };
+  if (!Array.isArray(s.warehouse.area2.stacks)) s.warehouse.area2.stacks = [];
+  const k = key || warehouseKeyAtPlayer(s) || 'area1';
+  return s.warehouse[k] || s.warehouse.area1;
+}
+
+/** Total warehouse mass in grams for a bag. @param {GameState} s @param {'area1'|'area2'|null} [key] */
+export function warehouseUsed(s, key = null) {
+  const wh = ensureWarehouse(s, key);
   if (!wh?.stacks) return 0;
   let grams = 0;
   for (const st of wh.stacks) {
@@ -400,8 +420,8 @@ export function warehouseUsed(s) {
 }
 
 /** Warehouse weighted condition % for a good (100 if unset). */
-export function warehouseGoodCondition(s, goodId) {
-  const wh = s.warehouse?.area1;
+export function warehouseGoodCondition(s, goodId, key = null) {
+  const wh = ensureWarehouse(s, key);
   if (!wh?.stacks) return 0;
   let sum = 0;
   let qty = 0;
@@ -417,14 +437,19 @@ export function warehouseGoodCondition(s, goodId) {
   return Math.max(0, Math.min(100, sum / qty));
 }
 
-/** Player docked at Area1 warehouse hub (Broken Lamp). */
+/** Player docked at any area warehouse hub (Broken Lamp or Mist Spur). */
 export function playerAtWarehouse(s) {
-  return !s.travel && s.locationId === AREA1_WAREHOUSE_LOC;
+  return !s.travel && warehouseKeyForLoc(s.locationId) != null;
 }
 
-/** Courier docked at Area1 warehouse hub. */
+/** Courier docked at the same warehouse hub as the player (or any hub if player not at one). */
 export function courierAtWarehouse(s) {
   const c = s.courier;
   if (!c || c.travel) return false;
-  return c.locationId === AREA1_WAREHOUSE_LOC;
+  const playerKey = warehouseKeyAtPlayer(s);
+  const courierKey = warehouseKeyForLoc(c.locationId);
+  if (!courierKey) return false;
+  // Prefer same hub as player when both at warehouses
+  if (playerKey) return courierKey === playerKey;
+  return true;
 }

@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028as';
-import { courierLocAllowed } from './engine.js?v=z1-20261028as';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028as';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028as';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028as';
-import { getLastSavedAt } from './saving.js?v=z1-20261028as';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028as';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028at';
+import { courierLocAllowed } from './engine.js?v=z1-20261028at';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028at';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028at';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028at';
+import { getLastSavedAt } from './saving.js?v=z1-20261028at';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028at';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -437,14 +437,23 @@ export function render(s, ui = {}) {
     cargoBar.style.width = pct + '%';
   }
   const here = LOCATIONS.find((l) => l.id === s.locationId);
+  const locForArea = s.travel ? s.travel.to : s.locationId;
+  const areaN = areaOfLoc(locForArea) || 1;
+  const zoneN = zoneOfLoc(locForArea) || 1;
+  const areaZoneLabel = `Area ${areaN} · Z${zoneN}`;
+  const h1 = document.querySelector('header h1');
+  if (h1) h1.textContent = `Saikoro Journey · ${areaZoneLabel}`;
+  document.title = `Saikoro Journey — ${areaZoneLabel}`;
   const travelLabel = s.travel
     ? (() => {
         const pct = Math.min(100, Math.round((s.travel.elapsedMs / s.travel.durationMs) * 100));
         const leftMs = Math.max(0, s.travel.durationMs - s.travel.elapsedMs);
-        return `moving → ${locName(s.travel.to)} (${pct}% · ${formatEta(leftMs)})`;
+        const toArea = areaOfLoc(s.travel.to) || 1;
+        const toZone = zoneOfLoc(s.travel.to) || 1;
+        return `A${toArea}Z${toZone} moving → ${locName(s.travel.to)} (${pct}% · ${formatEta(leftMs)})`;
       })()
     : here
-      ? here.name
+      ? `A${areaN}Z${zoneN} · ${here.name}`
       : s.locationId;
   setText('hud-loc', travelLabel);
 
@@ -1150,14 +1159,22 @@ export function render(s, ui = {}) {
     }
   }
 
-  // Slice AB — Area1 warehouse panel (Broken Lamp hub)
+  // Slice AB/AG — warehouse panel (Broken Lamp / Mist Spur hubs)
   {
     const whPanel = document.getElementById('warehouse-panel');
     if (whPanel) {
-      const atHub = playerAtWarehouse(s);
+      const hubKey = warehouseKeyAtPlayer(s);
+      const atHub = !!hubKey && playerAtWarehouse(s);
       whPanel.hidden = !atHub;
       if (atHub) {
-        ensureWarehouse(s);
+        ensureWarehouse(s, hubKey);
+        const areaLabel = hubKey === 'area2' ? 'Area 2' : 'Area 1';
+        const hubName = hubKey === 'area2' ? 'Mist Spur' : 'Broken Lamp';
+        const whTitle = whPanel.querySelector('h2');
+        if (whTitle) whTitle.textContent = `${areaLabel} Safe House / Warehouse`;
+        const whHint = whPanel.querySelector('p.hint:not(#warehouse-cap)');
+        if (whHint) whHint.textContent = `${hubName} hub · goods only · no quest lots. Soft cap ${WAREHOUSE_CAP}g. Separate stock per area.`;
+
         const courierHere = courierAtWarehouse(s);
         if (!ui.warehouseWho) ui.warehouseWho = 'player';
         if (ui.warehouseWho === 'courier' && !courierHere) ui.warehouseWho = 'player';
@@ -1177,17 +1194,18 @@ export function render(s, ui = {}) {
           who === 'courier' ? 'Moving: courier cargo ↔ warehouse' : 'Moving: player cargo ↔ warehouse',
         );
 
-        const used = warehouseUsed(s);
-        setText('warehouse-cap', `${used} / ${AREA1_WAREHOUSE_CAP} g`);
+        const used = warehouseUsed(s, hubKey);
+        setText('warehouse-cap', `${used} / ${WAREHOUSE_CAP} g`);
 
         const bagStacks = who === 'courier' ? (s.courier.cargoStacks || []) : (s.cargoStacks || []);
         const bagUsed = who === 'courier' ? courierCargoUsed(s.courier) : cargoUsed(s);
         const bagCap = who === 'courier' ? s.courier.capacity : s.capacity;
         const free = Math.max(0, bagCap - bagUsed);
 
-        const wh = s.warehouse.area1;
+        const wh = ensureWarehouse(s, hubKey);
         const whStacks = wh.stacks || [];
         const sigParts = [
+          hubKey,
           who,
           used,
           bagUsed,

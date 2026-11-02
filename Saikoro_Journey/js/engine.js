@@ -8,6 +8,7 @@ import {
   emptyStacks,
   ensureWarehouse,
   warehouseUsed,
+  warehouseKeyAtPlayer,
   playerAtWarehouse,
   courierAtWarehouse,
   allocStackId,
@@ -17,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028as';
+} from './state.js?v=z1-20261028at';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -54,8 +55,10 @@ import {
   effectiveSpeed,
   AREA1_WAREHOUSE_LOC,
   AREA1_WAREHOUSE_CAP,
-} from './economy-data.js?v=z1-20261028as';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028as';
+  AREA2_WAREHOUSE_LOC,
+  WAREHOUSE_CAP,
+} from './economy-data.js?v=z1-20261028at';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028at';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -700,8 +703,9 @@ export function tryAbandonQuest(s) {
 // ——— Slice Q: courier ———
 
 /**
- * Slice AD — loc eligible for courier route.
- * Before universal: Zone1 unlocked only. After: any unlocked Area1 loc.
+ * Slice AD/AG — loc eligible for courier route.
+ * Before universal: Area1 Zone1 unlocked only (a01z01).
+ * After universal: any unlocked loc including Area2.
  * @param {import('./state.js').GameState} s
  * @param {string} id
  */
@@ -709,7 +713,7 @@ export function courierLocAllowed(s, id) {
   if (typeof id !== 'string' || !id) return false;
   if (!s.unlocked.includes(id)) return false;
   if (s.universalCourierUnlocked) return true;
-  return isZone1Loc(id);
+  return areaOfLoc(id) === 1 && isZone1Loc(id);
 }
 
 /** Hire Zone1 courier once Star Ash is unlocked. Free hire (COURIER_HIRE_COST=0). */
@@ -932,7 +936,7 @@ export function tryTransferGood(s, goodId, dir, qty, stackId) {
 
 
 /**
- * Slice AB/AE — deposit from a cargo stack into Area1 warehouse.
+ * Slice AB/AE/AG — deposit from a cargo stack into the hub warehouse for current area.
  * @param {'player'|'courier'} who
  * @param {string} [stackId] source stack; omit → FIFO by goodId
  */
@@ -943,6 +947,9 @@ export function tryWarehouseDeposit(s, who, goodId, qty, stackId) {
   if (!(qty > 0)) return { ok: false, reason: 'qty' };
   const w = goodWeightG(goodId);
   if (!(w > 0)) return { ok: false, reason: 'weight' };
+
+  const hubKey = warehouseKeyAtPlayer(s);
+  if (!hubKey) return { ok: false, reason: 'not_at_hub' };
 
   if (who === 'player') {
     if (!playerAtWarehouse(s)) return { ok: false, reason: 'not_at_hub' };
@@ -957,9 +964,9 @@ export function tryWarehouseDeposit(s, who, goodId, qty, stackId) {
     : stacksQtyOf(bagStacks, goodId);
   if (have < qty) return { ok: false, reason: 'stock' };
 
-  const wh = ensureWarehouse(s);
-  const used = warehouseUsed(s);
-  if (used + w * qty > AREA1_WAREHOUSE_CAP) return { ok: false, reason: 'warehouse_cap' };
+  const wh = ensureWarehouse(s, hubKey);
+  const used = warehouseUsed(s, hubKey);
+  if (used + w * qty > WAREHOUSE_CAP) return { ok: false, reason: 'warehouse_cap' };
 
   const idGen = () => allocStackId(s);
   /** @type {{ goodId: string, unitPrice: number, qty: number, condition: number }[]} */
@@ -994,7 +1001,7 @@ export function tryWarehouseDeposit(s, who, goodId, qty, stackId) {
 }
 
 /**
- * Slice AB/AE — withdraw a warehouse stack into player or courier cargo.
+ * Slice AB/AE/AG — withdraw a warehouse stack into player or courier cargo.
  * @param {'player'|'courier'} who
  * @param {string} [stackId] warehouse stack; omit → FIFO by goodId
  */
@@ -1006,6 +1013,9 @@ export function tryWarehouseWithdraw(s, who, goodId, qty, stackId) {
   const w = goodWeightG(goodId);
   if (!(w > 0)) return { ok: false, reason: 'weight' };
 
+  const hubKey = warehouseKeyAtPlayer(s);
+  if (!hubKey) return { ok: false, reason: 'not_at_hub' };
+
   if (who === 'player') {
     if (!playerAtWarehouse(s)) return { ok: false, reason: 'not_at_hub' };
   } else {
@@ -1013,7 +1023,7 @@ export function tryWarehouseWithdraw(s, who, goodId, qty, stackId) {
     if (!s.courier) return { ok: false, reason: 'no_courier' };
   }
 
-  const wh = ensureWarehouse(s);
+  const wh = ensureWarehouse(s, hubKey);
   const have = stackId
     ? (findStack(wh.stacks, stackId)?.qty || 0)
     : stacksQtyOf(wh.stacks, goodId);

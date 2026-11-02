@@ -1,13 +1,14 @@
 /** localStorage save/load — SAVE_VERSION bump requires migration. */
-import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028as';
+import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028at';
 import {
   migrateCargoMapToStacks,
   sanitizeStack,
   emptyCargoMap,
-} from './state.js?v=z1-20261028as';
+} from './state.js?v=z1-20261028at';
 
-export const SAVE_VERSION = 11;
-const KEY = 'saikoro_journey_z1_v11';
+export const SAVE_VERSION = 12;
+const KEY = 'saikoro_journey_z1_v12';
+const KEY_V11 = 'saikoro_journey_z1_v11';
 const KEY_V10 = 'saikoro_journey_z1_v10';
 const KEY_V9 = 'saikoro_journey_z1_v9';
 const KEY_V8 = 'saikoro_journey_z1_v8';
@@ -120,6 +121,9 @@ export function serialize(s) {
       area1: {
         stacks: serializeStacks(s.warehouse?.area1?.stacks),
       },
+      area2: {
+        stacks: serializeStacks(s.warehouse?.area2?.stacks),
+      },
     },
     universalCourierUnlocked: !!s.universalCourierUnlocked,
     savedAt: Date.now(),
@@ -191,7 +195,7 @@ function applyCourier(dataCourier, idGen) {
  * @param {any} data
  */
 export function applySave(s, data) {
-  // Accept v2–v11 (v11 = price-split stacks)
+  // Accept v2–v12 (v11 = price-split stacks; v12 = Area2 warehouse)
   if (
     !data ||
     (data.v !== 2 &&
@@ -204,6 +208,7 @@ export function applySave(s, data) {
       data.v !== 9 &&
       data.v !== 10 &&
       data.v !== 11 &&
+      data.v !== 12 &&
       data.v !== SAVE_VERSION)
   ) {
     return false;
@@ -331,8 +336,8 @@ export function applySave(s, data) {
       if (Number.isFinite(n) && n > 0) s.personal[id] = n;
     }
   }
-  // Slice AB/AE — warehouse stacks
-  s.warehouse = { area1: { stacks: [] } };
+  // Slice AB/AE/AG — warehouse stacks (area1 + area2)
+  s.warehouse = { area1: { stacks: [] }, area2: { stacks: [] } };
   if (data.v >= 11 && data.warehouse?.area1 && typeof data.warehouse.area1 === 'object') {
     const src = data.warehouse.area1;
     if (Array.isArray(src.stacks)) {
@@ -350,6 +355,16 @@ export function applySave(s, data) {
       src.condition && typeof src.condition === 'object' ? src.condition : {},
       idGen,
     );
+  }
+  // Slice AG — area2 stacks (empty on migrate from ≤11)
+  if (data.v >= 12 && data.warehouse?.area2 && typeof data.warehouse.area2 === 'object') {
+    const src2 = data.warehouse.area2;
+    if (Array.isArray(src2.stacks)) {
+      for (const raw of src2.stacks) {
+        const st = sanitizeStack(raw, idGen);
+        if (st) s.warehouse.area2.stacks.push(st);
+      }
+    }
   }
   {
     const SCRAP_GATE = 'loc_a01z03l003_scrap_gate';
@@ -370,6 +385,7 @@ export function applySave(s, data) {
   };
   scan(s.cargoStacks);
   scan(s.warehouse.area1.stacks);
+  scan(s.warehouse.area2?.stacks);
   if (s.courier) scan(s.courier.cargoStacks);
   s.nextStackId = Math.max(1, maxN);
 
@@ -393,6 +409,7 @@ export function saveGame(s) {
 export function loadGame(s) {
   try {
     let raw = localStorage.getItem(KEY);
+    if (!raw) raw = localStorage.getItem(KEY_V11);
     if (!raw) raw = localStorage.getItem(KEY_V10);
     if (!raw) raw = localStorage.getItem(KEY_V9);
     if (!raw) raw = localStorage.getItem(KEY_V8);
@@ -420,6 +437,7 @@ export function loadGame(s) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(KEY_V11);
     localStorage.removeItem(KEY_V10);
     localStorage.removeItem(KEY_V9);
     localStorage.removeItem(KEY_V8);

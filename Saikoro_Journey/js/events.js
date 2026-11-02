@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028as';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028as';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028at';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028at';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,10 +7,10 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028as';
-import { cargoUsed, courierCargoUsed, warehouseUsed, stacksQtyOf, findStack } from './state.js?v=z1-20261028as';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028as';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028as';
+} from './engine.js?v=z1-20261028at';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028at';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028at';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028at';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -536,7 +536,8 @@ export function bindEvents(s, opts = {}) {
         qty = have;
         const w = goodWeightG(good);
         if (w > 0) {
-          const freeWh = Math.max(0, AREA1_WAREHOUSE_CAP - warehouseUsed(state));
+          const hubKey = warehouseKeyAtPlayer(state) || 'area1';
+          const freeWh = Math.max(0, WAREHOUSE_CAP - warehouseUsed(state, hubKey));
           qty = Math.min(qty, Math.floor(freeWh / w));
         }
       } else {
@@ -554,7 +555,8 @@ export function bindEvents(s, opts = {}) {
       return;
     }
     if (wit) {
-      const whStacks = state.warehouse?.area1?.stacks || [];
+      const hubKeyW = warehouseKeyAtPlayer(state) || 'area1';
+      const whStacks = ensureWarehouse(state, hubKeyW).stacks || [];
       const st = stackId ? findStack(whStacks, stackId) : null;
       const whHave = st ? (st.qty | 0) : stacksQtyOf(whStacks, good);
       if (mode === 'max') {

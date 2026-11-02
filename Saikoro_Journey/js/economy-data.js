@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028as';
+import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028at';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
@@ -73,6 +73,67 @@ export const BASE_PRICES = {
     goods_a01z01i001_dry_food: 7,
     goods_a01z01i002_oil_speciality: 65,
     goods_a01z01i003_water_speciality: 10,
+  },
+  // Slice AG — Area2 wider oil/water spreads
+  loc_a02z01l001_mist_spur: {
+    goods_a01z01i001_dry_food: 10,
+    goods_a01z01i002_oil_speciality: 72,
+    goods_a01z01i003_water_speciality: 16,
+  },
+  loc_a02z01l002_fog_well: {
+    goods_a01z01i001_dry_food: 19,
+    goods_a01z01i002_oil_speciality: 15,
+    goods_a01z01i003_water_speciality: 88,
+  },
+  loc_a02z01l003_pale_lamp: {
+    goods_a01z01i001_dry_food: 8,
+    goods_a01z01i002_oil_speciality: 68,
+    goods_a01z01i003_water_speciality: 11,
+  },
+  loc_a02z02l001_reed_bank: {
+    goods_a01z01i001_dry_food: 13,
+    goods_a01z01i002_oil_speciality: 74,
+    goods_a01z01i003_water_speciality: 13,
+  },
+  loc_a02z02l002_glass_fen: {
+    goods_a01z01i001_dry_food: 21,
+    goods_a01z01i002_oil_speciality: 13,
+    goods_a01z01i003_water_speciality: 90,
+  },
+  loc_a02z02l003_quiet_pier: {
+    goods_a01z01i001_dry_food: 7,
+    goods_a01z01i002_oil_speciality: 70,
+    goods_a01z01i003_water_speciality: 9,
+  },
+  loc_a02z03l001_iron_marsh: {
+    goods_a01z01i001_dry_food: 14,
+    goods_a01z01i002_oil_speciality: 78,
+    goods_a01z01i003_water_speciality: 12,
+  },
+  loc_a02z03l002_drift_yard: {
+    goods_a01z01i001_dry_food: 23,
+    goods_a01z01i002_oil_speciality: 12,
+    goods_a01z01i003_water_speciality: 92,
+  },
+  loc_a02z03l003_cobalt_gate: {
+    goods_a01z01i001_dry_food: 6,
+    goods_a01z01i002_oil_speciality: 76,
+    goods_a01z01i003_water_speciality: 8,
+  },
+  loc_a02z04l001_high_loom: {
+    goods_a01z01i001_dry_food: 15,
+    goods_a01z01i002_oil_speciality: 80,
+    goods_a01z01i003_water_speciality: 11,
+  },
+  loc_a02z04l002_silk_cut: {
+    goods_a01z01i001_dry_food: 24,
+    goods_a01z01i002_oil_speciality: 11,
+    goods_a01z01i003_water_speciality: 95,
+  },
+  loc_a02z04l003_far_beacon: {
+    goods_a01z01i001_dry_food: 6,
+    goods_a01z01i002_oil_speciality: 82,
+    goods_a01z01i003_water_speciality: 7,
   },
 };
 
@@ -178,6 +239,19 @@ export function speedUpgradeCost(level) {
  *  8) Dune Crown (first Z4): after Scrap Gate — oil×32 + water×14 + dry×28 = 32100g (~3× max).
  *  9) Star Gate: after Dune Crown — oil×14 + dry×22 = 11400g (multi-trip deposit).
  * 10) Exit Ash: after Star Gate — oil×14 + water×12 = 16000g (multi-trip deposit).
+ * Slice AG — Area2 (after Exit Ash; oil=500g water=750g dry=200g):
+ * 11) Mist Spur (A2Z1): oil×30 + water×12 + dry×25 = 29000g (~2–3× max).
+ * 12) Fog Well: oil×12 + dry×20 = 10000g.
+ * 13) Pale Lamp: oil×12 + water×10 = 13500g.
+ * 14) Reed Bank (A2Z2): oil×30 + water×12 + dry×25 = 29000g.
+ * 15) Glass Fen: oil×12 + dry×20 = 10000g.
+ * 16) Quiet Pier: oil×12 + water×10 = 13500g.
+ * 17) Iron Marsh (A2Z3): oil×32 + water×14 + dry×28 = 32100g.
+ * 18) Drift Yard: oil×14 + dry×22 = 11400g.
+ * 19) Cobalt Gate: oil×14 + water×12 = 16000g.
+ * 20) High Loom (A2Z4): oil×32 + water×14 + dry×28 = 32100g.
+ * 21) Silk Cut: oil×14 + dry×22 = 11400g.
+ * 22) Far Beacon: oil×14 + water×12 = 16000g.
  * Hand-in at any unlocked station via unlockDeposits (UI lists next available).
  * @type {{ target: string, requiresUnlocked: string[], costs: { goodId: string, qty: number }[] }[]}
  */
@@ -260,6 +334,107 @@ export const UNLOCKS = [
   {
     target: 'loc_a01z04l003_exit_ash',
     requiresUnlocked: ['loc_a01z04l002_star_gate'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 14 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 12 },
+    ],
+  },
+  // Slice AG — Area2 sequential unlocks
+  {
+    target: 'loc_a02z01l001_mist_spur',
+    requiresUnlocked: ['loc_a01z04l003_exit_ash'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 30 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 12 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 25 },
+    ],
+  },
+  {
+    target: 'loc_a02z01l002_fog_well',
+    requiresUnlocked: ['loc_a02z01l001_mist_spur'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 12 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 20 },
+    ],
+  },
+  {
+    target: 'loc_a02z01l003_pale_lamp',
+    requiresUnlocked: ['loc_a02z01l002_fog_well'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 12 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 10 },
+    ],
+  },
+  {
+    target: 'loc_a02z02l001_reed_bank',
+    requiresUnlocked: ['loc_a02z01l003_pale_lamp'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 30 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 12 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 25 },
+    ],
+  },
+  {
+    target: 'loc_a02z02l002_glass_fen',
+    requiresUnlocked: ['loc_a02z02l001_reed_bank'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 12 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 20 },
+    ],
+  },
+  {
+    target: 'loc_a02z02l003_quiet_pier',
+    requiresUnlocked: ['loc_a02z02l002_glass_fen'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 12 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 10 },
+    ],
+  },
+  {
+    target: 'loc_a02z03l001_iron_marsh',
+    requiresUnlocked: ['loc_a02z02l003_quiet_pier'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 32 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 14 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 28 },
+    ],
+  },
+  {
+    target: 'loc_a02z03l002_drift_yard',
+    requiresUnlocked: ['loc_a02z03l001_iron_marsh'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 14 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 22 },
+    ],
+  },
+  {
+    target: 'loc_a02z03l003_cobalt_gate',
+    requiresUnlocked: ['loc_a02z03l002_drift_yard'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 14 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 12 },
+    ],
+  },
+  {
+    target: 'loc_a02z04l001_high_loom',
+    requiresUnlocked: ['loc_a02z03l003_cobalt_gate'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 32 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 14 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 28 },
+    ],
+  },
+  {
+    target: 'loc_a02z04l002_silk_cut',
+    requiresUnlocked: ['loc_a02z04l001_high_loom'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 14 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 22 },
+    ],
+  },
+  {
+    target: 'loc_a02z04l003_far_beacon',
+    requiresUnlocked: ['loc_a02z04l002_silk_cut'],
     costs: [
       { goodId: 'goods_a01z01i002_oil_speciality', qty: 14 },
       { goodId: 'goods_a01z01i003_water_speciality', qty: 12 },
@@ -382,6 +557,15 @@ export const COURIER_CAPACITY = 3000;
  */
 export const AREA1_WAREHOUSE_LOC = START_LOC;
 export const AREA1_WAREHOUSE_CAP = 20000;
+
+/**
+ * Slice AG — Area2 warehouse / safe house.
+ * Hub = Mist Spur. Separate stock from Area1; same soft cap.
+ */
+export const AREA2_WAREHOUSE_LOC = 'loc_a02z01l001_mist_spur';
+export const AREA2_WAREHOUSE_CAP = AREA1_WAREHOUSE_CAP;
+/** Alias used by shared warehouse helpers. */
+export const WAREHOUSE_CAP = AREA1_WAREHOUSE_CAP;
 
 /**
  * Slice O — A→B transport quests (economy.md §5 / systems.md §5 / map-area1 §4).
