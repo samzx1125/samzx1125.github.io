@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028au';
+import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028av';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
@@ -605,11 +605,53 @@ export const TRANSPORT_QUESTS = {
     qty: 3,
     rewardGold: 110,
   },
+  // Slice AI — deeper A1 Z3 (Ash Pump → Scrap Gate); water×2 = 1500g
+  loc_a01z03l002_ash_pump: {
+    to: 'loc_a01z03l003_scrap_gate',
+    goodId: 'goods_a01z01i003_water_speciality',
+    qty: 2,
+    rewardGold: 115,
+  },
   // Slice X — optional Z4 offer
   loc_a01z04l001_dune_crown: {
     to: 'loc_a01z04l002_star_gate',
     goodId: 'goods_a01z01i001_dry_food',
     qty: 5,
     rewardGold: 120,
+  },
+  // Slice AI — deeper A1 Z4 (Star Gate → Exit Ash); dry×5 = 1000g
+  loc_a01z04l002_star_gate: {
+    to: 'loc_a01z04l003_exit_ash',
+    goodId: 'goods_a01z01i001_dry_food',
+    qty: 5,
+    rewardGold: 125,
+  },
+  // Slice AI — A1→A2 bridge (Exit Ash → Mist Spur); oil×2 = 1000g
+  loc_a01z04l003_exit_ash: {
+    to: 'loc_a02z01l001_mist_spur',
+    goodId: 'goods_a01z01i002_oil_speciality',
+    qty: 2,
+    rewardGold: 130,
+  },
+  // Slice AI — A2Z1 (Mist Spur → Fog Well); dry×5 = 1000g
+  loc_a02z01l001_mist_spur: {
+    to: 'loc_a02z01l002_fog_well',
+    goodId: 'goods_a01z01i001_dry_food',
+    qty: 5,
+    rewardGold: 130,
+  },
+  // Slice AI — A2Z1 (Fog Well → Pale Lamp); water×2 = 1500g
+  loc_a02z01l002_fog_well: {
+    to: 'loc_a02z01l003_pale_lamp',
+    goodId: 'goods_a01z01i003_water_speciality',
+    qty: 2,
+    rewardGold: 140,
+  },
+  // Slice AI — A2Z2 (Reed Bank → Glass Fen); oil×3 = 1500g
+  loc_a02z02l001_reed_bank: {
+    to: 'loc_a02z02l002_glass_fen',
+    goodId: 'goods_a01z01i002_oil_speciality',
+    qty: 3,
+    rewardGold: 150,
   },
 };
