@@ -1,7 +1,7 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028ad';
-import { GOODS, UNLOCK_LOC3, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC } from './economy-data.js?v=z1-20261028ad';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ad';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ad';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ae';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC } from './economy-data.js?v=z1-20261028ae';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ae';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ae';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -289,41 +289,48 @@ function renderQuotes(s) {
     tbody.appendChild(tr);
   }
 
-  const unlocked3 = s.unlocked.includes(UNLOCK_LOC3.target);
+  // Slice T — data-driven next available unlock(s)
   const unlockPanel = document.getElementById('unlock-panel');
   if (unlockPanel) {
-    unlockPanel.hidden = unlocked3;
-    const list = unlockPanel.querySelector('.unlock-list');
-    if (list) {
-      list.innerHTML = UNLOCK_LOC3.costs
-        .map((c) => {
-          const g = GOODS.find((x) => x.id === c.goodId);
-          const have = s.cargo[c.goodId] || 0;
-          const ok = have >= c.qty;
-          return `<li class="${ok ? 'ok' : ''}" title="${c.goodId}">${g?.name || c.goodId} ${have}/${c.qty}</li>`;
-        })
-        .join('');
-    }
-    {
-      let need = 0;
-      let haveUnits = 0;
-      for (const c of UNLOCK_LOC3.costs) {
-        need += c.qty;
-        haveUnits += Math.min(s.cargo[c.goodId] || 0, c.qty);
+    const offers = availableUnlocks(s.unlocked);
+    const traveling = isTraveling(s);
+    const offersEl = document.getElementById('unlock-offers');
+    if (offersEl) {
+      if (!offers.length) {
+        offersEl.innerHTML = '';
+      } else {
+        offersEl.innerHTML = offers
+          .map((u) => {
+            let need = 0;
+            let haveUnits = 0;
+            const lis = u.costs
+              .map((c) => {
+                const g = GOODS.find((x) => x.id === c.goodId);
+                const have = s.cargo[c.goodId] || 0;
+                need += c.qty;
+                haveUnits += Math.min(have, c.qty);
+                const ok = have >= c.qty;
+                return `<li class="${ok ? 'ok' : ''}" title="${c.goodId}">${g?.name || c.goodId} ${have}/${c.qty}</li>`;
+              })
+              .join('');
+            const pct = need ? Math.round((haveUnits / need) * 100) : 0;
+            const can =
+              !traveling &&
+              u.costs.every((c) => (s.cargo[c.goodId] || 0) >= c.qty);
+            const name = locName(u.target);
+            return `<div class="unlock-offer" data-target="${u.target}">
+              <h3 class="unlock-offer-title">Unlock ${name}</h3>
+              <div class="bar" aria-label="unlock progress"><div class="bar-fill" style="width:${pct}%"></div></div>
+              <p class="muted unlock-offer-pct">${haveUnits} / ${need}</p>
+              <ul class="unlock-list">${lis}</ul>
+              <button type="button" class="primary" data-act="unlock" data-target="${u.target}" ${can ? '' : 'disabled'}>Unlock ${name}</button>
+            </div>`;
+          })
+          .join('');
       }
-      const pct = need ? Math.round((haveUnits / need) * 100) : 0;
-      const fill = document.getElementById('unlock-bar-fill');
-      if (fill) fill.style.width = (unlocked3 ? 100 : pct) + '%';
-      setText('unlock-pct', unlocked3 ? 'done' : `${haveUnits} / ${need}`);
     }
-    const btn = unlockPanel.querySelector('[data-act="unlock"]');
-    if (btn) {
-      const can =
-        !isTraveling(s) &&
-        !unlocked3 &&
-        UNLOCK_LOC3.costs.every((c) => (s.cargo[c.goodId] || 0) >= c.qty);
-      btn.disabled = !can;
-    }
+    // visibility also gated by panelOpen in render()
+    unlockPanel.dataset.hasOffers = offers.length ? '1' : '0';
   }
 }
 
@@ -724,8 +731,8 @@ export function render(s, ui = {}) {
     if (quotePanel) quotePanel.hidden = !panelOpen;
     const unlockPanel = document.getElementById('unlock-panel');
     if (unlockPanel) {
-      const unlocked3 = s.unlocked.includes(UNLOCK_LOC3.target);
-      unlockPanel.hidden = unlocked3 || !panelOpen;
+      const hasOffers = unlockPanel.dataset.hasOffers === '1' || availableUnlocks(s.unlocked).length > 0;
+      unlockPanel.hidden = !hasOffers || !panelOpen;
     }
   }
 
@@ -794,7 +801,7 @@ export function render(s, ui = {}) {
           }
           const addWrap = document.getElementById('courier-route-add');
           if (addWrap) {
-            const missing = s.unlocked.filter((id) => !c.route.includes(id));
+            const missing = s.unlocked.filter((id) => isZone1Loc(id) && !c.route.includes(id));
             addWrap.innerHTML = missing
               .map(
                 (id) =>

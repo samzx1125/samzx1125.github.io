@@ -6,7 +6,7 @@ import {
   courierCargoUsed,
   courierGoodCondition,
   emptyCargoMap,
-} from './state.js?v=z1-20261028ad';
+} from './state.js?v=z1-20261028ae';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -31,8 +31,8 @@ import {
   COURIER_HIRE_COST,
   COURIER_SEED_GOLD,
   COURIER_CAPACITY,
-} from './economy-data.js?v=z1-20261028ad';
-import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath } from './map-data.js?v=z1-20261028ad';
+} from './economy-data.js?v=z1-20261028ae';
+import { LOCATIONS, distanceBetween, travelMsBetween, TRAIN_SPEED, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028ae';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -442,12 +442,15 @@ export function tryTravel(s, toId, durationMs, meta = {}) {
 
 /**
  * @param {import('./state.js').GameState} s
- * @param {{ target: string, costs: { goodId: string, qty: number }[] }} unlock
+ * @param {{ target: string, requiresUnlocked?: string[], costs: { goodId: string, qty: number }[] }} unlock
  */
 export function tryUnlock(s, unlock) {
   if (s.travel) return { ok: false, reason: 'traveling' };
   if (!s.unlocked.includes(s.locationId)) return { ok: false, reason: 'locked_here' };
   if (s.unlocked.includes(unlock.target)) return { ok: false, reason: 'already' };
+  for (const id of unlock.requiresUnlocked || []) {
+    if (!s.unlocked.includes(id)) return { ok: false, reason: 'prereq' };
+  }
   for (const c of unlock.costs) {
     if ((s.cargo[c.goodId] || 0) < c.qty) return { ok: false, reason: 'need_' + c.goodId };
   }
@@ -555,7 +558,8 @@ export function tryHireCourier(s) {
   if (COURIER_HIRE_COST > 0 && s.gold < COURIER_HIRE_COST) return { ok: false, reason: 'gold' };
   if (COURIER_HIRE_COST > 0) s.gold -= COURIER_HIRE_COST;
 
-  const route = LOCATIONS.map((l) => l.id).filter((id) => s.unlocked.includes(id));
+  // Slice T — courier stays Zone1-only
+  const route = LOCATIONS.map((l) => l.id).filter((id) => isZone1Loc(id) && s.unlocked.includes(id));
   /** @type {Record<string, Record<string, { buy: boolean, sell: boolean }>>} */
   const trade = {};
   for (const locId of route) {
@@ -609,6 +613,7 @@ export function trySetCourierRoute(s, routeIds) {
   if (!s.courier) return { ok: false, reason: 'no_courier' };
   const cleaned = [];
   for (const id of routeIds) {
+    if (!isZone1Loc(id)) continue; // Slice T — reject Z2
     if (!s.unlocked.includes(id)) continue;
     if (cleaned.includes(id)) continue;
     cleaned.push(id);

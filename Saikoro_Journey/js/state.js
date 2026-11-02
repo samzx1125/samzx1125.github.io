@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028ad';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG, COURIER_CAPACITY } from './economy-data.js?v=z1-20261028ad';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028ae';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, goodWeightG, COURIER_CAPACITY } from './economy-data.js?v=z1-20261028ae';
 
 /**
  * @typedef {{

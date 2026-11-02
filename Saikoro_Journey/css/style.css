@@ -107,7 +107,7 @@ main {
 
 #map-plane {
   position: relative;
-  width: 680px;
+  width: 1120px;
   height: 400px;
   margin: 1rem auto;
 }
@@ -116,7 +116,7 @@ main {
   position: absolute;
   left: 0;
   top: 0;
-  width: 680px;
+  width: 1120px;
   height: 400px;
   pointer-events: none;
   overflow: visible;
@@ -139,7 +139,7 @@ main {
   position: absolute;
   left: 0;
   top: 0;
-  width: 680px;
+  width: 1120px;
   height: 400px;
 }
 .node-wrap {
@@ -850,3 +850,8 @@ body.opening-active > main {
 #hud-name {
   font-weight: 600;
 }
+
+/* Slice T — multi unlock offers */
+.unlock-offer { margin-bottom: 0.85rem; }
+.unlock-offer-title { font-size: 0.95rem; margin: 0.35rem 0; font-weight: 600; }
+.unlock-offer-pct { margin: 0.2rem 0; }

@@ -7,6 +7,10 @@ export const LOCATIONS = [
   { id: 'loc_a01z01l001_broken_lamp', name: 'Broken Lamp', x: 120, y: 220 },
   { id: 'loc_a01z01l002_drywind_depot', name: 'Drywind Depot', x: 340, y: 160 },
   { id: 'loc_a01z01l003_star_ash', name: 'Star Ash', x: 560, y: 240 },
+  // Slice T — Zone 2 (right of Star Ash)
+  { id: 'loc_a01z02l001_deep_dune', name: 'Deep Dune', x: 740, y: 200 },
+  { id: 'loc_a01z02l002_salt_glass', name: 'Salt Glass', x: 900, y: 280 },
+  { id: 'loc_a01z02l003_night_well', name: 'Night Well', x: 1040, y: 180 },
 ];
 
 /** Distance units along the rail (variables — ETA = distance / TRAIN_SPEED). */
@@ -14,6 +18,11 @@ export const LOCATIONS = [
 export const EDGES = [
   { a: 'loc_a01z01l001_broken_lamp', b: 'loc_a01z01l002_drywind_depot', distance: 100 },
   { a: 'loc_a01z01l002_drywind_depot', b: 'loc_a01z01l003_star_ash', distance: 125 },
+  // Slice T — Z1↔Z2 bridge + Z2 chain + optional triangle
+  { a: 'loc_a01z01l003_star_ash', b: 'loc_a01z02l001_deep_dune', distance: 140 },
+  { a: 'loc_a01z02l001_deep_dune', b: 'loc_a01z02l002_salt_glass', distance: 130 },
+  { a: 'loc_a01z02l002_salt_glass', b: 'loc_a01z02l003_night_well', distance: 150 },
+  { a: 'loc_a01z02l001_deep_dune', b: 'loc_a01z02l003_night_well', distance: 160 },
 ];
 
 /** Initial train speed (distance units per second). */
@@ -24,6 +33,11 @@ export const INITIALLY_UNLOCKED = [
   'loc_a01z01l001_broken_lamp',
   'loc_a01z01l002_drywind_depot',
 ];
+
+/** Zone1-only helper (courier routing). Matches loc_a##z01… */
+export function isZone1Loc(id) {
+  return typeof id === 'string' && /loc_a\d+z01/.test(id);
+}
 
 /** @returns {number|null} */
 export function distanceBetween(fromId, toId) {

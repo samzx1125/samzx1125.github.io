@@ -24,6 +24,22 @@ export const BASE_PRICES = {
     goods_a01z01i002_oil_speciality: 35,
     goods_a01z01i003_water_speciality: 28,
   },
+  // Slice T — Z2 wider spreads (extreme oil/water between stops)
+  loc_a01z02l001_deep_dune: {
+    goods_a01z01i001_dry_food: 10,
+    goods_a01z01i002_oil_speciality: 55,
+    goods_a01z01i003_water_speciality: 20,
+  },
+  loc_a01z02l002_salt_glass: {
+    goods_a01z01i001_dry_food: 18,
+    goods_a01z01i002_oil_speciality: 18,
+    goods_a01z01i003_water_speciality: 70,
+  },
+  loc_a01z02l003_night_well: {
+    goods_a01z01i001_dry_food: 9,
+    goods_a01z01i002_oil_speciality: 48,
+    goods_a01z01i003_water_speciality: 15,
+  },
 };
 
 /** Slice L — slow MP drift around base (prototype-z1 appendix). */
@@ -51,14 +67,68 @@ export const START_GOLD = 200;
 /** Cargo capacity in grams (total weight). */
 export const CAPACITY = 5000;
 
-/** Unlock loc_a01z01l003 at any unlocked station. */
-export const UNLOCK_LOC3 = {
-  target: 'loc_a01z01l003_star_ash',
-  costs: [
-    { goodId: 'goods_a01z01i002_oil_speciality', qty: 5 },
-    { goodId: 'goods_a01z01i001_dry_food', qty: 10 },
-  ],
-};
+/**
+ * Slice T — data-driven unlocks.
+ * Rule:
+ *  1) Star Ash: oil×5 + dry×10 (any unlocked station; no prereq beyond not already unlocked).
+ *  2) Deep Dune (first Z2): after Star Ash unlocked — oil×8 + water×5 + dry×12.
+ *  3) Salt Glass: after Deep Dune — oil×4 + dry×6 (sequential adjacent).
+ *  4) Night Well: after Salt Glass — oil×4 + water×4.
+ * Hand-in at any unlocked station (UI lists next available).
+ * @type {{ target: string, requiresUnlocked: string[], costs: { goodId: string, qty: number }[] }[]}
+ */
+export const UNLOCKS = [
+  {
+    target: 'loc_a01z01l003_star_ash',
+    requiresUnlocked: [],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 5 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 10 },
+    ],
+  },
+  {
+    target: 'loc_a01z02l001_deep_dune',
+    requiresUnlocked: ['loc_a01z01l003_star_ash'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 8 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 5 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 12 },
+    ],
+  },
+  {
+    target: 'loc_a01z02l002_salt_glass',
+    requiresUnlocked: ['loc_a01z02l001_deep_dune'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 4 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 6 },
+    ],
+  },
+  {
+    target: 'loc_a01z02l003_night_well',
+    requiresUnlocked: ['loc_a01z02l002_salt_glass'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 4 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 4 },
+    ],
+  },
+];
+
+/** @deprecated Slice A–S alias — prefer UNLOCKS[0] / availableUnlocks(). */
+export const UNLOCK_LOC3 = UNLOCKS[0];
+
+/** Unlocks whose prereqs are met and target not yet unlocked. */
+export function availableUnlocks(unlockedIds) {
+  const have = new Set(unlockedIds || []);
+  return UNLOCKS.filter((u) => {
+    if (have.has(u.target)) return false;
+    return (u.requiresUnlocked || []).every((id) => have.has(id));
+  });
+}
+
+/** Lookup unlock def by target id. */
+export function unlockByTarget(targetId) {
+  return UNLOCKS.find((u) => u.target === targetId) || null;
+}
 
 /** @param {string} id */
 export function goodName(id) {
@@ -157,5 +227,12 @@ export const TRANSPORT_QUESTS = {
     goodId: 'goods_a01z01i001_dry_food',
     qty: 5,
     rewardGold: 70,
+  },
+  // Slice T — optional Z2 offer
+  loc_a01z02l001_deep_dune: {
+    to: 'loc_a01z02l002_salt_glass',
+    goodId: 'goods_a01z01i001_dry_food',
+    qty: 4,
+    rewardGold: 90,
   },
 };

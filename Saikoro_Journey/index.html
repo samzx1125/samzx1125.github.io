@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Saikoro Journey — Z1</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028ad" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028ad" />
+  <title>Saikoro Journey — Z1–Z2</title>
+  <link rel="icon" href="favicon.svg?v=z1-20261028ae" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028ae" />
 </head>
 <body>
   <header class="top-row">
-    <h1>Saikoro Journey · Z1</h1>
+    <h1>Saikoro Journey · Z1–Z2</h1>
     <div class="hud">
       <span>name <strong id="hud-name">Saikoro</strong></span>
       <span>gold <strong id="hud-gold">0</strong></span>
@@ -110,7 +110,7 @@
     </aside>
     <div id="map-wrap">
       <div id="map-plane">
-        <svg id="rails" viewBox="0 0 680 400" width="680" height="400" preserveAspectRatio="xMinYMin meet"></svg>
+        <svg id="rails" viewBox="0 0 1120 400" width="1120" height="400" preserveAspectRatio="xMinYMin meet"></svg>
         <div id="nodes"></div>
         <div id="travel-rect" class="travel-rect" hidden title="on train" aria-label="on train">
           <span>On train</span>
@@ -152,13 +152,10 @@
         <p id="quest-offer-reward" class="muted"></p>
         <button type="button" class="primary" id="btn-quest-accept" data-act="quest-accept">Accept</button>
       </section>
-      <section id="unlock-panel">
-        <h2>Unlock Star Ash</h2>
+      <section id="unlock-panel" hidden>
+        <h2>Unlock</h2>
         <p class="hint">Hand in at any unlocked location:</p>
-        <div class="bar" aria-label="unlock progress"><div id="unlock-bar-fill" class="bar-fill"></div></div>
-        <p id="unlock-pct" class="muted">0 / 0</p>
-        <ul class="unlock-list"></ul>
-        <button type="button" class="primary" data-act="unlock">Unlock Star Ash</button>
+        <div id="unlock-offers"></div>
       </section>
       <p id="toast"></p>
     </aside>
@@ -204,6 +201,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028ad"></script>
+  <script type="module" src="js/main.js?v=z1-20261028ae"></script>
 </body>
 </html>

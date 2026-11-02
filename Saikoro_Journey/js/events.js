@@ -1,14 +1,14 @@
-import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ad';
-import { UNLOCK_LOC3, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ad';
+import { neighborsOf, travelMsBetween, distanceBetween, TRAIN_SPEED, locName } from './map-data.js?v=z1-20261028ae';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED } from './economy-data.js?v=z1-20261028ae';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
-} from './engine.js?v=z1-20261028ad';
-import { cargoUsed } from './state.js?v=z1-20261028ad';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028ad';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ad';
+} from './engine.js?v=z1-20261028ae';
+import { cargoUsed } from './state.js?v=z1-20261028ae';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028ae';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ae';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -246,9 +246,16 @@ export function bindEvents(s, opts = {}) {
   document.getElementById('unlock-panel')?.addEventListener('click', (ev) => {
     const btn = ev.target.closest('[data-act="unlock"]');
     if (!btn || !state) return;
-    const r = tryUnlock(state, UNLOCK_LOC3);
-    ui.lastMsg = r.ok ? `unlocked ${locName(UNLOCK_LOC3.target)}` : `unlock failed (${r.reason})`;
-    if (r.ok) { saveGame(state); invalidateQuotes(); flashUnlockedNode(UNLOCK_LOC3.target); }
+    const target = btn.dataset.target;
+    const unlock = unlockByTarget(target);
+    if (!unlock) {
+      ui.lastMsg = 'unlock failed (unknown)';
+      render(state, ui);
+      return;
+    }
+    const r = tryUnlock(state, unlock);
+    ui.lastMsg = r.ok ? `unlocked ${locName(unlock.target)}` : `unlock failed (${r.reason})`;
+    if (r.ok) { saveGame(state); invalidateQuotes(); flashUnlockedNode(unlock.target); }
     render(state, ui);
   });
 
