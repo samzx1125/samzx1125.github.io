@@ -40,6 +40,22 @@ export const BASE_PRICES = {
     goods_a01z01i002_oil_speciality: 48,
     goods_a01z01i003_water_speciality: 15,
   },
+  // Slice W — Z3 wider oil/water spreads (舊油路／遺址)
+  loc_a01z03l001_rust_spur: {
+    goods_a01z01i001_dry_food: 11,
+    goods_a01z01i002_oil_speciality: 62,
+    goods_a01z01i003_water_speciality: 18,
+  },
+  loc_a01z03l002_ash_pump: {
+    goods_a01z01i001_dry_food: 20,
+    goods_a01z01i002_oil_speciality: 16,
+    goods_a01z01i003_water_speciality: 78,
+  },
+  loc_a01z03l003_scrap_gate: {
+    goods_a01z01i001_dry_food: 8,
+    goods_a01z01i002_oil_speciality: 58,
+    goods_a01z01i003_water_speciality: 12,
+  },
 };
 
 /** Slice L — slow MP drift around base (prototype-z1 appendix). */
@@ -86,12 +102,15 @@ export function capacityUpgradeCost(level) {
 export const CAPACITY = CAPACITY_BASE;
 
 /**
- * Slice T — data-driven unlocks (multi-trip deposit; starter 5000g, max 10000g).
+ * Slice T/W — data-driven unlocks (multi-trip deposit; starter 5000g, max 10000g).
  * Rule:
  *  1) Star Ash: oil×5 + dry×10 (fits starter; any unlocked station).
  *  2) Deep Dune (first Z2): after Star Ash — oil×25 + water×10 + dry×25 = 25000g (~2–3 trips at max cargo).
  *  3) Salt Glass: after Deep Dune — oil×10 + dry×15 = 8000g (multi-trip deposit).
  *  4) Night Well: after Salt Glass — oil×10 + water×8 = 11000g (multi-trip deposit).
+ *  5) Rust Spur (first Z3): after Night Well — oil×30 + water×12 + dry×25 = 29000g (~2–3 trips at max).
+ *  6) Ash Pump: after Rust Spur — oil×12 + dry×20 = 10000g (multi-trip deposit).
+ *  7) Scrap Gate: after Ash Pump — oil×12 + water×10 = 13500g (multi-trip deposit).
  * Hand-in at any unlocked station via unlockDeposits (UI lists next available).
  * @type {{ target: string, requiresUnlocked: string[], costs: { goodId: string, qty: number }[] }[]}
  */
@@ -127,6 +146,31 @@ export const UNLOCKS = [
     costs: [
       { goodId: 'goods_a01z01i002_oil_speciality', qty: 10 },
       { goodId: 'goods_a01z01i003_water_speciality', qty: 8 },
+    ],
+  },
+  {
+    target: 'loc_a01z03l001_rust_spur',
+    requiresUnlocked: ['loc_a01z02l003_night_well'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 30 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 12 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 25 },
+    ],
+  },
+  {
+    target: 'loc_a01z03l002_ash_pump',
+    requiresUnlocked: ['loc_a01z03l001_rust_spur'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 12 },
+      { goodId: 'goods_a01z01i001_dry_food', qty: 20 },
+    ],
+  },
+  {
+    target: 'loc_a01z03l003_scrap_gate',
+    requiresUnlocked: ['loc_a01z03l002_ash_pump'],
+    costs: [
+      { goodId: 'goods_a01z01i002_oil_speciality', qty: 12 },
+      { goodId: 'goods_a01z01i003_water_speciality', qty: 10 },
     ],
   },
 ];
@@ -252,5 +296,12 @@ export const TRANSPORT_QUESTS = {
     goodId: 'goods_a01z01i001_dry_food',
     qty: 4,
     rewardGold: 90,
+  },
+  // Slice W — optional Z3 offer (oil flavour)
+  loc_a01z03l001_rust_spur: {
+    to: 'loc_a01z03l002_ash_pump',
+    goodId: 'goods_a01z01i002_oil_speciality',
+    qty: 3,
+    rewardGold: 110,
   },
 };

@@ -1,9 +1,9 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ai';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity } from './economy-data.js?v=z1-20261028ai';
-import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028ai';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028ai';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ai';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028ai';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028aj';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity } from './economy-data.js?v=z1-20261028aj';
+import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028aj';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028aj';
+import { getLastSavedAt } from './saving.js?v=z1-20261028aj';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated } from './state.js?v=z1-20261028aj';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;

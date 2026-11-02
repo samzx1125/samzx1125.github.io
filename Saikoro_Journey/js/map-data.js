@@ -11,6 +11,10 @@ export const LOCATIONS = [
   { id: 'loc_a01z02l001_deep_dune', name: 'Deep Dune', x: 740, y: 200 },
   { id: 'loc_a01z02l002_salt_glass', name: 'Salt Glass', x: 900, y: 280 },
   { id: 'loc_a01z02l003_night_well', name: 'Night Well', x: 1040, y: 180 },
+  // Slice W — Zone 3 (舊油路／遺址, right of Night Well)
+  { id: 'loc_a01z03l001_rust_spur', name: 'Rust Spur', x: 1180, y: 220 },
+  { id: 'loc_a01z03l002_ash_pump', name: 'Ash Pump', x: 1340, y: 160 },
+  { id: 'loc_a01z03l003_scrap_gate', name: 'Scrap Gate', x: 1480, y: 260 },
 ];
 
 /** Distance units along the rail (variables — ETA = distance / TRAIN_SPEED). */
@@ -23,6 +27,11 @@ export const EDGES = [
   { a: 'loc_a01z02l001_deep_dune', b: 'loc_a01z02l002_salt_glass', distance: 130 },
   { a: 'loc_a01z02l002_salt_glass', b: 'loc_a01z02l003_night_well', distance: 150 },
   { a: 'loc_a01z02l001_deep_dune', b: 'loc_a01z02l003_night_well', distance: 160 },
+  // Slice W — Z2↔Z3 bridge + Z3 chain + triangle
+  { a: 'loc_a01z02l003_night_well', b: 'loc_a01z03l001_rust_spur', distance: 170 },
+  { a: 'loc_a01z03l001_rust_spur', b: 'loc_a01z03l002_ash_pump', distance: 160 },
+  { a: 'loc_a01z03l002_ash_pump', b: 'loc_a01z03l003_scrap_gate', distance: 180 },
+  { a: 'loc_a01z03l001_rust_spur', b: 'loc_a01z03l003_scrap_gate', distance: 190 },
 ];
 
 /** Initial train speed (distance units per second). */
