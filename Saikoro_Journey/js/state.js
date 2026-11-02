@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028ap';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ap';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028aq';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028aq';
 
 /**
  * @typedef {{
@@ -29,6 +29,7 @@ import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeight
  *   openingDone: boolean,
  *   personal: Record<string, number>, // Slice U — key/consumable qty by personal id
  *   warehouse: { area1: { cargo: Record<string, number>, condition: Record<string, number> } }, // Slice AB
+ *   universalCourierUnlocked: boolean, // Slice AD — Scrap Gate unlocks Area1-wide courier routes
  * }} GameState
  *
  * @typedef {{
@@ -88,6 +89,7 @@ export function createInitialState() {
     openingDone: false,
     personal: {},
     warehouse: { area1: { cargo: {}, condition: {} } },
+    universalCourierUnlocked: false,
   };
   // start station counts as visited
   const startRow = prices[START_LOC] || {};

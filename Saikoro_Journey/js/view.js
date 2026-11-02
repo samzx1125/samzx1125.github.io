@@ -1,9 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ap';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ap';
-import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028ap';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028ap';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ap';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse } from './state.js?v=z1-20261028ap';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028aq';
+import { courierLocAllowed } from './engine.js?v=z1-20261028aq';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028aq';
+import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028aq';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028aq';
+import { getLastSavedAt } from './saving.js?v=z1-20261028aq';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse } from './state.js?v=z1-20261028aq';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -894,6 +895,12 @@ export function render(s, ui = {}) {
         const spd = effectiveSpeed(sl);
         setText('character-speed', `Speed level ${sl} / ${SPEED_MAX_LEVEL} · speed ${spd}`);
       }
+      setText(
+        'character-courier',
+        s.universalCourierUnlocked
+          ? 'Courier range: universal (unlocked)'
+          : 'Courier range: Zone 1',
+      );
       setText('character-gold', `Gold ${s.gold}`);
       const keysList = document.getElementById('character-keys');
       const keysEmpty = document.getElementById('character-keys-empty');
@@ -948,6 +955,12 @@ export function render(s, ui = {}) {
           ? `→ ${locName(c.travel.finalDest || c.travel.to)}`
           : (c.route.length < 2 ? 'docked (need ≥2 stops)' : 'docked');
         setText('courier-status', st);
+        setText(
+          'courier-range',
+          s.universalCourierUnlocked
+            ? 'Range: universal (unlocked)'
+            : 'Range: Zone 1',
+        );
         const pauseBtn = document.getElementById('btn-courier-pause');
         const resumeBtn = document.getElementById('btn-courier-resume');
         if (pauseBtn) pauseBtn.hidden = !!c.paused;
@@ -972,6 +985,8 @@ export function render(s, ui = {}) {
           c.route.join(','),
           c.routeIndex,
           c.paused ? 1 : 0,
+          s.universalCourierUnlocked ? 1 : 0,
+          s.unlocked.join(','),
           JSON.stringify(c.trade || {}),
         ].join('|');
         if (rsig !== lastCourierPanelSig) {
@@ -991,7 +1006,7 @@ export function render(s, ui = {}) {
           }
           const addWrap = document.getElementById('courier-route-add');
           if (addWrap) {
-            const missing = s.unlocked.filter((id) => isZone1Loc(id) && !c.route.includes(id));
+            const missing = s.unlocked.filter((id) => courierLocAllowed(s, id) && !c.route.includes(id));
             addWrap.innerHTML = missing
               .map(
                 (id) =>

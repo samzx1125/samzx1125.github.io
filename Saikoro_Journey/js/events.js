@@ -1,15 +1,16 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028ap';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028ap';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028aq';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028aq';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
-} from './engine.js?v=z1-20261028ap';
-import { cargoUsed, courierCargoUsed, warehouseUsed } from './state.js?v=z1-20261028ap';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028ap';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ap';
+  courierLocAllowed,
+} from './engine.js?v=z1-20261028aq';
+import { cargoUsed, courierCargoUsed, warehouseUsed } from './state.js?v=z1-20261028aq';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028aq';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028aq';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -296,7 +297,9 @@ export function bindEvents(s, opts = {}) {
     }
     const r = tryDepositUnlock(state, unlock);
     if (r.ok && r.unlocked) {
-      ui.lastMsg = `unlocked ${locName(unlock.target)}`;
+      ui.lastMsg = r.universalCourier
+        ? `unlocked ${locName(unlock.target)} · universal courier routes unlocked`
+        : `unlocked ${locName(unlock.target)}`;
       saveGame(state);
       invalidateQuotes();
       flashUnlockedNode(unlock.target);
@@ -409,7 +412,13 @@ export function bindEvents(s, opts = {}) {
       return;
     }
     if (add) {
-      route.push(add.dataset.loc);
+      const loc = add.dataset.loc;
+      if (!courierLocAllowed(state, loc)) {
+        ui.lastMsg = 'add failed (locked)';
+        render(state, ui);
+        return;
+      }
+      route.push(loc);
       const r = trySetCourierRoute(state, route);
       ui.lastMsg = r.ok ? 'stop added' : `add failed (${r.reason})`;
       if (r.ok) saveGame(state);

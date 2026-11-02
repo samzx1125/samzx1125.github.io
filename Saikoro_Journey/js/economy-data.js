@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028ap';
+import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028aq';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number }} GoodDef */
 
@@ -353,6 +353,8 @@ export const STOP_REROUTE_UNLOCKED = STOP_REROUTE_DEFAULT || rrQueryForcesUnlock
  * Hire is FREE (teaching unlock after Star Ash); seed gold modest; capacity < player.
  */
 export const COURIER_UNLOCK_LOC = 'loc_a01z01l003_star_ash';
+/** Slice AD — universal courier unlock when Scrap Gate first unlocks. */
+export const UNIVERSAL_COURIER_UNLOCK_LOC = 'loc_a01z03l003_scrap_gate';
 /** Slice Q: free hire for teaching MVP (not a gold sink). */
 export const COURIER_HIRE_COST = 0;
 export const COURIER_SEED_GOLD = 300;

@@ -1,9 +1,10 @@
 /** localStorage save/load — SAVE_VERSION bump requires migration. */
-import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028ap';
-import { emptyCargoMap } from './state.js?v=z1-20261028ap';
+import { GOODS, effectiveCapacity } from './economy-data.js?v=z1-20261028aq';
+import { emptyCargoMap } from './state.js?v=z1-20261028aq';
 
-export const SAVE_VERSION = 9;
-const KEY = 'saikoro_journey_z1_v9';
+export const SAVE_VERSION = 10;
+const KEY = 'saikoro_journey_z1_v10';
+const KEY_V9 = 'saikoro_journey_z1_v9';
 const KEY_V8 = 'saikoro_journey_z1_v8';
 const KEY_V7 = 'saikoro_journey_z1_v7';
 const KEY_V6 = 'saikoro_journey_z1_v6';
@@ -112,6 +113,7 @@ export function serialize(s) {
       }
       return { area1: { cargo, condition } };
     })(),
+    universalCourierUnlocked: !!s.universalCourierUnlocked,
     savedAt: Date.now(),
     // stationBuys not persisted — mid-visit buffer
   };
@@ -171,8 +173,8 @@ function applyCourier(dataCourier) {
  * @param {any} data
  */
 export function applySave(s, data) {
-  // Accept v2–v9 (v9 = Area1 warehouse)
-  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== 6 && data.v !== 7 && data.v !== 8 && data.v !== 9 && data.v !== SAVE_VERSION)) return false;
+  // Accept v2–v10 (v10 = universal courier)
+  if (!data || (data.v !== 2 && data.v !== 3 && data.v !== 4 && data.v !== 5 && data.v !== 6 && data.v !== 7 && data.v !== 8 && data.v !== 9 && data.v !== 10 && data.v !== SAVE_VERSION)) return false;
   s.gold = data.gold;
   s.cargo = { ...data.cargo };
   s.condition = data.condition && typeof data.condition === 'object' ? { ...data.condition } : {};
@@ -309,6 +311,15 @@ export function applySave(s, data) {
       }
     }
   }
+  // Slice AD — universal courier (v10+). Older / missing: true if Scrap Gate already unlocked.
+  {
+    const SCRAP_GATE = 'loc_a01z03l003_scrap_gate';
+    if (data.v >= 10 && typeof data.universalCourierUnlocked === 'boolean') {
+      s.universalCourierUnlocked = data.universalCourierUnlocked;
+    } else {
+      s.universalCourierUnlocked = s.unlocked.includes(SCRAP_GATE);
+    }
+  }
   lastSavedAt = typeof data.savedAt === 'number' ? data.savedAt : Date.now();
   return true;
 }
@@ -330,31 +341,35 @@ export function loadGame(s) {
   try {
     let raw = localStorage.getItem(KEY);
     if (!raw) {
-      // migrate v8 → v9
+      // migrate v9 → v10
+      raw = localStorage.getItem(KEY_V9);
+    }
+    if (!raw) {
+      // migrate v8 → v10
       raw = localStorage.getItem(KEY_V8);
     }
     if (!raw) {
-      // migrate v7 → v9
+      // migrate v7 → v10
       raw = localStorage.getItem(KEY_V7);
     }
     if (!raw) {
-      // migrate v6 → v9
+      // migrate v6 → v10
       raw = localStorage.getItem(KEY_V6);
     }
     if (!raw) {
-      // migrate v5 → v9
+      // migrate v5 → v10
       raw = localStorage.getItem(KEY_V5);
     }
     if (!raw) {
-      // migrate v4 → v9
+      // migrate v4 → v10
       raw = localStorage.getItem(KEY_V4);
     }
     if (!raw) {
-      // migrate v3 → v9
+      // migrate v3 → v10
       raw = localStorage.getItem(KEY_V3);
     }
     if (!raw) {
-      // migrate v2 → v9
+      // migrate v2 → v10
       raw = localStorage.getItem(KEY_V2);
     }
     if (!raw) return false;
@@ -372,6 +387,7 @@ export function loadGame(s) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(KEY_V9);
     localStorage.removeItem(KEY_V8);
     localStorage.removeItem(KEY_V7);
     localStorage.removeItem(KEY_V6);

@@ -10,7 +10,7 @@ import {
   warehouseUsed,
   playerAtWarehouse,
   courierAtWarehouse,
-} from './state.js?v=z1-20261028ap';
+} from './state.js?v=z1-20261028aq';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -33,6 +33,7 @@ import {
   TRANSPORT_QUESTS,
   goodName,
   COURIER_UNLOCK_LOC,
+  UNIVERSAL_COURIER_UNLOCK_LOC,
   COURIER_HIRE_COST,
   COURIER_SEED_GOLD,
   COURIER_CAPACITY,
@@ -46,8 +47,8 @@ import {
   effectiveSpeed,
   AREA1_WAREHOUSE_LOC,
   AREA1_WAREHOUSE_CAP,
-} from './economy-data.js?v=z1-20261028ap';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028ap';
+} from './economy-data.js?v=z1-20261028aq';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028aq';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -515,7 +516,13 @@ export function tryDepositUnlock(s, unlock) {
   if (allMet) {
     s.unlocked.push(unlock.target);
     delete s.unlockDeposits[target];
-    return { ok: true, unlocked: true };
+    let universalCourier = false;
+    // Slice AD: unlock universal courier routes on Scrap Gate unlock
+    if (unlock.target === UNIVERSAL_COURIER_UNLOCK_LOC && !s.universalCourierUnlocked) {
+      s.universalCourierUnlocked = true;
+      universalCourier = true;
+    }
+    return { ok: true, unlocked: true, universalCourier };
   }
   return { ok: true, unlocked: false };
 }
@@ -663,6 +670,19 @@ export function tryAbandonQuest(s) {
 
 // ——— Slice Q: courier ———
 
+/**
+ * Slice AD — loc eligible for courier route.
+ * Before universal: Zone1 unlocked only. After: any unlocked Area1 loc.
+ * @param {import('./state.js').GameState} s
+ * @param {string} id
+ */
+export function courierLocAllowed(s, id) {
+  if (typeof id !== 'string' || !id) return false;
+  if (!s.unlocked.includes(id)) return false;
+  if (s.universalCourierUnlocked) return true;
+  return isZone1Loc(id);
+}
+
 /** Hire Zone1 courier once Star Ash is unlocked. Free hire (COURIER_HIRE_COST=0). */
 export function tryHireCourier(s) {
   if (s.courier) return { ok: false, reason: 'already' };
@@ -670,8 +690,8 @@ export function tryHireCourier(s) {
   if (COURIER_HIRE_COST > 0 && s.gold < COURIER_HIRE_COST) return { ok: false, reason: 'gold' };
   if (COURIER_HIRE_COST > 0) s.gold -= COURIER_HIRE_COST;
 
-  // Slice T — courier stays Zone1-only
-  const route = LOCATIONS.map((l) => l.id).filter((id) => isZone1Loc(id) && s.unlocked.includes(id));
+  // Slice AD — seed route from allowed locs (Z1-only until universal)
+  const route = LOCATIONS.map((l) => l.id).filter((id) => courierLocAllowed(s, id));
   /** @type {Record<string, Record<string, { buy: boolean, sell: boolean }>>} */
   const trade = {};
   for (const locId of route) {
@@ -724,13 +744,17 @@ export function trySetCourierPaused(s, paused) {
 export function trySetCourierRoute(s, routeIds) {
   if (!s.courier) return { ok: false, reason: 'no_courier' };
   const cleaned = [];
+  let rejectedLocked = false;
   for (const id of routeIds) {
-    if (!isZone1Loc(id)) continue; // Slice T — reject Z2
-    if (!s.unlocked.includes(id)) continue;
+    if (typeof id !== 'string') continue;
     if (cleaned.includes(id)) continue;
+    if (!courierLocAllowed(s, id)) {
+      rejectedLocked = true;
+      continue;
+    }
     cleaned.push(id);
   }
-  if (cleaned.length < 1) return { ok: false, reason: 'empty' };
+  if (cleaned.length < 1) return { ok: false, reason: rejectedLocked ? 'locked' : 'empty' };
   const c = s.courier;
   c.route = cleaned;
   c.travel = null;
