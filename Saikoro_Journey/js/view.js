@@ -1,9 +1,9 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ao';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ao';
-import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028ao';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028ao';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ao';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse } from './state.js?v=z1-20261028ao';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, isZone1Loc } from './map-data.js?v=z1-20261028ap';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ap';
+import { PERSONAL_DEFS, personalName } from './personal-data.js?v=z1-20261028ap';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028ap';
+import { getLastSavedAt } from './saving.js?v=z1-20261028ap';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse } from './state.js?v=z1-20261028ap';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;

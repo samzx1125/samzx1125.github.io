@@ -1,15 +1,15 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028ao';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028ao';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028ap';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028ap';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
   tryHireCourier, trySetCourierPaused, trySetCourierRoute, trySetCourierTradeFlag,
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
-} from './engine.js?v=z1-20261028ao';
-import { cargoUsed, courierCargoUsed, warehouseUsed } from './state.js?v=z1-20261028ao';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028ao';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ao';
+} from './engine.js?v=z1-20261028ap';
+import { cargoUsed, courierCargoUsed, warehouseUsed } from './state.js?v=z1-20261028ap';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028ap';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ap';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;

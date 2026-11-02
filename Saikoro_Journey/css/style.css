@@ -927,6 +927,7 @@ body.opening-active > main {
   gap: 0.35rem;
   margin: 0.35rem 0;
 }
+.warehouse-tabs[hidden] { display: none !important; }
 .warehouse-tabs button.active {
   background: #222;
   color: #eee;

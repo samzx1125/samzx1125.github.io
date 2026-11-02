@@ -10,7 +10,7 @@ import {
   warehouseUsed,
   playerAtWarehouse,
   courierAtWarehouse,
-} from './state.js?v=z1-20261028ao';
+} from './state.js?v=z1-20261028ap';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -46,8 +46,8 @@ import {
   effectiveSpeed,
   AREA1_WAREHOUSE_LOC,
   AREA1_WAREHOUSE_CAP,
-} from './economy-data.js?v=z1-20261028ao';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028ao';
+} from './economy-data.js?v=z1-20261028ap';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028ap';
 
 /**
  * @param {import('./state.js').GameState} s
