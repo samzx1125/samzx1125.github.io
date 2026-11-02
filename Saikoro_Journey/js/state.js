@@ -1,5 +1,5 @@
-import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028ar';
-import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ar';
+import { LOCATIONS, INITIALLY_UNLOCKED, START_LOC } from './map-data.js?v=z1-20261028as';
+import { GOODS, BASE_PRICES, START_GOLD, CAPACITY, effectiveCapacity, goodWeightG, COURIER_CAPACITY, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028as';
 
 /**
  * Slice AE — price-split cargo stacks.

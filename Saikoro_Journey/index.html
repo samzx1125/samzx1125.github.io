@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028ar" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028ar" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028as" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028as" />
 </head>
 <body>
   <header class="top-row">
@@ -170,7 +170,15 @@
           <button type="button" data-act="wh-tab-courier" id="btn-wh-tab-courier">Courier ↔ Warehouse</button>
         </div>
         <p id="warehouse-who-label" class="muted">Moving: player cargo</p>
-        <ul id="warehouse-list" class="warehouse-list"></ul>
+        <ul id="warehouse-list" class="warehouse-list inv-icons"></ul>
+        <div id="warehouse-actions" class="wh-actions-bar" hidden>
+          <p id="warehouse-sel-label" class="muted">select a stack</p>
+          <div class="wh-actions">
+            <input type="number" class="qty" id="wh-sel-qty" data-wh-stack-qty="" min="1" value="1" />
+            <button type="button" id="btn-wh-mode-qty" data-act="wh-deposit" data-mode="qty" data-good="" data-stack-id="">Deposit N</button>
+            <button type="button" id="btn-wh-mode-all" data-act="wh-deposit" data-mode="all" data-good="" data-stack-id="">Deposit all</button>
+          </div>
+        </div>
         <p id="warehouse-empty" class="hint" hidden>empty · nothing in cargo either</p>
       </section>
       <section id="quote-panel">
@@ -266,6 +274,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028ar"></script>
+  <script type="module" src="js/main.js?v=z1-20261028as"></script>
 </body>
 </html>

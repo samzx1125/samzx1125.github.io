@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028ar';
-import { courierLocAllowed } from './engine.js?v=z1-20261028ar';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028ar';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028ar';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028ar';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ar';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028ar';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta } from './map-data.js?v=z1-20261028as';
+import { courierLocAllowed } from './engine.js?v=z1-20261028as';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC } from './economy-data.js?v=z1-20261028as';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028as';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028as';
+import { getLastSavedAt } from './saving.js?v=z1-20261028as';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028as';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -1202,44 +1202,133 @@ export function render(s, ui = {}) {
           const ul = document.getElementById('warehouse-list');
           const emptyEl = document.getElementById('warehouse-empty');
           const rows = [];
-          // bag stacks → deposit
+          ul?.classList.add('inv-icons');
+          // bag stacks → deposit (icon tiles)
+          let bagHeader = false;
           for (const st of bagStacks) {
             if (!st || !(st.qty > 0)) continue;
-            const g = GOODS.find((x) => x.id === st.goodId);
-            const unit = g?.weightG || 0;
+            if (!bagHeader) {
+              rows.push(`<li class="inv-section">${who === 'courier' ? 'courier cargo' : 'your cargo'}</li>`);
+              bagHeader = true;
+            }
             const depletes = depleteRateForGood(st.goodId) > 0;
-            const cond = depletes ? ` · ${Math.round(st.condition ?? 100)}%` : '';
-            rows.push(`<li class="wh-stack" data-stack-id="${st.id}" data-good="${st.goodId}" data-side="bag">
-              <span class="wh-meta"><span class="inv-icon inline">${goodIcon(st.goodId)}</span> ${g?.name || st.goodId} @${st.unitPrice}G ×${st.qty}${cond} · ${who === 'courier' ? 'courier' : 'you'}</span>
-              <div class="wh-actions">
-                <input type="number" class="qty" data-wh-stack-qty="${st.id}" min="1" value="1" />
-                <button type="button" data-act="wh-deposit" data-good="${st.goodId}" data-stack-id="${st.id}" data-mode="qty">Deposit N</button>
-                <button type="button" data-act="wh-deposit" data-good="${st.goodId}" data-stack-id="${st.id}" data-mode="all">Deposit all</button>
-              </div>
-            </li>`);
+            const cond = depletes ? Math.round(st.condition ?? 100) : null;
+            const condBadge = cond == null ? '' : `<span class="inv-cond">${cond}%</span>`;
+            const sideLabel = who === 'courier' ? 'C' : 'you';
+            const title = `${stackHoverTitle(st)} · ${who === 'courier' ? 'courier' : 'you'} (deposit)`;
+            rows.push(
+              `<li class="inv-stack wh-bag" data-stack-id="${st.id}" data-good="${st.goodId}" data-side="bag" title="${title}">` +
+                `<span class="inv-side">${sideLabel}</span>` +
+                `<span class="inv-icon" aria-hidden="true">${goodIcon(st.goodId)}</span>` +
+                `<span class="inv-qty">×${st.qty}</span>` +
+                `<span class="inv-badge">${st.unitPrice}G</span>${condBadge}</li>`,
+            );
           }
           // warehouse stacks → withdraw
+          let whHeader = false;
           for (const st of whStacks) {
             if (!st || !(st.qty > 0)) continue;
-            const g = GOODS.find((x) => x.id === st.goodId);
-            const unit = g?.weightG || 0;
-            const maxFit = unit > 0 ? Math.floor(free / unit) : 0;
+            if (!whHeader) {
+              rows.push('<li class="inv-section">warehouse</li>');
+              whHeader = true;
+            }
             const depletes = depleteRateForGood(st.goodId) > 0;
-            const cond = depletes ? ` · ${Math.round(st.condition ?? 100)}%` : '';
-            rows.push(`<li class="wh-stack" data-stack-id="${st.id}" data-good="${st.goodId}" data-side="wh">
-              <span class="wh-meta"><span class="inv-icon inline">${goodIcon(st.goodId)}</span> ${g?.name || st.goodId} @${st.unitPrice}G ×${st.qty}${cond} · warehouse</span>
-              <div class="wh-actions">
-                <input type="number" class="qty" data-wh-stack-qty="${st.id}" min="1" value="1" />
-                <button type="button" data-act="wh-withdraw" data-good="${st.goodId}" data-stack-id="${st.id}" data-mode="qty">Withdraw N</button>
-                <button type="button" data-act="wh-withdraw" data-good="${st.goodId}" data-stack-id="${st.id}" data-mode="max" ${maxFit <= 0 ? 'disabled' : ''}>Withdraw max</button>
-              </div>
-            </li>`);
+            const cond = depletes ? Math.round(st.condition ?? 100) : null;
+            const condBadge = cond == null ? '' : `<span class="inv-cond">${cond}%</span>`;
+            const title = `${stackHoverTitle(st)} · warehouse (withdraw)`;
+            rows.push(
+              `<li class="inv-stack wh-store" data-stack-id="${st.id}" data-good="${st.goodId}" data-side="wh" title="${title}">` +
+                `<span class="inv-side">WH</span>` +
+                `<span class="inv-icon" aria-hidden="true">${goodIcon(st.goodId)}</span>` +
+                `<span class="inv-qty">×${st.qty}</span>` +
+                `<span class="inv-badge">${st.unitPrice}G</span>${condBadge}</li>`,
+            );
           }
           if (ul) ul.innerHTML = rows.join('');
           if (emptyEl) emptyEl.hidden = rows.length > 0;
+          // drop selection if stack vanished
+          if (ui.warehouseSel) {
+            const still =
+              (ui.warehouseSel.side === 'bag' &&
+                bagStacks.some((st) => st && st.id === ui.warehouseSel.stackId && st.qty > 0)) ||
+              (ui.warehouseSel.side === 'wh' &&
+                whStacks.some((st) => st && st.id === ui.warehouseSel.stackId && st.qty > 0));
+            if (!still) ui.warehouseSel = null;
+          }
+        }
+        // selection chrome + shared action bar (every frame while at hub)
+        {
+          const ul = document.getElementById('warehouse-list');
+          const sel = ui.warehouseSel;
+          if (ul) {
+            ul.querySelectorAll('.inv-stack[data-stack-id]').forEach((li) => {
+              const on =
+                !!sel &&
+                li.dataset.stackId === sel.stackId &&
+                li.dataset.side === sel.side;
+              li.classList.toggle('selected', on);
+            });
+          }
+          const bar = document.getElementById('warehouse-actions');
+          const label = document.getElementById('warehouse-sel-label');
+          const qtyIn = document.getElementById('wh-sel-qty');
+          const btnQty = document.getElementById('btn-wh-mode-qty');
+          const btnAll = document.getElementById('btn-wh-mode-all');
+          if (bar && btnQty && btnAll && qtyIn) {
+            if (!sel) {
+              bar.hidden = true;
+              if (label) label.textContent = 'select a stack';
+            } else {
+              const pool = sel.side === 'bag' ? bagStacks : whStacks;
+              const st = pool.find((x) => x && x.id === sel.stackId);
+              if (!st || !(st.qty > 0)) {
+                bar.hidden = true;
+                ui.warehouseSel = null;
+              } else {
+                bar.hidden = false;
+                const gname = goodName(st.goodId);
+                const sideTxt =
+                  sel.side === 'bag'
+                    ? who === 'courier'
+                      ? 'courier → warehouse'
+                      : 'you → warehouse'
+                    : who === 'courier'
+                      ? 'warehouse → courier'
+                      : 'warehouse → you';
+                if (label) {
+                  label.textContent = `${gname} @${st.unitPrice}G ×${st.qty} · ${sideTxt}`;
+                }
+                qtyIn.dataset.whStackQty = st.id;
+                qtyIn.setAttribute('data-wh-stack-qty', st.id);
+                qtyIn.max = String(st.qty);
+                const act = sel.side === 'bag' ? 'wh-deposit' : 'wh-withdraw';
+                btnQty.dataset.act = act;
+                btnQty.dataset.mode = 'qty';
+                btnQty.dataset.good = st.goodId;
+                btnQty.dataset.stackId = st.id;
+                btnQty.textContent = sel.side === 'bag' ? 'Deposit N' : 'Withdraw N';
+                btnQty.disabled = false;
+                btnAll.dataset.act = act;
+                btnAll.dataset.mode = sel.side === 'bag' ? 'all' : 'max';
+                btnAll.dataset.good = st.goodId;
+                btnAll.dataset.stackId = st.id;
+                btnAll.textContent = sel.side === 'bag' ? 'Deposit all' : 'Withdraw max';
+                if (sel.side === 'wh') {
+                  const unit = goodWeightG(st.goodId);
+                  const maxFit = unit > 0 ? Math.floor(free / unit) : 0;
+                  btnAll.disabled = maxFit <= 0;
+                } else {
+                  btnAll.disabled = false;
+                }
+              }
+            }
+          }
         }
       } else {
         lastWarehouseSig = '';
+        ui.warehouseSel = null;
+        const bar = document.getElementById('warehouse-actions');
+        if (bar) bar.hidden = true;
       }
     }
   }

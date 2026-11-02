@@ -522,12 +522,6 @@ aside code {
   font-size: 0.75rem;
   margin: 0 0.15rem;
 }
-.wh-stack .wh-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-}
 
 #personal-panel { margin-top: 0.75rem; border-top: 1px solid var(--border, #ccc); padding-top: 0.5rem; }
 .personal-list li .kind { color: var(--muted); font-size: 0.75rem; }
@@ -1010,28 +1004,56 @@ body.opening-active > main {
   color: #eee;
   border-color: #111;
 }
-.warehouse-list {
+/* Slice AF — warehouse uses same inv-icons tiles as train cargo */
+.warehouse-list.inv-icons {
   list-style: none;
   margin: 0.35rem 0 0;
   padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: flex-start;
 }
-.warehouse-list li {
+.warehouse-list .inv-stack.wh-bag {
+  border-style: dashed;
+}
+.warehouse-list .inv-stack.wh-store {
+  border-style: solid;
+}
+.warehouse-list .inv-stack.selected {
+  outline: 2px solid #111;
+  background: #e4e4e4;
+}
+.warehouse-list .inv-side {
+  position: absolute;
+  top: 0.05rem;
+  left: 0.1rem;
+  font-size: 0.5rem;
+  color: #333;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.wh-actions-bar {
+  margin-top: 0.45rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border, #ccc);
+}
+.wh-actions-bar .wh-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
   align-items: center;
-  margin: 0.35rem 0;
-  font-size: 0.85rem;
-  border-bottom: 1px solid var(--border, #ccc);
-  padding-bottom: 0.35rem;
 }
-.warehouse-list li .wh-meta {
+.wh-actions-bar input.qty { width: 3.5rem; }
+.warehouse-list .inv-section {
   flex: 1 1 100%;
-}
-.warehouse-list input.qty { width: 3.5rem; }
-.warehouse-list .wh-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  align-items: center;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.7rem;
+  color: var(--muted, #666);
+  text-align: left;
+  min-height: 0;
+  width: auto;
 }

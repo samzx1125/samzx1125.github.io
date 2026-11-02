@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028ar';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028ar';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028as';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, AREA1_WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028as';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,15 +7,15 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028ar';
-import { cargoUsed, courierCargoUsed, warehouseUsed, stacksQtyOf, findStack } from './state.js?v=z1-20261028ar';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028ar';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ar';
+} from './engine.js?v=z1-20261028as';
+import { cargoUsed, courierCargoUsed, warehouseUsed, stacksQtyOf, findStack } from './state.js?v=z1-20261028as';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028as';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028as';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
 /** @type {{ lastMsg: string, panelOpen: boolean, optionsOpen: boolean, characterOpen: boolean }} */
-const ui = { lastMsg: '', panelOpen: true, optionsOpen: false, characterOpen: false, warehouseWho: 'player' };
+const ui = { lastMsg: '', panelOpen: true, optionsOpen: false, characterOpen: false, warehouseWho: 'player', warehouseSel: null };
 
 /** @param {import('./state.js').GameState} s */
 export function bindEvents(s, opts = {}) {
@@ -490,11 +490,26 @@ export function bindEvents(s, opts = {}) {
     const tabC = ev.target.closest('button[data-act="wh-tab-courier"]');
     if (tabP) {
       ui.warehouseWho = 'player';
+      ui.warehouseSel = null;
       render(state, ui);
       return;
     }
     if (tabC) {
       ui.warehouseWho = 'courier';
+      ui.warehouseSel = null;
+      render(state, ui);
+      return;
+    }
+    // Slice AF — click icon tile to select stack (actions in shared bar)
+    const tile = ev.target.closest('#warehouse-list .inv-stack[data-stack-id]');
+    if (tile && !ev.target.closest('button')) {
+      const stackId = tile.dataset.stackId;
+      const side = tile.dataset.side === 'wh' ? 'wh' : 'bag';
+      const same =
+        ui.warehouseSel &&
+        ui.warehouseSel.stackId === stackId &&
+        ui.warehouseSel.side === side;
+      ui.warehouseSel = same ? null : { stackId, side, goodId: tile.dataset.good };
       render(state, ui);
       return;
     }

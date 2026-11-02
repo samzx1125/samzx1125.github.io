@@ -17,7 +17,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028ar';
+} from './state.js?v=z1-20261028as';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -54,8 +54,8 @@ import {
   effectiveSpeed,
   AREA1_WAREHOUSE_LOC,
   AREA1_WAREHOUSE_CAP,
-} from './economy-data.js?v=z1-20261028ar';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028ar';
+} from './economy-data.js?v=z1-20261028as';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc } from './map-data.js?v=z1-20261028as';
 
 /**
  * @param {import('./state.js').GameState} s
