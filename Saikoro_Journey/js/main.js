@@ -1,13 +1,13 @@
 /**
  * SaikoroJourney — Zone1 boot
  */
-import { createInitialState } from './state.js?v=z1-20261028bb';
-import { tick } from './engine.js?v=z1-20261028bb';
-import { mountView, render } from './view.js?v=z1-20261028bb';
-import { bindEvents, getUi } from './events.js?v=z1-20261028bb';
-import { loadGame, saveGame } from './saving.js?v=z1-20261028bb';
-import { locName } from './map-data.js?v=z1-20261028bb';
-import { mountOpening } from './opening.js?v=z1-20261028bb';
+import { createInitialState } from './state.js?v=z1-20261028bc';
+import { tick } from './engine.js?v=z1-20261028bc';
+import { mountView, render } from './view.js?v=z1-20261028bc';
+import { bindEvents, getUi } from './events.js?v=z1-20261028bc';
+import { loadGame, saveGame } from './saving.js?v=z1-20261028bc';
+import { locName } from './map-data.js?v=z1-20261028bc';
+import { mountOpening } from './opening.js?v=z1-20261028bc';
 
 const state = createInitialState();
 const loaded = loadGame(state);

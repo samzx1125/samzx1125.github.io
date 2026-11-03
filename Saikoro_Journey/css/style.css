@@ -580,6 +580,14 @@ aside code {
   padding: 0.4rem 0.5rem;
 }
 .dest-list .eta { color: var(--muted); font-size: 0.75rem; }
+/* Slice AP — soft-gated Destinations row (Exit Ash↔Mist Spur capacity) */
+.dest-list button.dest-gated,
+.dest-list button.dest-gated:disabled {
+  opacity: 0.45;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 
 .hud-cargo-wrap {
   display: inline-flex;

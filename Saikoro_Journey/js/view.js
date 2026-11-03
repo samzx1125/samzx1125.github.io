@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bb';
-import { courierLocAllowed } from './engine.js?v=z1-20261028bb';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B } from './economy-data.js?v=z1-20261028bb';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bb';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028bb';
-import { getLastSavedAt } from './saving.js?v=z1-20261028bb';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bb';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bc';
+import { courierLocAllowed } from './engine.js?v=z1-20261028bc';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B } from './economy-data.js?v=z1-20261028bc';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bc';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028bc';
+import { getLastSavedAt } from './saving.js?v=z1-20261028bc';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bc';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -174,25 +174,49 @@ function quoteSignature(s) {
  */
 function destSignature(s) {
   const spd = effectiveSpeed(s.speedLevel);
+  // Include capacityLevel so AO bridge gate re-enables dest rows after upgrade (Slice AP).
+  const capPart = `cap${s.capacityLevel | 0}`;
   if (s.travel) {
-    const parts = ['traveling', s.travel.from + '>' + s.travel.to, STOP_REROUTE_UNLOCKED ? 'rr1' : 'rr0', `spd${s.speedLevel|0}`];
+    const parts = ['traveling', s.travel.from + '>' + s.travel.to, STOP_REROUTE_UNLOCKED ? 'rr1' : 'rr0', `spd${s.speedLevel|0}`, capPart];
     if (STOP_REROUTE_UNLOCKED) {
       const fromId = s.locationId;
       const neigh = neighborsOf(fromId).filter((id) => s.unlocked.includes(id) && id !== s.travel.to);
       for (const id of neigh) {
         const ms = travelMsBetween(fromId, id, spd) || 0;
-        parts.push(id, String(Math.round(ms / 1000)));
+        const gated = areaBridgeBlockReason(s, fromId, id) ? '1' : '0';
+        parts.push(id, String(Math.round(ms / 1000)), gated);
       }
     }
     return parts.join('|');
   }
   const neigh = neighborsOf(s.locationId).filter((id) => s.unlocked.includes(id));
-  const parts = [s.locationId, 'docked', `spd${s.speedLevel|0}`];
+  const parts = [s.locationId, 'docked', `spd${s.speedLevel|0}`, capPart];
   for (const id of neigh) {
     const ms = travelMsBetween(s.locationId, id, spd) || 0;
-    parts.push(id, String(Math.round(ms / 1000)));
+    const gated = areaBridgeBlockReason(s, s.locationId, id) ? '1' : '0';
+    parts.push(id, String(Math.round(ms / 1000)), gated);
   }
   return parts.join('|');
+}
+
+/**
+ * Slice AP — Destinations row HTML; soft-gate Exit Ash↔Mist Spur via areaBridgeBlockReason.
+ * @param {import('./state.js').GameState} s
+ * @param {string} fromId
+ * @param {string} id
+ * @param {number} ms
+ * @param {boolean} reroute
+ */
+function destGoButtonHtml(s, fromId, id, ms, reroute) {
+  const bridgeMsg = areaBridgeBlockReason(s, fromId, id);
+  const label = reroute ? `Re-route ${locName(id)}` : locName(id);
+  if (bridgeMsg) {
+    return (
+      `<li><button type="button" class="dest-gated" data-act="go" data-loc="${id}" disabled ` +
+      `title="${bridgeMsg}" aria-label="${bridgeMsg}">${label} <span class="eta">${formatEta(ms)}</span></button></li>`
+    );
+  }
+  return `<li><button type="button" data-act="go" data-loc="${id}">${label} <span class="eta">${formatEta(ms)}</span></button></li>`;
 }
 
 /**
@@ -618,7 +642,7 @@ export function render(s, ui = {}) {
         destList.innerHTML = neigh
           .map((id) => {
             const ms = travelMsBetween(fromId, id, spd) || 0;
-            return `<li><button type="button" data-act="go" data-loc="${id}">Re-route ${locName(id)} <span class="eta">${formatEta(ms)}</span></button></li>`;
+            return destGoButtonHtml(s, fromId, id, ms, true);
           })
           .join('');
         // also allow stop via going "home" listed? Stop button handles abort
@@ -633,7 +657,7 @@ export function render(s, ui = {}) {
         destList.innerHTML = neigh
           .map((id) => {
             const ms = travelMsBetween(s.locationId, id, spd) || 0;
-            return `<li><button type="button" data-act="go" data-loc="${id}">${locName(id)} <span class="eta">${formatEta(ms)}</span></button></li>`;
+            return destGoButtonHtml(s, s.locationId, id, ms, false);
           })
           .join('');
         if (destEmpty) destEmpty.hidden = neigh.length > 0;
