@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bc';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bc';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bd';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bd';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,10 +7,10 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028bc';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bc';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028bc';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bc';
+} from './engine.js?v=z1-20261028bd';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bd';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028bd';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bd';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -169,6 +169,50 @@ export function bindEvents(s, opts = {}) {
   mapWrap?.addEventListener('pointerup', endMapDrag);
   mapWrap?.addEventListener('pointercancel', endMapDrag);
   mapWrap?.addEventListener('lostpointercapture', endMapDrag);
+
+  /** Slice AQ — wheel zoom toward pointer; view-only (no SAVE). */
+  const MAP_PLANE_W = 3800;
+  const MAP_PLANE_H = 400;
+  const MAP_ZOOM_MIN = 0.5;
+  const MAP_ZOOM_MAX = 2.0;
+  let mapZoom = 1;
+  const mapSizer = document.getElementById('map-zoom-sizer');
+  const mapPlane = document.getElementById('map-plane');
+
+  function applyMapZoom(nextZoom, anchorClientX, anchorClientY) {
+    if (!mapWrap || !mapSizer || !mapPlane) return;
+    const z0 = mapZoom;
+    const z1 = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, nextZoom));
+    if (Math.abs(z1 - z0) < 1e-9) return;
+
+    const rect = mapWrap.getBoundingClientRect();
+    const mx = anchorClientX != null ? anchorClientX - rect.left : mapWrap.clientWidth / 2;
+    const my = anchorClientY != null ? anchorClientY - rect.top : mapWrap.clientHeight / 2;
+    // Unscaled content coords under the anchor (sizer scroll space / zoom).
+    const contentX = (mapWrap.scrollLeft + mx) / z0;
+    const contentY = (mapWrap.scrollTop + my) / z0;
+
+    mapZoom = z1;
+    mapSizer.style.width = MAP_PLANE_W * z1 + 'px';
+    mapSizer.style.height = MAP_PLANE_H * z1 + 'px';
+    mapPlane.style.transform = 'scale(' + z1 + ')';
+
+    mapWrap.scrollLeft = contentX * z1 - mx;
+    mapWrap.scrollTop = contentY * z1 - my;
+  }
+
+  if (mapSizer && mapPlane) {
+    mapSizer.style.width = MAP_PLANE_W + 'px';
+    mapSizer.style.height = MAP_PLANE_H + 'px';
+    mapPlane.style.transform = 'scale(1)';
+  }
+
+  mapWrap?.addEventListener('wheel', (ev) => {
+    ev.preventDefault();
+    const pixels = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaMode === 2 ? ev.deltaY * mapWrap.clientHeight : ev.deltaY;
+    const factor = Math.exp(-pixels * 0.0018);
+    applyMapZoom(mapZoom * factor, ev.clientX, ev.clientY);
+  }, { passive: false });
 
   mapWrap?.addEventListener('click', (ev) => {
     if (mapDidPan) {

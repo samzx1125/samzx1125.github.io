@@ -144,11 +144,20 @@ main {
   cursor: not-allowed;
 }
 
-#map-plane {
+/* Slice AQ — sizer grows with zoom so overflow scroll matches scaled plane */
+#map-zoom-sizer {
   position: relative;
   width: 3800px;
   height: 400px;
-  margin: 1rem auto;
+}
+#map-plane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3800px;
+  height: 400px;
+  margin: 0;
+  transform-origin: 0 0;
 }
 
 #rails {

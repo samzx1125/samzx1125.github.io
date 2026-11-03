@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028bc" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028bc" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028bd" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028bd" />
 </head>
 <body>
   <header class="top-row">
@@ -140,19 +140,21 @@
       </section>
     </aside>
     <div id="map-wrap">
-      <div id="map-plane">
-        <svg id="rails" viewBox="0 0 3800 400" width="3800" height="400" preserveAspectRatio="xMinYMin meet"></svg>
-        <div id="nodes"></div>
-        <div id="travel-rect" class="travel-rect" hidden title="on train" aria-label="on train">
-          <span>On train</span>
+      <div id="map-zoom-sizer">
+        <div id="map-plane">
+          <svg id="rails" viewBox="0 0 3800 400" width="3800" height="400" preserveAspectRatio="xMinYMin meet"></svg>
+          <div id="nodes"></div>
+          <div id="travel-rect" class="travel-rect" hidden title="on train" aria-label="on train">
+            <span>On train</span>
+          </div>
+          <div id="train-marker" class="pin" hidden title="you" aria-label="player">
+            <svg viewBox="0 0 16 24" width="14" height="21" aria-hidden="true">
+              <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 5.5 8 16 8 16s8-10.5 8-16C16 3.58 12.42 0 8 0z"/>
+              <circle cx="8" cy="8" r="3.25" fill="#ffffff"/>
+            </svg>
+          </div>
+          <div id="courier-marker" class="courier-pin" hidden title="courier" aria-label="courier">◇</div>
         </div>
-        <div id="train-marker" class="pin" hidden title="you" aria-label="player">
-          <svg viewBox="0 0 16 24" width="14" height="21" aria-hidden="true">
-            <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 5.5 8 16 8 16s8-10.5 8-16C16 3.58 12.42 0 8 0z"/>
-            <circle cx="8" cy="8" r="3.25" fill="#ffffff"/>
-          </svg>
-        </div>
-        <div id="courier-marker" class="courier-pin" hidden title="courier" aria-label="courier">◇</div>
       </div>
     </div>
     <aside id="right-menu" class="side-menu side-right" aria-label="Station">
@@ -275,6 +277,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028bc"></script>
+  <script type="module" src="js/main.js?v=z1-20261028bd"></script>
 </body>
 </html>
