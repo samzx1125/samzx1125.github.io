@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bd';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bd';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028be';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028be';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,10 +7,10 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028bd';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bd';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028bd';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bd';
+} from './engine.js?v=z1-20261028be';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028be';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028be';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028be';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -170,41 +170,52 @@ export function bindEvents(s, opts = {}) {
   mapWrap?.addEventListener('pointercancel', endMapDrag);
   mapWrap?.addEventListener('lostpointercapture', endMapDrag);
 
-  /** Slice AQ — wheel zoom toward pointer; view-only (no SAVE). */
+  /** Slice AQ/AR — wheel zoom toward pointer; pad+center when scaled plane shorter than wrap. */
   const MAP_PLANE_W = 3800;
   const MAP_PLANE_H = 400;
   const MAP_ZOOM_MIN = 0.5;
   const MAP_ZOOM_MAX = 2.0;
   let mapZoom = 1;
+  let mapZoomOffX = 0;
+  let mapZoomOffY = 0;
   const mapSizer = document.getElementById('map-zoom-sizer');
   const mapPlane = document.getElementById('map-plane');
 
-  function applyMapZoom(nextZoom, anchorClientX, anchorClientY) {
+  function applyMapZoom(nextZoom, anchorClientX, anchorClientY, force) {
     if (!mapWrap || !mapSizer || !mapPlane) return;
     const z0 = mapZoom;
     const z1 = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, nextZoom));
-    if (Math.abs(z1 - z0) < 1e-9) return;
+    if (!force && Math.abs(z1 - z0) < 1e-9) return;
 
     const rect = mapWrap.getBoundingClientRect();
     const mx = anchorClientX != null ? anchorClientX - rect.left : mapWrap.clientWidth / 2;
     const my = anchorClientY != null ? anchorClientY - rect.top : mapWrap.clientHeight / 2;
-    // Unscaled content coords under the anchor (sizer scroll space / zoom).
-    const contentX = (mapWrap.scrollLeft + mx) / z0;
-    const contentY = (mapWrap.scrollTop + my) / z0;
+    // Unscaled plane coords under the anchor (account for AR pad offsets).
+    const contentX = (mapWrap.scrollLeft + mx - mapZoomOffX) / z0;
+    const contentY = (mapWrap.scrollTop + my - mapZoomOffY) / z0;
 
     mapZoom = z1;
-    mapSizer.style.width = MAP_PLANE_W * z1 + 'px';
-    mapSizer.style.height = MAP_PLANE_H * z1 + 'px';
-    mapPlane.style.transform = 'scale(' + z1 + ')';
+    const scaledW = MAP_PLANE_W * z1;
+    const scaledH = MAP_PLANE_H * z1;
+    // Slice AR — when scaled size < wrap, grow sizer to wrap and center the plane so
+    // scrollTop isn't stuck at 0 with content pinned oddly at the top.
+    const sizerW = Math.max(scaledW, mapWrap.clientWidth);
+    const sizerH = Math.max(scaledH, mapWrap.clientHeight);
+    mapZoomOffX = Math.max(0, (sizerW - scaledW) / 2);
+    mapZoomOffY = Math.max(0, (sizerH - scaledH) / 2);
 
-    mapWrap.scrollLeft = contentX * z1 - mx;
-    mapWrap.scrollTop = contentY * z1 - my;
+    mapSizer.style.width = sizerW + 'px';
+    mapSizer.style.height = sizerH + 'px';
+    mapPlane.style.transform = 'scale(' + z1 + ')';
+    mapPlane.style.left = mapZoomOffX + 'px';
+    mapPlane.style.top = mapZoomOffY + 'px';
+
+    mapWrap.scrollLeft = contentX * z1 + mapZoomOffX - mx;
+    mapWrap.scrollTop = contentY * z1 + mapZoomOffY - my;
   }
 
   if (mapSizer && mapPlane) {
-    mapSizer.style.width = MAP_PLANE_W + 'px';
-    mapSizer.style.height = MAP_PLANE_H + 'px';
-    mapPlane.style.transform = 'scale(1)';
+    applyMapZoom(1, null, null, true);
   }
 
   mapWrap?.addEventListener('wheel', (ev) => {

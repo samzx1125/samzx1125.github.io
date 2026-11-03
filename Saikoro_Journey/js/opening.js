@@ -2,10 +2,10 @@
  * Slice S — opening: name + body + mirror
  * Steps: name → body → mirror → enter game.
  */
-import { saveGame } from './saving.js?v=z1-20261028bd';
-import { createInitialState } from './state.js?v=z1-20261028bd';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028bd';
-import { render } from './view.js?v=z1-20261028bd';
+import { saveGame } from './saving.js?v=z1-20261028be';
+import { createInitialState } from './state.js?v=z1-20261028be';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028be';
+import { render } from './view.js?v=z1-20261028be';
 
 export const BODY_IDS = ['body_a', 'body_b', 'body_c', 'body_d'];
 
