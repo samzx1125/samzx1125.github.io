@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bf';
-import { courierLocAllowed } from './engine.js?v=z1-20261028bf';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B } from './economy-data.js?v=z1-20261028bf';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bf';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028bf';
-import { getLastSavedAt } from './saving.js?v=z1-20261028bf';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bf';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bg';
+import { courierLocAllowed } from './engine.js?v=z1-20261028bg';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES } from './economy-data.js?v=z1-20261028bg';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bg';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028bg';
+import { getLastSavedAt } from './saving.js?v=z1-20261028bg';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bg';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -122,6 +122,28 @@ export function mountView() {
       wrap.appendChild(btn);
       wrap.appendChild(travel);
       nodesEl.appendChild(wrap);
+    }
+  }
+
+  // Slice AS — static Area climate labels (once); pointer-events none via CSS
+  const labelsEl = document.getElementById('map-area-labels');
+  if (labelsEl) {
+    labelsEl.innerHTML = '';
+    for (const areaId of Object.keys(AREA_PROPERTIES).map(Number).sort((a, b) => a - b)) {
+      const prop = AREA_PROPERTIES[areaId];
+      if (!prop || !prop.climate) continue;
+      const locs = LOCATIONS.filter((l) => areaOfLoc(l.id) === areaId);
+      if (!locs.length) continue;
+      const cx = locs.reduce((s, l) => s + l.x, 0) / locs.length;
+      // Sit above the node band (~150–280) so chips stay readable
+      const cy = 52;
+      const el = document.createElement('div');
+      el.className = 'map-area-label';
+      el.dataset.areaId = String(areaId);
+      el.style.left = Math.round(cx) + 'px';
+      el.style.top = cy + 'px';
+      el.textContent = `A${areaId} ${prop.climate}`;
+      labelsEl.appendChild(el);
     }
   }
 }

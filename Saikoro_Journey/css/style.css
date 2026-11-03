@@ -183,6 +183,34 @@ main {
   stroke-width: 5;
 }
 
+/* Slice AS — Area climate labels on plane; chrome only, never interactive */
+#map-area-labels {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3800px;
+  height: 400px;
+  pointer-events: none;
+  z-index: 1;
+}
+.map-area-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 0.15rem 0.45rem;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
 #nodes {
   position: absolute;
   left: 0;
