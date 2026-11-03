@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC } from './map-data.js?v=z1-20261028ba';
+import { TRAIN_SPEED, START_LOC, areaOfLoc } from './map-data.js?v=z1-20261028bb';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
@@ -192,6 +192,55 @@ export const BUY_IMPACT_STEP = 0.03;
 export const SELL_IMPACT_STEP = 0.015;
 /** Per drift tick, fraction of base pulled back toward drift band when outside it. */
 export const IMPACT_RECOVERY_STEP = 0.01;
+
+/** Slice AO — Area property lite (systems §1.1). Static; no SAVE bump. */
+export const AREA_PROPERTIES = {
+  1: {
+    id: 1,
+    climate: 'Ash desert',
+    blurb: 'Hot ash flats; prices wander hard.',
+    driftAmp: 1.25,
+    sellTaxPct: 0,
+  },
+  2: {
+    id: 2,
+    climate: 'Mist fen',
+    blurb: 'Damp fen road; quieter markets, light toll.',
+    driftAmp: 0.75,
+    sellTaxPct: 0.025,
+  },
+};
+
+/** @param {string} locId */
+export function areaPropertyForLoc(locId) {
+  const a = areaOfLoc(locId);
+  return (a && AREA_PROPERTIES[a]) || AREA_PROPERTIES[1];
+}
+
+/** Soft capacity gate: Exit Ash ↔ Mist Spur. */
+export const AREA_BRIDGE_A = 'loc_a01z04l003_exit_ash';
+export const AREA_BRIDGE_B = 'loc_a02z01l001_mist_spur';
+export const AREA_BRIDGE_MIN_CAPACITY_LEVEL = 1;
+
+export function isAreaBridgeEdge(fromId, toId) {
+  return (
+    (fromId === AREA_BRIDGE_A && toId === AREA_BRIDGE_B) ||
+    (fromId === AREA_BRIDGE_B && toId === AREA_BRIDGE_A)
+  );
+}
+
+/**
+ * @param {{ capacityLevel?: number }} s
+ * @param {string} fromId
+ * @param {string} toId
+ * @returns {string|null} blocked reason tooltip, or null if ok
+ */
+export function areaBridgeBlockReason(s, fromId, toId) {
+  if (!isAreaBridgeEdge(fromId, toId)) return null;
+  if ((s.capacityLevel | 0) >= AREA_BRIDGE_MIN_CAPACITY_LEVEL) return null;
+  return 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur';
+}
+
 
 export const START_GOLD = 200;
 /** Base cargo capacity (g). Upgrades: +20% of base per level, max level 5 → 10000g. */

@@ -55,6 +55,15 @@ header h1 {
   min-width: 0;
 }
 .hud span strong { color: var(--accent); }
+.hud-area-prop {
+  color: var(--muted, #999);
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .options-wrap {
   position: relative;

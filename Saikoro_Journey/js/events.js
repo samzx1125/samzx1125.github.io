@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028ba';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028ba';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bb';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bb';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,10 +7,10 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028ba';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028ba';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028ba';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ba';
+} from './engine.js?v=z1-20261028bb';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bb';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028bb';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bb';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -227,9 +227,10 @@ export function bindEvents(s, opts = {}) {
       const spd = effectiveSpeed(state.speedLevel);
       const ms = travelMsBetween(fromId, locId, spd);
       const r = tryReroute(state, locId, ms, { distance: dist ?? 0, speed: spd });
-      ui.lastMsg = r.ok
-        ? (r.stopped ? 'stopped' : `re-routed → ${locName(locId)}`)
-        : `cannot re-route (${r.reason})`;
+      if (r.ok) ui.lastMsg = r.stopped ? 'stopped' : `re-routed → ${locName(locId)}`;
+      else if (r.reason === 'capacity_gate') {
+        ui.lastMsg = r.message || areaBridgeBlockReason(state, state.locationId, locId) || 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur';
+      } else ui.lastMsg = `cannot re-route (${r.reason})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
       return;
@@ -254,7 +255,10 @@ export function bindEvents(s, opts = {}) {
     const spd = effectiveSpeed(state.speedLevel);
     const ms = travelMsBetween(state.locationId, locId, spd);
     const r = tryTravel(state, locId, ms, { distance: dist ?? 0, speed: spd });
-    ui.lastMsg = r.ok ? `departing → ${locName(locId)}` : `cannot travel (${r.reason})`;
+    if (r.ok) ui.lastMsg = `departing → ${locName(locId)}`;
+    else if (r.reason === 'capacity_gate') {
+      ui.lastMsg = r.message || areaBridgeBlockReason(state, state.locationId, locId) || 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur';
+    } else ui.lastMsg = `cannot travel (${r.reason})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
   }
@@ -359,7 +363,10 @@ export function bindEvents(s, opts = {}) {
       // sell-all without stackId sells FIFO across all price stacks of that good
       const r = trySell(state, loc, good, n, act === 'sell-all' && !stackId ? undefined : stackId || undefined);
       const sold = r.sold != null ? r.sold : n;
-      ui.lastMsg = r.ok ? `sold ${goodName(good)} ×${sold}` : `sell failed (${r.reason})`;
+      if (r.ok) {
+        const taxBit = r.tax > 0 ? ` (−${r.tax} A2 toll)` : '';
+        ui.lastMsg = `sold ${goodName(good)} ×${sold}${taxBit}`;
+      } else ui.lastMsg = `sell failed (${r.reason})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); focusQtyAfterTrade(good); flashTradedRow(good); }
     }
     render(state, ui);

@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028ba';
-import { courierLocAllowed } from './engine.js?v=z1-20261028ba';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028ba';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028ba';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028ba';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ba';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028ba';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bb';
+import { courierLocAllowed } from './engine.js?v=z1-20261028bb';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B } from './economy-data.js?v=z1-20261028bb';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bb';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028bb';
+import { getLastSavedAt } from './saving.js?v=z1-20261028bb';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bb';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -456,6 +456,30 @@ export function render(s, ui = {}) {
       ? `A${areaN}Z${zoneN} · ${here.name}`
       : s.locationId;
   setText('hud-loc', travelLabel);
+  // Slice AO — area property chip (climate + optional bridge gate hint)
+  {
+    const propEl = document.getElementById('hud-area-prop');
+    if (propEl) {
+      const prop = areaPropertyForLoc(locForArea);
+      let line = prop ? `${prop.climate} — ${prop.blurb}` : '';
+      const standId = s.travel ? null : s.locationId;
+      if (
+        standId &&
+        (standId === AREA_BRIDGE_A || standId === AREA_BRIDGE_B) &&
+        (s.capacityLevel | 0) < 1
+      ) {
+        line = (line ? line + ' · ' : '') + 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur';
+      }
+      if (line) {
+        propEl.hidden = false;
+        propEl.textContent = line;
+        propEl.title = line;
+      } else {
+        propEl.hidden = true;
+        propEl.textContent = '';
+      }
+    }
+  }
 
   document.querySelectorAll('.node').forEach((el) => {
     const id = el.dataset.locId;
@@ -832,6 +856,15 @@ export function render(s, ui = {}) {
       else if (!adjacent) hint = 'only adjacent locations';
       else hint = `depart → ${name}`;
     }
+    // Slice AO — soft capacity gate Exit Ash ↔ Mist Spur
+    if (can && !here) {
+      const fromForGate = s.locationId;
+      const bridgeMsg = areaBridgeBlockReason(s, fromForGate, target);
+      if (bridgeMsg) {
+        can = false;
+        hint = bridgeMsg;
+      }
+    }
     for (const id of ['btn-travel-to', 'btn-travel']) {
       const btn = document.getElementById(id);
       if (!btn) continue;
@@ -856,16 +889,24 @@ export function render(s, ui = {}) {
         return;
       }
       const thisSameDest = !!(s.travel && locId === s.travel.to);
-      const thisCan =
+      let thisCan =
         s.unlocked.includes(locId) &&
         locId !== s.locationId &&
         neighborsOf(s.locationId).includes(locId) &&
         !thisSameDest;
+      let thisHint = hint;
+      if (thisCan) {
+        const bridgeMsg = areaBridgeBlockReason(s, s.locationId, locId);
+        if (bridgeMsg) {
+          thisCan = false;
+          thisHint = bridgeMsg;
+        }
+      }
       btn.disabled = !thisCan;
       btn.textContent = s.travel && STOP_REROUTE_UNLOCKED ? 'Re-route' : 'Travel';
       btn.title = thisCan
         ? (s.travel ? `Re-route → ${locName(locId)}` : `Travel to ${locName(locId)}`)
-        : hint;
+        : thisHint;
     });
   }
 

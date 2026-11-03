@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028ba';
+} from './state.js?v=z1-20261028bb';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -57,8 +57,10 @@ import {
   AREA1_WAREHOUSE_CAP,
   AREA2_WAREHOUSE_LOC,
   WAREHOUSE_CAP,
-} from './economy-data.js?v=z1-20261028ba';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028ba';
+  areaPropertyForLoc,
+  areaBridgeBlockReason,
+} from './economy-data.js?v=z1-20261028bb';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028bb';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -146,6 +148,7 @@ function driftPricesOnce(s) {
     const baseRow = BASE_PRICES[loc.id];
     if (!baseRow) continue;
     if (!s.prices[loc.id]) s.prices[loc.id] = {};
+    const driftAmp = areaPropertyForLoc(loc.id).driftAmp ?? 1;
     for (const g of GOODS) {
       const base = baseRow[g.id];
       if (base == null) continue;
@@ -156,10 +159,10 @@ function driftPricesOnce(s) {
       const hardLo = Math.max(1, base * (1 - SELL_IMPACT_CAP));
       const hardHi = base * (1 + BUY_IMPACT_CAP);
       let next = current;
-      // Recover toward drift band if buy/sell impact pushed outside
-      if (current > hi) next = current - base * IMPACT_RECOVERY_STEP;
-      else if (current < lo) next = current + base * IMPACT_RECOVERY_STEP;
-      else next = current + base * ((Math.random() * 2 - 1) * PRICE_DRIFT_PCT_MAX);
+      // Recover toward drift band if buy/sell impact pushed outside (amp softens/hardens step lightly)
+      if (current > hi) next = current - base * IMPACT_RECOVERY_STEP * driftAmp;
+      else if (current < lo) next = current + base * IMPACT_RECOVERY_STEP * driftAmp;
+      else next = current + base * ((Math.random() * 2 - 1) * PRICE_DRIFT_PCT_MAX * driftAmp);
       if (next < hardLo) next = hardLo;
       if (next > hardHi) next = hardHi;
       // Inside normal band, soft-clamp drift
@@ -478,9 +481,12 @@ export function trySell(s, locId, goodId, qty, stackId) {
     if (sold <= 0) return { ok: false, reason: 'waste' };
   }
 
-  s.gold += goldGain;
+  const taxPct = areaPropertyForLoc(locId).sellTaxPct || 0;
+  const tax = taxPct > 0 ? Math.floor(goldGain * taxPct) : 0;
+  const net = goldGain - tax;
+  s.gold += net;
   if (sold > 0) recordTradeImpact(s, locId, goodId, sold, 'sell');
-  return { ok: true, sold, gold: goldGain };
+  return { ok: true, sold, gold: net, tax };
 }
 
 /**
@@ -494,6 +500,8 @@ export function tryTravel(s, toId, durationMs, meta = {}) {
   if (!s.unlocked.includes(toId)) return { ok: false, reason: 'locked' };
   if (toId === s.locationId) return { ok: false, reason: 'same' };
   if (durationMs == null || durationMs <= 0) return { ok: false, reason: 'no_edge' };
+  const bridgeBlock = areaBridgeBlockReason(s, s.locationId, toId);
+  if (bridgeBlock) return { ok: false, reason: 'capacity_gate', message: bridgeBlock };
   commitStationBuys(s);
   snapshotVisitedPrices(s, s.locationId); // Slice P — leave snapshot
   const distance = meta.distance != null ? meta.distance : 0;
@@ -652,6 +660,8 @@ export function tryReroute(s, toId, durationMs, meta = {}) {
   }
   if (toId === s.travel.to) return { ok: false, reason: 'same_dest' };
   if (durationMs == null || durationMs <= 0) return { ok: false, reason: 'no_edge' };
+  const bridgeBlock = areaBridgeBlockReason(s, fromId, toId);
+  if (bridgeBlock) return { ok: false, reason: 'capacity_gate', message: bridgeBlock };
   const distance = meta.distance != null ? meta.distance : 0;
   const speed = meta.speed != null ? meta.speed : 0;
   s.travel = {
