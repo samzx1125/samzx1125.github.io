@@ -144,7 +144,7 @@ main {
   cursor: not-allowed;
 }
 
-/* Slice AQ/AR — sizer grows with zoom; JS pads to wrap + centers plane when short */
+/* Slice AQ/AR — sizer grows with zoom; JS pads to wrap + offset-anchors plane when short */
 #map-zoom-sizer {
   position: relative;
   width: 3800px;
