@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC, areaOfLoc } from './map-data.js?v=z1-20261028bg';
+import { TRAIN_SPEED, START_LOC, areaOfLoc, distanceBetween } from './map-data.js?v=z1-20261028bh';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
@@ -201,6 +201,8 @@ export const AREA_PROPERTIES = {
     blurb: 'Hot ash flats; prices wander hard.',
     driftAmp: 1.25,
     sellTaxPct: 0,
+    /** Slice AT — body-train haul gold per distance unit (origin area). */
+    freightPerDist: 1.5,
   },
   2: {
     id: 2,
@@ -208,6 +210,7 @@ export const AREA_PROPERTIES = {
     blurb: 'Damp fen road; quieter markets, light toll.',
     driftAmp: 0.75,
     sellTaxPct: 0.025,
+    freightPerDist: 1.0,
   },
 };
 
@@ -215,6 +218,21 @@ export const AREA_PROPERTIES = {
 export function areaPropertyForLoc(locId) {
   const a = areaOfLoc(locId);
   return (a && AREA_PROPERTIES[a]) || AREA_PROPERTIES[1];
+}
+
+/**
+ * Slice AT — body-train freight gold for a hop (origin area's freightPerDist).
+ * @param {string} fromId
+ * @param {string} toId
+ * @returns {number|null} rounded gold, or null if no edge
+ */
+export function travelFreightCost(fromId, toId) {
+  const d = distanceBetween(fromId, toId);
+  if (d == null || !(d > 0)) return null;
+  const prop = areaPropertyForLoc(fromId);
+  const rate = Number(prop && prop.freightPerDist);
+  if (!(rate > 0)) return 0;
+  return Math.round(d * rate);
 }
 
 /** Soft capacity gate: Exit Ash ↔ Mist Spur. */

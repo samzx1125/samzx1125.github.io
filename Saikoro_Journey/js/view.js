@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bg';
-import { courierLocAllowed } from './engine.js?v=z1-20261028bg';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES } from './economy-data.js?v=z1-20261028bg';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bg';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028bg';
-import { getLastSavedAt } from './saving.js?v=z1-20261028bg';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bg';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bh';
+import { courierLocAllowed } from './engine.js?v=z1-20261028bh';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bh';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bh';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028bh';
+import { getLastSavedAt } from './saving.js?v=z1-20261028bh';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bh';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -223,6 +223,7 @@ function destSignature(s) {
 
 /**
  * Slice AP — Destinations row HTML; soft-gate Exit Ash↔Mist Spur via areaBridgeBlockReason.
+ * Slice AT — show body-train freight gold next to ETA (fresh depart only; re-route uncharged).
  * @param {import('./state.js').GameState} s
  * @param {string} fromId
  * @param {string} id
@@ -232,13 +233,27 @@ function destSignature(s) {
 function destGoButtonHtml(s, fromId, id, ms, reroute) {
   const bridgeMsg = areaBridgeBlockReason(s, fromId, id);
   const label = reroute ? `Re-route ${locName(id)}` : locName(id);
+  const freight = reroute ? 0 : (travelFreightCost(fromId, id) || 0);
+  const etaBits = freight > 0 ? `${formatEta(ms)} · ${freight}g` : formatEta(ms);
   if (bridgeMsg) {
     return (
       `<li><button type="button" class="dest-gated" data-act="go" data-loc="${id}" disabled ` +
-      `title="${bridgeMsg}" aria-label="${bridgeMsg}">${label} <span class="eta">${formatEta(ms)}</span></button></li>`
+      `title="${bridgeMsg}" aria-label="${bridgeMsg}">${label} <span class="eta">${etaBits}</span></button></li>`
     );
   }
-  return `<li><button type="button" data-act="go" data-loc="${id}">${label} <span class="eta">${formatEta(ms)}</span></button></li>`;
+  // Soft-disable when gold < freight on fresh depart
+  if (!reroute && freight > 0 && (s.gold | 0) < freight) {
+    const msg = `Need ${freight}g freight (have ${s.gold | 0}g)`;
+    return (
+      `<li><button type="button" class="dest-gated" data-act="go" data-loc="${id}" disabled ` +
+      `title="${msg}" aria-label="${msg}">${label} <span class="eta">${etaBits}</span></button></li>`
+    );
+  }
+  const tip = freight > 0 ? `${label} · ${freight}g freight` : label;
+  return (
+    `<li><button type="button" data-act="go" data-loc="${id}" title="${tip}">` +
+    `${label} <span class="eta">${etaBits}</span></button></li>`
+  );
 }
 
 /**
@@ -903,6 +918,7 @@ export function render(s, ui = {}) {
       else hint = `depart → ${name}`;
     }
     // Slice AO — soft capacity gate Exit Ash ↔ Mist Spur
+    let departFreight = 0;
     if (can && !here) {
       const fromForGate = s.locationId;
       const bridgeMsg = areaBridgeBlockReason(s, fromForGate, target);
@@ -911,10 +927,22 @@ export function render(s, ui = {}) {
         hint = bridgeMsg;
       }
     }
+    // Slice AT — body-train freight on fresh depart (not re-route)
+    if (can && !here && !s.travel) {
+      departFreight = travelFreightCost(s.locationId, target) || 0;
+      if (departFreight > 0) {
+        hint = `depart → ${name} · ${departFreight}g freight`;
+        if ((s.gold | 0) < departFreight) {
+          can = false;
+          hint = `Need ${departFreight}g freight (have ${s.gold | 0}g)`;
+        }
+      }
+    }
     for (const id of ['btn-travel-to', 'btn-travel']) {
       const btn = document.getElementById(id);
       if (!btn) continue;
       btn.disabled = !can;
+      btn.title = hint;
       if (id === 'btn-travel-to') {
         if (s.travel && STOP_REROUTE_UNLOCKED && can) btn.textContent = `Re-route ${name}`;
         else btn.textContent = here ? 'Travel to' : `Travel to ${name}`;
@@ -941,6 +969,7 @@ export function render(s, ui = {}) {
         neighborsOf(s.locationId).includes(locId) &&
         !thisSameDest;
       let thisHint = hint;
+      let thisFreight = 0;
       if (thisCan) {
         const bridgeMsg = areaBridgeBlockReason(s, s.locationId, locId);
         if (bridgeMsg) {
@@ -948,10 +977,24 @@ export function render(s, ui = {}) {
           thisHint = bridgeMsg;
         }
       }
+      if (thisCan && !s.travel) {
+        thisFreight = travelFreightCost(s.locationId, locId) || 0;
+        if (thisFreight > 0) {
+          thisHint = `Travel to ${locName(locId)} · ${thisFreight}g freight`;
+          if ((s.gold | 0) < thisFreight) {
+            thisCan = false;
+            thisHint = `Need ${thisFreight}g freight (have ${s.gold | 0}g)`;
+          }
+        }
+      }
       btn.disabled = !thisCan;
       btn.textContent = s.travel && STOP_REROUTE_UNLOCKED ? 'Re-route' : 'Travel';
       btn.title = thisCan
-        ? (s.travel ? `Re-route → ${locName(locId)}` : `Travel to ${locName(locId)}`)
+        ? (s.travel
+            ? `Re-route → ${locName(locId)}`
+            : thisFreight > 0
+              ? thisHint
+              : `Travel to ${locName(locId)}`)
         : thisHint;
     });
   }

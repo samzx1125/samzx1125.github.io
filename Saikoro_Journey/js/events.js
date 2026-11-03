@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bg';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bg';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bh';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bh';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,10 +7,10 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028bg';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bg';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028bg';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bg';
+} from './engine.js?v=z1-20261028bh';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bh';
+import { saveGame, clearSave } from './saving.js?v=z1-20261028bh';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bh';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -330,9 +330,15 @@ export function bindEvents(s, opts = {}) {
     const spd = effectiveSpeed(state.speedLevel);
     const ms = travelMsBetween(state.locationId, locId, spd);
     const r = tryTravel(state, locId, ms, { distance: dist ?? 0, speed: spd });
-    if (r.ok) ui.lastMsg = `departing → ${locName(locId)}`;
-    else if (r.reason === 'capacity_gate') {
+    if (r.ok) {
+      const fg = r.freight | 0;
+      ui.lastMsg = fg > 0
+        ? `departing → ${locName(locId)} (−${fg}g freight)`
+        : `departing → ${locName(locId)}`;
+    } else if (r.reason === 'capacity_gate') {
       ui.lastMsg = r.message || areaBridgeBlockReason(state, state.locationId, locId) || 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur';
+    } else if (r.reason === 'freight') {
+      ui.lastMsg = r.message || 'not enough gold for freight';
     } else ui.lastMsg = `cannot travel (${r.reason})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);

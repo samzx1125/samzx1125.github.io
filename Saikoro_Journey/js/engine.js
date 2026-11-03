@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028bg';
+} from './state.js?v=z1-20261028bh';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -59,8 +59,9 @@ import {
   WAREHOUSE_CAP,
   areaPropertyForLoc,
   areaBridgeBlockReason,
-} from './economy-data.js?v=z1-20261028bg';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028bg';
+  travelFreightCost,
+} from './economy-data.js?v=z1-20261028bh';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028bh';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -502,8 +503,20 @@ export function tryTravel(s, toId, durationMs, meta = {}) {
   if (durationMs == null || durationMs <= 0) return { ok: false, reason: 'no_edge' };
   const bridgeBlock = areaBridgeBlockReason(s, s.locationId, toId);
   if (bridgeBlock) return { ok: false, reason: 'capacity_gate', message: bridgeBlock };
+  // Slice AT — body-train freight (origin area rate); soft-fail, no debt
+  const freight = travelFreightCost(s.locationId, toId) || 0;
+  const gold = s.gold | 0;
+  if (freight > 0 && gold < freight) {
+    return {
+      ok: false,
+      reason: 'freight',
+      message: `Need ${freight}g freight (have ${gold}g)`,
+      freight,
+    };
+  }
   commitStationBuys(s);
   snapshotVisitedPrices(s, s.locationId); // Slice P — leave snapshot
+  if (freight > 0) s.gold = gold - freight;
   const distance = meta.distance != null ? meta.distance : 0;
   const speed = meta.speed != null ? meta.speed : 0;
   s.travel = {
@@ -515,7 +528,7 @@ export function tryTravel(s, toId, durationMs, meta = {}) {
     speed,
     traveledDistance: 0,
   };
-  return { ok: true };
+  return { ok: true, freight };
 }
 
 /**
