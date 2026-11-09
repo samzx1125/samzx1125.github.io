@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bj';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bj';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bk';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bk';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,10 +7,10 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028bj';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bj';
-import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028bj';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bj';
+} from './engine.js?v=z1-20261028bk';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bk';
+import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028bk';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bk';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -849,6 +849,25 @@ export function bindEvents(s, opts = {}) {
     if (!btn || !state) return;
     if (btn.dataset.act === 'save') {
       ui.lastMsg = saveGame(state) ? 'saved' : 'save failed';
+    } else if (btn.dataset.act === 'load') {
+      // Soft reload — main.js re-reads localStorage via loadGame
+      if (!confirm('Load last save? Unsaved progress in this session will be discarded.')) return;
+      location.reload();
+      return;
+    } else if (btn.dataset.act === 'export-save') {
+      try {
+        const payload = serialize(state);
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'saikoro-save.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        ui.lastMsg = 'save exported';
+      } catch {
+        ui.lastMsg = 'export failed';
+      }
     } else if (btn.dataset.act === 'new-game') {
       if (!confirm('New game? This clears the current save and restarts the opening.')) return;
       clearSave();
@@ -861,33 +880,6 @@ export function bindEvents(s, opts = {}) {
     } else if (btn.dataset.act === 'reset-save') {
       clearSave();
       ui.lastMsg = 'save cleared — reload page for fresh start';
-    }
-    render(state, ui);
-  });
-
-  document.getElementById('load-panel')?.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('button[data-act="load"]');
-    if (!btn || !state) return;
-    // Soft reload — main.js re-reads localStorage via loadGame
-    if (!confirm('Load last save? Unsaved progress in this session will be discarded.')) return;
-    location.reload();
-  });
-
-  document.getElementById('export-panel')?.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('button[data-act="export-save"]');
-    if (!btn || !state) return;
-    try {
-      const payload = serialize(state);
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'saikoro-save.json';
-      a.click();
-      URL.revokeObjectURL(url);
-      ui.lastMsg = 'save exported';
-    } catch {
-      ui.lastMsg = 'export failed';
     }
     render(state, ui);
   });

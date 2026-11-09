@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028bj" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028bj" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028bk" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028bk" />
 </head>
 <body>
   <header class="top-row">
@@ -58,25 +58,18 @@
         <div id="options-menu" class="options-menu" hidden role="menu" aria-label="Options">
           <section id="save-panel">
             <h2>Save</h2>
-            <p class="hint">localStorage only (this browser).</p>
+            <p class="hint">localStorage only (this browser). Load reloads last save; Export downloads JSON.</p>
             <p id="save-stamp" class="muted">never saved</p>
             <button type="button" class="primary" data-act="save">Save</button>
+            <button type="button" class="primary" data-act="load">Load</button>
+            <button type="button" class="primary" data-act="export-save">Export save</button>
             <button type="button" data-act="new-game">New game</button>
             <button type="button" data-act="reset-save">Clear save</button>
-          </section>
-          <section id="load-panel">
-            <h2>Load</h2>
-            <p class="hint">Reload the last localStorage save (soft page reload).</p>
-            <button type="button" class="primary" data-act="load">Load</button>
-          </section>
-          <section id="export-panel">
-            <h2>Export save</h2>
-            <p class="hint">Download current save JSON.</p>
-            <button type="button" class="primary" data-act="export-save">Export save</button>
           </section>
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>AW</strong> — Options Save family grouped (Save/Load/Export/New game/Clear save)</li>
               <li><strong>AV</strong> — Options slim (Save/Load/Export/Update log); Upgrade tab; Inventory Mirror; Controls → ?</li>
               <li><strong>AU</strong> — map hides future zones until unlock; clean Fog Well reveal</li>
               <li><strong>AT</strong> — body-train travel freight from AREA_PROPERTIES</li>
@@ -322,6 +315,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028bj"></script>
+  <script type="module" src="js/main.js?v=z1-20261028bk"></script>
 </body>
 </html>
