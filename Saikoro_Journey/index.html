@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028cc" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028cc" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028cd" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028cd" />
 </head>
 <body>
   <header class="top-row">
@@ -80,6 +80,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>BP</strong> — Character “?” help (Mirror / Mirror Residue only · read-only sheet: name, body, upgrades, gold, keys)</li>
               <li><strong>BO</strong> — Courier hire+panels “?” help (hire unlock loc · route min 2 stops · pause/resume · Zone1 vs universal · cargo bar)</li>
               <li><strong>BN</strong> — Transport quest “?” help (accept locks lot · deliver at dest · abandon dumps · body only · both ends unlocked)</li>
               <li><strong>BM</strong> — Exit Ash Scrap key on Exit Ash unlock (click no-op)</li>
@@ -366,8 +367,17 @@
   <div id="character-panel" class="character-panel" hidden role="dialog" aria-modal="true" aria-labelledby="character-title">
     <div class="character-card">
       <div class="character-head">
-        <h2 id="character-title">Character</h2>
+        <div class="character-head-left">
+          <h2 id="character-title">Character</h2>
+          <button type="button" class="help-q" data-help="character" aria-label="Character help" aria-expanded="false" aria-controls="help-character">?</button>
+        </div>
         <button type="button" id="btn-character-close" data-act="character-close">Close</button>
+      </div>
+      <div id="help-character" class="help-pop" hidden role="tooltip">
+        <ul class="controls-list">
+          <li>Opens via Mirror / Mirror Residue only</li>
+          <li>Read-only sheet (name, body, upgrades, gold, keys)</li>
+        </ul>
       </div>
       <div class="character-identity">
         <span id="character-glyph" class="opening-silhouette" aria-hidden="true">■</span>
@@ -427,6 +437,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028cc"></script>
+  <script type="module" src="js/main.js?v=z1-20261028cd"></script>
 </body>
 </html>

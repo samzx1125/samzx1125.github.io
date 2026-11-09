@@ -1133,6 +1133,12 @@ body.opening-active > main {
   margin: 0;
   font-size: 1rem;
 }
+.character-head-left {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
 .character-identity {
   display: flex;
   align-items: center;
