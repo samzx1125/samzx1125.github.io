@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028bs';
+} from './state.js?v=z1-20261028bt';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -60,9 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028bs';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028bs';
-import { KEY_FOG_WELL_SCRAP } from './personal-data.js?v=z1-20261028bs';
+} from './economy-data.js?v=z1-20261028bt';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028bt';
+import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP } from './personal-data.js?v=z1-20261028bt';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -581,6 +581,13 @@ export function tryDepositUnlock(s, unlock) {
       if (!s.personal || typeof s.personal !== 'object') s.personal = {};
       if (!(s.personal[KEY_FOG_WELL_SCRAP] > 0)) {
         s.personal[KEY_FOG_WELL_SCRAP] = 1;
+      }
+    }
+    // Slice BF: Mist Spur Scrap once on Mist Spur unlock (idempotent)
+    if (unlock.target === 'loc_a02z01l001_mist_spur') {
+      if (!s.personal || typeof s.personal !== 'object') s.personal = {};
+      if (!(s.personal[KEY_MIST_SPUR_SCRAP] > 0)) {
+        s.personal[KEY_MIST_SPUR_SCRAP] = 1;
       }
     }
     return { ok: true, unlocked: true, universalCourier };
