@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028by" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028by" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028bz" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028bz" />
 </head>
 <body>
   <header class="top-row">
@@ -80,6 +80,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>BL</strong> — Unlock “?” help (multi-trip deposit · progress sticks · any unlocked loc · ~2–3 max-cap trips)</li>
               <li><strong>BK</strong> — Warehouse “?” help (soft cap · goods only · per-area stock · player/courier tabs)</li>
               <li><strong>BI</strong> — Personal “?” help (keys/consumables · Mirror → Character · scrap no-op)</li>
               <li><strong>BH</strong> — inventory cargo fill bar</li>
@@ -293,7 +294,18 @@
         <button type="button" class="primary" id="btn-quest-accept" data-act="quest-accept">Accept</button>
       </section>
       <section id="unlock-panel" hidden>
-        <h2>Unlock</h2>
+        <div class="panel-head-row">
+          <h2>Unlock</h2>
+          <button type="button" class="help-q" data-help="unlock" aria-label="Unlock help" aria-expanded="false" aria-controls="help-unlock">?</button>
+        </div>
+        <div id="help-unlock" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Multi-trip deposit OK</li>
+            <li>Progress sticks</li>
+            <li>Hand-in at any unlocked location</li>
+            <li>Costs ~2–3 max-cap trips</li>
+          </ul>
+        </div>
         <p class="hint">Hand in at any unlocked location:</p>
         <div id="unlock-offers"></div>
       </section>
@@ -364,6 +376,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028by"></script>
+  <script type="module" src="js/main.js?v=z1-20261028bz"></script>
 </body>
 </html>
