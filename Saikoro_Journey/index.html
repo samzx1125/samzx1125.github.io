@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028co" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028co" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028cp" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028cp" />
 </head>
 <body>
   <header class="top-row">
@@ -80,6 +80,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>CB</strong> — Transfer “?” help (same station · both docked · gold either way · goods either way · panel only when co-located)</li>
               <li><strong>CA</strong> — Inventory “?” help (weight capacity · stacks by buy price · icons + hover · condition % · quest lot · fill bar · Mirror → Character)</li>
               <li><strong>BZ</strong> — Far Beacon Scrap key on Far Beacon unlock (click no-op)</li>
               <li><strong>BY</strong> — Silk Cut Scrap key on Silk Cut unlock (click no-op)</li>
@@ -218,8 +219,19 @@
         <div id="courier-trade-list" class="courier-trade-list"></div>
       </section>
       <section id="transfer-panel" hidden>
-        <h2>Transfer</h2>
-        <p class="hint">Same station · both docked. Move gold / goods either way.</p>
+        <div class="panel-head-row">
+          <h2>Transfer</h2>
+          <button type="button" class="help-q" data-help="transfer" aria-label="Transfer help" aria-expanded="false" aria-controls="help-transfer">?</button>
+        </div>
+        <div id="help-transfer" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Same station</li>
+            <li>Both docked</li>
+            <li>Gold either way</li>
+            <li>Goods either way</li>
+            <li>Panel only when co-located</li>
+          </ul>
+        </div>
         <div class="transfer-gold">
           <label>Gold <input type="number" id="xfer-gold-qty" class="qty" min="1" value="50" /></label>
           <button type="button" data-act="xfer-gold-to-courier">→ Courier</button>
@@ -459,6 +471,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028co"></script>
+  <script type="module" src="js/main.js?v=z1-20261028cp"></script>
 </body>
 </html>
