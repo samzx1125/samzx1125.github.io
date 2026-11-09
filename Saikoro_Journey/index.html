@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028cb" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028cb" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028cc" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028cc" />
 </head>
 <body>
   <header class="top-row">
@@ -80,6 +80,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>BO</strong> — Courier hire+panels “?” help (hire unlock loc · route min 2 stops · pause/resume · Zone1 vs universal · cargo bar)</li>
               <li><strong>BN</strong> — Transport quest “?” help (accept locks lot · deliver at dest · abandon dumps · body only · both ends unlocked)</li>
               <li><strong>BM</strong> — Exit Ash Scrap key on Exit Ash unlock (click no-op)</li>
               <li><strong>BL</strong> — Unlock “?” help (multi-trip deposit · progress sticks · any unlocked loc · ~2–3 max-cap trips)</li>
@@ -158,12 +159,36 @@
         <button type="button" id="btn-quest-abandon" data-act="quest-abandon">Abandon</button>
       </section>
       <section id="courier-hire-panel" hidden>
-        <h2>Courier</h2>
+        <div class="panel-head-row">
+          <h2>Courier</h2>
+          <button type="button" class="help-q" data-help="courier-hire" aria-label="Courier hire help" aria-expanded="false" aria-controls="help-courier-hire">?</button>
+        </div>
+        <div id="help-courier-hire" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Hire at unlock location (Star Ash)</li>
+            <li>Route min 2 stops</li>
+            <li>Pause / resume</li>
+            <li>Zone 1 vs universal range</li>
+            <li>Cargo bar</li>
+          </ul>
+        </div>
         <p class="hint">Zone1-only after Star Ash. Free hire · seed 300G · 3000g hold.</p>
         <button type="button" class="primary" data-act="hire-courier" id="btn-hire-courier">Hire Courier</button>
       </section>
       <section id="courier-panel" hidden>
-        <h2>Courier</h2>
+        <div class="panel-head-row">
+          <h2>Courier</h2>
+          <button type="button" class="help-q" data-help="courier" aria-label="Courier help" aria-expanded="false" aria-controls="help-courier">?</button>
+        </div>
+        <div id="help-courier" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Hire at unlock location (Star Ash)</li>
+            <li>Route min 2 stops</li>
+            <li>Pause / resume</li>
+            <li>Zone 1 vs universal range</li>
+            <li>Cargo bar</li>
+          </ul>
+        </div>
         <div class="bar" aria-label="courier cargo fill"><div id="courier-bar-fill" class="bar-fill"></div></div>
         <p id="courier-summary" class="hint">—</p>
         <p id="courier-status" class="muted"></p>
@@ -402,6 +427,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028cb"></script>
+  <script type="module" src="js/main.js?v=z1-20261028cc"></script>
 </body>
 </html>
