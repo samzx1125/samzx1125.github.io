@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028bv" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028bv" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028bw" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028bw" />
 </head>
 <body>
   <header class="top-row">
@@ -183,7 +183,17 @@
         <p id="cargo-empty" class="hint" hidden>empty</p>
       </section>
       <section id="personal-panel">
-        <h2>Personal</h2>
+        <div class="panel-head-row">
+          <h2>Personal</h2>
+          <button type="button" class="help-q" data-help="personal" aria-label="Personal help" aria-expanded="false" aria-controls="help-personal">?</button>
+        </div>
+        <div id="help-personal" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Keys &amp; consumables — no cargo weight · not for sale</li>
+            <li>Mirror Residue — opens Character</li>
+            <li>Other keys may be scrap (click no-op for now)</li>
+          </ul>
+        </div>
         <p class="hint">Keys &amp; consumables — no cargo weight; not for sale.</p>
         <ul id="personal-list" class="cargo-list personal-list"></ul>
         <p id="personal-empty" class="hint" hidden>empty</p>
@@ -339,6 +349,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028bv"></script>
+  <script type="module" src="js/main.js?v=z1-20261028bw"></script>
 </body>
 </html>
