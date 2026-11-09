@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028ce';
+} from './state.js?v=z1-20261028cf';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -60,9 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028ce';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028ce';
-import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP } from './personal-data.js?v=z1-20261028ce';
+} from './economy-data.js?v=z1-20261028cf';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028cf';
+import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP } from './personal-data.js?v=z1-20261028cf';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -602,6 +602,13 @@ export function tryDepositUnlock(s, unlock) {
       if (!s.personal || typeof s.personal !== 'object') s.personal = {};
       if (!(s.personal[KEY_COBALT_GATE_SCRAP] > 0)) {
         s.personal[KEY_COBALT_GATE_SCRAP] = 1;
+      }
+    }
+    // Slice BR: Quiet Pier Scrap once on Quiet Pier unlock (idempotent)
+    if (unlock.target === 'loc_a02z02l003_quiet_pier') {
+      if (!s.personal || typeof s.personal !== 'object') s.personal = {};
+      if (!(s.personal[KEY_QUIET_PIER_SCRAP] > 0)) {
+        s.personal[KEY_QUIET_PIER_SCRAP] = 1;
       }
     }
     return { ok: true, unlocked: true, universalCourier };
