@@ -183,6 +183,13 @@ main {
   stroke-width: 5;
 }
 
+/* Slice AU — hide deep future map nodes/rails/labels until visible */
+.node-wrap.map-hidden,
+.rail.map-hidden,
+.map-area-label.map-hidden {
+  display: none !important;
+}
+
 /* Slice AS — Area climate labels on plane; chrome only, never interactive */
 #map-area-labels {
   position: absolute;

@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bh';
-import { courierLocAllowed } from './engine.js?v=z1-20261028bh';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bh';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bh';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028bh';
-import { getLastSavedAt } from './saving.js?v=z1-20261028bh';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bh';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bi';
+import { courierLocAllowed } from './engine.js?v=z1-20261028bi';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bi';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bi';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028bi';
+import { getLastSavedAt } from './saving.js?v=z1-20261028bi';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bi';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -46,6 +46,16 @@ export function flashTradedRow(goodId) {
 }
 
 /** Brief map flash when a location unlocks. */
+
+/** Slice AU — locs shown on map: unlocked + current availableUnlock targets only. */
+function mapVisibleLocIds(s) {
+  const vis = new Set(s.unlocked || []);
+  for (const u of availableUnlocks(s.unlocked)) {
+    if (u && u.target) vis.add(u.target);
+  }
+  return vis;
+}
+
 export function flashUnlockedNode(locId) {
   const el = document.querySelector(`.node[data-loc-id="${locId}"]`);
   if (!el) return;
@@ -82,7 +92,7 @@ export function mountView() {
       line.setAttribute('y1', String(la.y));
       line.setAttribute('x2', String(lb.x));
       line.setAttribute('y2', String(lb.y));
-      line.setAttribute('class', 'rail');
+      line.setAttribute('class', 'rail map-hidden');
       line.dataset.a = e.a;
       line.dataset.b = e.b;
       railsEl.appendChild(line);
@@ -93,7 +103,7 @@ export function mountView() {
     nodesEl.innerHTML = '';
     for (const loc of LOCATIONS) {
       const wrap = document.createElement('div');
-      wrap.className = 'node-wrap';
+      wrap.className = 'node-wrap map-hidden';
       wrap.dataset.locId = loc.id;
       wrap.style.left = loc.x + 'px';
       wrap.style.top = loc.y + 'px';
@@ -138,7 +148,7 @@ export function mountView() {
       // Sit above the node band (~150–280) so chips stay readable
       const cy = 52;
       const el = document.createElement('div');
-      el.className = 'map-area-label';
+      el.className = 'map-area-label map-hidden';
       el.dataset.areaId = String(areaId);
       el.style.left = Math.round(cx) + 'px';
       el.style.top = cy + 'px';
@@ -542,6 +552,16 @@ export function render(s, ui = {}) {
     }
   }
 
+  // Slice AU — hide deep future zones; show unlocked + next unlock target(s) only
+  const mapVis = mapVisibleLocIds(s);
+
+  document.querySelectorAll('.node-wrap').forEach((wrap) => {
+    const id = wrap.dataset.locId;
+    const visible = mapVis.has(id);
+    wrap.classList.toggle('map-hidden', !visible);
+    wrap.hidden = !visible;
+  });
+
   document.querySelectorAll('.node').forEach((el) => {
     const id = el.dataset.locId;
     const unlocked = s.unlocked.includes(id);
@@ -550,6 +570,7 @@ export function render(s, ui = {}) {
     el.classList.toggle('selected', id === s.selectedLocId);
     el.classList.toggle('dest', !!s.travel && id === s.travel.to);
     // Locked: disabled + tabindex=-1 so Tab skips (aria-disabled alone is not enough)
+    // Locked-but-visible unlock targets keep locked styling (hand-in destinations)
     el.disabled = !unlocked;
     el.tabIndex = unlocked ? 0 : -1;
     el.setAttribute('tabindex', unlocked ? '0' : '-1');
@@ -559,12 +580,24 @@ export function render(s, ui = {}) {
   document.querySelectorAll('.rail').forEach((line) => {
     const a = line.dataset.a;
     const b = line.dataset.b;
+    const railVis = mapVis.has(a) && mapVis.has(b);
+    line.classList.toggle('map-hidden', !railVis);
+    if (railVis) line.removeAttribute('hidden');
+    else line.setAttribute('hidden', '');
     const active =
       s.travel &&
       ((s.travel.from === a && s.travel.to === b) || (s.travel.from === b && s.travel.to === a));
     line.classList.toggle('active', !!active);
     const bothUnlocked = s.unlocked.includes(a) && s.unlocked.includes(b);
     line.classList.toggle('locked', !bothUnlocked);
+  });
+
+  // Slice AU — Area climate labels only when area has a map-visible loc
+  document.querySelectorAll('.map-area-label').forEach((el) => {
+    const areaId = Number(el.dataset.areaId);
+    const show = LOCATIONS.some((l) => areaOfLoc(l.id) === areaId && mapVis.has(l.id));
+    el.classList.toggle('map-hidden', !show);
+    el.hidden = !show;
   });
 
   {
