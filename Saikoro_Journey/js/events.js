@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028df';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028df';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dg';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028dg';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,30 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028df';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028df';
-import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028df';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028df';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028df';
+} from './engine.js?v=z1-20261028dg';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dg';
+import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028dg';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dg';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dg';
+
+
+/** Slice CS — humanize common fail-toast reasons. Unknown stays raw. */
+const FAIL_REASON_PHRASE = {
+  capacity: 'cargo full',
+  warehouse_cap: 'warehouse full (20000g)',
+  gold: 'not enough gold',
+  freight: 'not enough gold for freight',
+  locked_feature: 'stop/re-route locked (Star Ash)',
+  traveling: 'already traveling',
+  stock: 'not enough stock',
+  max: 'already max level',
+};
+
+/** @param {string|undefined|null} reason */
+function failPhrase(reason) {
+  if (reason == null || reason === '') return reason;
+  return FAIL_REASON_PHRASE[reason] || reason;
+}
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -386,7 +405,7 @@ export function bindEvents(s, opts = {}) {
       if (r.ok) ui.lastMsg = r.stopped ? 'stopped' : `re-routed → ${locName(locId)}`;
       else if (r.reason === 'capacity_gate') {
         ui.lastMsg = r.message || areaBridgeBlockReason(state, state.locationId, locId) || 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur';
-      } else ui.lastMsg = `cannot re-route (${r.reason})`;
+      } else ui.lastMsg = `cannot re-route (${failPhrase(r.reason)})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
       return;
@@ -418,9 +437,7 @@ export function bindEvents(s, opts = {}) {
         : `departing → ${locName(locId)}`;
     } else if (r.reason === 'capacity_gate') {
       ui.lastMsg = r.message || areaBridgeBlockReason(state, state.locationId, locId) || 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur';
-    } else if (r.reason === 'freight') {
-      ui.lastMsg = r.message || 'not enough gold for freight';
-    } else ui.lastMsg = `cannot travel (${r.reason})`;
+    } else ui.lastMsg = `cannot travel (${failPhrase(r.reason)})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
   }
@@ -507,7 +524,7 @@ export function bindEvents(s, opts = {}) {
         n = Math.max(0, Math.min(byGold, byCap));
       }
       const r = tryBuy(state, loc, good, n);
-      ui.lastMsg = r.ok ? `bought ${goodName(good)} ×${n}` : `buy failed (${r.reason})`;
+      ui.lastMsg = r.ok ? `bought ${goodName(good)} ×${n}` : `buy failed (${failPhrase(r.reason)})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); focusQtyAfterTrade(good); flashTradedRow(good); }
     } else if (act === 'sell' || act === 'sell-all') {
       let n = qty;
@@ -528,7 +545,7 @@ export function bindEvents(s, opts = {}) {
       if (r.ok) {
         const taxBit = r.tax > 0 ? ` (−${r.tax} A2 toll)` : '';
         ui.lastMsg = `sold ${goodName(good)} ×${sold}${taxBit}`;
-      } else ui.lastMsg = `sell failed (${r.reason})`;
+      } else ui.lastMsg = `sell failed (${failPhrase(r.reason)})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); focusQtyAfterTrade(good); flashTradedRow(good); }
     }
     render(state, ui);
@@ -569,7 +586,7 @@ export function bindEvents(s, opts = {}) {
     const btn = ev.target.closest('button[data-act="stop-travel"]');
     if (!btn || !state) return;
     const r = tryStopTravel(state);
-    ui.lastMsg = r.ok ? 'stopped' : `cannot stop (${r.reason})`;
+    ui.lastMsg = r.ok ? 'stopped' : `cannot stop (${failPhrase(r.reason)})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
   });
@@ -578,7 +595,7 @@ export function bindEvents(s, opts = {}) {
     const btn = ev.target.closest('button[data-act="quest-accept"]');
     if (!btn || !state) return;
     const r = tryAcceptQuest(state);
-    ui.lastMsg = r.ok ? 'quest accepted' : `cannot accept (${r.reason})`;
+    ui.lastMsg = r.ok ? 'quest accepted' : `cannot accept (${failPhrase(r.reason)})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
   });
@@ -589,14 +606,14 @@ export function bindEvents(s, opts = {}) {
     const abandon = ev.target.closest('button[data-act="quest-abandon"]');
     if (deliver) {
       const r = tryDeliverQuest(state);
-      ui.lastMsg = r.ok ? `delivered +${r.reward}G` : `cannot deliver (${r.reason})`;
+      ui.lastMsg = r.ok ? `delivered +${r.reward}G` : `cannot deliver (${failPhrase(r.reason)})`;
       if (r.ok || r.reason === 'waste') { saveGame(state); invalidateQuotes(); }
       render(state, ui);
       return;
     }
     if (abandon) {
       const r = tryAbandonQuest(state);
-      ui.lastMsg = r.ok ? 'quest failed (abandoned)' : `cannot abandon (${r.reason})`;
+      ui.lastMsg = r.ok ? 'quest failed (abandoned)' : `cannot abandon (${failPhrase(r.reason)})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
     }
@@ -607,7 +624,7 @@ export function bindEvents(s, opts = {}) {
     const btn = ev.target.closest('button[data-act="hire-courier"]');
     if (!btn || !state) return;
     const r = tryHireCourier(state);
-    ui.lastMsg = r.ok ? 'courier hired' : `hire failed (${r.reason})`;
+    ui.lastMsg = r.ok ? 'courier hired' : `hire failed (${failPhrase(r.reason)})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
   });
@@ -705,7 +722,7 @@ export function bindEvents(s, opts = {}) {
     if (gToC || gToP) {
       const qty = Number(document.getElementById('xfer-gold-qty')?.value || 0);
       const r = tryTransferGold(state, gToC ? 'toCourier' : 'toPlayer', qty);
-      ui.lastMsg = r.ok ? `transferred ${qty}G` : `transfer failed (${r.reason})`;
+      ui.lastMsg = r.ok ? `transferred ${qty}G` : `transfer failed (${failPhrase(r.reason)})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
       return;
@@ -719,7 +736,7 @@ export function bindEvents(s, opts = {}) {
         : document.querySelector(`input[data-xfer-good="${good}"]`);
       const qty = Number(input?.value || 1);
       const r = tryTransferGood(state, good, goodToC ? 'toCourier' : 'toPlayer', qty, stackId || undefined);
-      ui.lastMsg = r.ok ? `transferred ${goodName(good)} ×${qty}` : `transfer failed (${r.reason})`;
+      ui.lastMsg = r.ok ? `transferred ${goodName(good)} ×${qty}` : `transfer failed (${failPhrase(r.reason)})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
     }
@@ -790,7 +807,7 @@ export function bindEvents(s, opts = {}) {
       const r = tryWarehouseDeposit(state, who, good, qty, stackId || undefined);
       ui.lastMsg = r.ok
         ? `deposited ${goodName(good)} ×${qty} → warehouse`
-        : `deposit failed (${r.reason})`;
+        : `deposit failed (${failPhrase(r.reason)})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
       return;
@@ -815,7 +832,7 @@ export function bindEvents(s, opts = {}) {
       const r = tryWarehouseWithdraw(state, who, good, qty, stackId || undefined);
       ui.lastMsg = r.ok
         ? `withdrew ${goodName(good)} ×${qty} → ${who === 'courier' ? 'courier' : 'cargo'}`
-        : `withdraw failed (${r.reason})`;
+        : `withdraw failed (${failPhrase(r.reason)})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
     }
@@ -830,7 +847,7 @@ export function bindEvents(s, opts = {}) {
       saveGame(state);
       invalidateQuotes();
     } else {
-      ui.lastMsg = `upgrade failed (${r.reason})`;
+      ui.lastMsg = `upgrade failed (${failPhrase(r.reason)})`;
     }
     render(state, ui);
   });
@@ -844,7 +861,7 @@ export function bindEvents(s, opts = {}) {
       saveGame(state);
       invalidateQuotes();
     } else {
-      ui.lastMsg = `preserve upgrade failed (${r.reason})`;
+      ui.lastMsg = `preserve upgrade failed (${failPhrase(r.reason)})`;
     }
     render(state, ui);
   });
@@ -860,7 +877,7 @@ export function bindEvents(s, opts = {}) {
       saveGame(state);
       invalidateQuotes();
     } else {
-      ui.lastMsg = `speed upgrade failed (${r.reason})`;
+      ui.lastMsg = `speed upgrade failed (${failPhrase(r.reason)})`;
     }
     render(state, ui);
   });
