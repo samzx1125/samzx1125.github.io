@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bk';
-import { courierLocAllowed } from './engine.js?v=z1-20261028bk';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bk';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bk';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028bk';
-import { getLastSavedAt } from './saving.js?v=z1-20261028bk';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bk';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bl';
+import { courierLocAllowed } from './engine.js?v=z1-20261028bl';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bl';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bl';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028bl';
+import { getLastSavedAt } from './saving.js?v=z1-20261028bl';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bl';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -527,12 +527,20 @@ export function render(s, ui = {}) {
       ? `A${areaN}Z${zoneN} · ${here.name}`
       : s.locationId;
   setText('hud-loc', travelLabel);
-  // Slice AO — area property chip (climate + optional bridge gate hint)
+  // Slice AO/AX — area property chip (climate + tax/freight + optional bridge gate hint)
   {
     const propEl = document.getElementById('hud-area-prop');
     if (propEl) {
       const prop = areaPropertyForLoc(locForArea);
-      let line = prop ? `${prop.climate} — ${prop.blurb}` : '';
+      let line = '';
+      if (prop) {
+        const taxPct = Number(prop.sellTaxPct) || 0;
+        const freight = Number(prop.freightPerDist);
+        const taxBit = `tax ${+(taxPct * 100).toFixed(2)}%`;
+        const freightBit = Number.isFinite(freight) ? `freight ${freight.toFixed(1)}/dist` : '';
+        line = `${prop.climate} — ${prop.blurb} · ${taxBit}`;
+        if (freightBit) line += ` · ${freightBit}`;
+      }
       const standId = s.travel ? null : s.locationId;
       if (
         standId &&
