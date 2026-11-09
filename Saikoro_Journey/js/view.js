@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bo';
-import { courierLocAllowed } from './engine.js?v=z1-20261028bo';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bo';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028bo';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028bo';
-import { getLastSavedAt } from './saving.js?v=z1-20261028bo';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bo';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bp';
+import { courierLocAllowed } from './engine.js?v=z1-20261028bp';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bp';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028bp';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028bp';
+import { getLastSavedAt } from './saving.js?v=z1-20261028bp';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bp';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -385,9 +385,19 @@ function renderQuotes(s) {
       if (have > 0 && depleteRateForGood(g.id) > 0) {
         const cond = Math.round(goodCondition(s, g.id));
         const mul = sellMulFromCondition(cond);
+        // Mirror trySell: condition mul first, then area sellTaxPct on the unit gold.
         const sellAt = Math.max(0, Math.round(price * mul));
-        priceCell = `${price}<span class="muted sell-at" title="sell at condition ${cond}%">→${sellAt}</span>`;
-        priceTitle = `MP ${price}; sell @ ${sellAt} (${cond}% condition)`;
+        const taxPct = Number(areaPropertyForLoc(quoteLoc)?.sellTaxPct) || 0;
+        if (taxPct > 0) {
+          const tax = Math.floor(sellAt * taxPct);
+          const net = sellAt - tax;
+          const taxShown = +(taxPct * 100).toFixed(2);
+          priceCell = `${price}<span class="muted sell-at" title="sell at condition ${cond}% · after ${taxShown}% tax">→${net}</span>`;
+          priceTitle = `MP ${price}; sell @ ${net} after tax (${cond}% condition · ${taxShown}% tax; pre-tax ${sellAt})`;
+        } else {
+          priceCell = `${price}<span class="muted sell-at" title="sell at condition ${cond}%">→${sellAt}</span>`;
+          priceTitle = `MP ${price}; sell @ ${sellAt} (${cond}% condition)`;
+        }
       }
     } else {
       priceCell = `<span class="mem-price" title="last seen MP">mem ${price}</span>`;
