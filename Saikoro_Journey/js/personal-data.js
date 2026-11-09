@@ -64,6 +64,14 @@ export const PERSONAL_DEFS = [
     icon: '◆',
   },
   {
+    id: 'key_a01k007_ash_pump_scrap',
+    name: 'Ash Pump Scrap',
+    kind: 'key',
+    desc: 'A dry scrap from the ash pump. Dusty in the pocket.',
+    description: 'A dry scrap from the ash pump. Dusty in the pocket.',
+    icon: '◇',
+  },
+  {
     id: 'key_a02k002_cobalt_gate_scrap',
     name: 'Cobalt Gate Scrap',
     kind: 'key',
@@ -152,6 +160,7 @@ export const KEY_EXIT_ASH_SCRAP = 'key_a01k003_exit_ash_scrap';
 export const KEY_SCRAP_GATE_SCRAP = 'key_a01k004_scrap_gate_scrap';
 export const KEY_DUNE_CROWN_SCRAP = 'key_a01k005_dune_crown_scrap';
 export const KEY_STAR_GATE_SCRAP = 'key_a01k006_star_gate_scrap';
+export const KEY_ASH_PUMP_SCRAP = 'key_a01k007_ash_pump_scrap';
 export const KEY_COBALT_GATE_SCRAP = 'key_a02k002_cobalt_gate_scrap';
 export const KEY_QUIET_PIER_SCRAP = 'key_a02k003_quiet_pier_scrap';
 export const KEY_PALE_LAMP_SCRAP = 'key_a02k004_pale_lamp_scrap';
