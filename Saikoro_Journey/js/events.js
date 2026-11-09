@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dg';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028dg';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dh';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028dh';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,11 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028dg';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dg';
-import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028dg';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dg';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dg';
+} from './engine.js?v=z1-20261028dh';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dh';
+import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dh';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dh';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dh';
 
 
 /** Slice CS — humanize common fail-toast reasons. Unknown stays raw. */
@@ -927,6 +927,13 @@ export function bindEvents(s, opts = {}) {
       } catch {
         ui.lastMsg = 'export failed';
       }
+    } else if (btn.dataset.act === 'import-save') {
+      const fileInput = document.getElementById('import-save-file');
+      if (fileInput) {
+        fileInput.value = '';
+        fileInput.click();
+      }
+      return;
     } else if (btn.dataset.act === 'new-game') {
       if (!confirm('New game? This clears the current save and restarts the opening.')) return;
       clearSave();
@@ -941,6 +948,52 @@ export function bindEvents(s, opts = {}) {
       ui.lastMsg = 'save cleared — reload page for fresh start';
     }
     render(state, ui);
+  });
+
+  // Slice CT — Import save from JSON (round-trip with Export)
+  document.getElementById('import-save-file')?.addEventListener('change', (ev) => {
+    const input = /** @type {HTMLInputElement} */ (ev.target);
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file || !state) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data;
+      try {
+        data = JSON.parse(String(reader.result || ''));
+      } catch {
+        ui.lastMsg = 'import failed (bad JSON)';
+        render(state, ui);
+        return;
+      }
+      if (!data || data.v == null || data.v === '') {
+        ui.lastMsg = 'import failed (missing v)';
+        render(state, ui);
+        return;
+      }
+      // Mirror applySave accepted range (v2…SAVE_VERSION) before overwrite confirm
+      const v = data.v;
+      if (typeof v !== 'number' || v < 2 || v > SAVE_VERSION) {
+        ui.lastMsg = 'import failed (bad or unsupported v)';
+        render(state, ui);
+        return;
+      }
+      if (!confirm('Import this save? Current progress in this browser will be overwritten.')) return;
+      const ok = applySave(state, data);
+      if (!ok) {
+        ui.lastMsg = 'import failed (bad save)';
+        render(state, ui);
+        return;
+      }
+      const saved = saveGame(state);
+      ui.lastMsg = saved ? 'save imported' : 'imported but save failed';
+      render(state, ui);
+    };
+    reader.onerror = () => {
+      ui.lastMsg = 'import failed (read error)';
+      render(state, ui);
+    };
+    reader.readAsText(file);
   });
 }
 

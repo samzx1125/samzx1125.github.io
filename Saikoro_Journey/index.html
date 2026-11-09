@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028dg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028dg" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028dh" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028dh" />
 </head>
 <body>
   <header class="top-row">
@@ -73,7 +73,7 @@
         </div>
         <div id="help-options" class="help-pop" hidden role="tooltip">
           <ul class="controls-list">
-            <li>Options — Save / Load / Export save / Update log</li>
+            <li>Options — Save / Load / Export save / Import save / Update log</li>
             <li>Upgrade — cargo / preserve / speed (mid-travel OK)</li>
             <li>Inventory Mirror — character sheet</li>
           </ul>
@@ -81,17 +81,20 @@
         <div id="options-menu" class="options-menu" hidden role="menu" aria-label="Options">
           <section id="save-panel">
             <h2>Save</h2>
-            <p class="hint">localStorage only (this browser). Load reloads last save; Export downloads JSON.</p>
+            <p class="hint">localStorage only (this browser). Load reloads last save; Export downloads JSON; Import loads a JSON file (confirm overwrite).</p>
             <p id="save-stamp" class="muted">never saved</p>
             <button type="button" class="primary" data-act="save">Save</button>
             <button type="button" class="primary" data-act="load">Load</button>
             <button type="button" class="primary" data-act="export-save">Export save</button>
+            <button type="button" class="primary" data-act="import-save">Import save</button>
+            <input type="file" id="import-save-file" accept=".json,application/json" hidden />
             <button type="button" data-act="new-game">New game</button>
             <button type="button" data-act="reset-save">Clear save</button>
           </section>
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>CT</strong> — Import save from JSON (round-trip with Export; confirm overwrite; reject bad/missing v)</li>
               <li><strong>CS</strong> — Humanize fail toasts (shared reason→phrase map; unknown stays raw)</li>
               <li><strong>CR</strong> — Export save download name saikoro-{safeName}-{YYYYMMDD-HHmm}.json (HKT; empty → player)</li>
               <li><strong>CQ</strong> — Star Ash unlock toast also notes free courier hire (same line as stop/re-route)</li>
@@ -523,6 +526,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028dg"></script>
+  <script type="module" src="js/main.js?v=z1-20261028dh"></script>
 </body>
 </html>
