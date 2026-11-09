@@ -103,6 +103,14 @@ export const PERSONAL_DEFS = [
     description: 'A dry scrap from the loom thread. Tight in the pocket.',
     icon: '◩',
   },
+  {
+    id: 'key_a02k010_silk_cut_scrap',
+    name: 'Silk Cut Scrap',
+    kind: 'key',
+    desc: 'A dry scrap from the silk cut. Soft in the pocket.',
+    description: 'A dry scrap from the silk cut. Soft in the pocket.',
+    icon: '◪',
+  },
 ];
 
 export const KEY_MIRROR_RESIDUE = 'key_a01k001_mirror_residue';
@@ -117,6 +125,7 @@ export const KEY_GLASS_FEN_SCRAP = 'key_a02k006_glass_fen_scrap';
 export const KEY_IRON_MARSH_SCRAP = 'key_a02k007_iron_marsh_scrap';
 export const KEY_DRIFT_YARD_SCRAP = 'key_a02k008_drift_yard_scrap';
 export const KEY_HIGH_LOOM_SCRAP = 'key_a02k009_high_loom_scrap';
+export const KEY_SILK_CUT_SCRAP = 'key_a02k010_silk_cut_scrap';
 
 /** @param {string} id */
 export function personalName(id) {
