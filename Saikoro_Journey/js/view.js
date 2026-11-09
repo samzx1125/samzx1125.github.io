@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bn';
-import { courierLocAllowed } from './engine.js?v=z1-20261028bn';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bn';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bn';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028bn';
-import { getLastSavedAt } from './saving.js?v=z1-20261028bn';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bn';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bo';
+import { courierLocAllowed } from './engine.js?v=z1-20261028bo';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bo';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028bo';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028bo';
+import { getLastSavedAt } from './saving.js?v=z1-20261028bo';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bo';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -808,10 +808,14 @@ export function render(s, ui = {}) {
           const n = bag[d.id] || 0;
           if (n <= 0) continue;
           const desc = personalDescription(d.id) || d.desc || '';
-          const title = `${d.name} — ${desc}`;
+          const activatable = d.id === KEY_MIRROR_RESIDUE;
+          const title = activatable
+            ? `${d.name} — ${desc} · opens character`
+            : `${d.name} — ${desc}`;
           const qty = d.kind === 'key' && n === 1 ? '' : `×${n}`;
+          const actClass = activatable ? ' personal-act' : '';
           rows.push(
-            `<li class="inv-stack" data-personal="${d.id}" title="${title}">` +
+            `<li class="inv-stack${actClass}" data-personal="${d.id}" title="${title}">` +
               `<span class="inv-icon" aria-hidden="true">${personalIcon(d.id)}</span>` +
               (qty ? `<span class="inv-qty">${qty}</span>` : '') +
               `<span class="inv-badge">${d.kind}</span></li>`,
