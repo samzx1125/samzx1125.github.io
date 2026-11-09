@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dh';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028dh';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028di';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028di';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,14 +7,14 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028dh';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dh';
-import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dh';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dh';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dh';
+} from './engine.js?v=z1-20261028di';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028di';
+import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028di';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028di';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028di';
 
 
-/** Slice CS — humanize common fail-toast reasons. Unknown stays raw. */
+/** Slice CS/CU — humanize fail-toast reasons. Unknown stays raw. */
 const FAIL_REASON_PHRASE = {
   capacity: 'cargo full',
   warehouse_cap: 'warehouse full (20000g)',
@@ -24,6 +24,23 @@ const FAIL_REASON_PHRASE = {
   traveling: 'already traveling',
   stock: 'not enough stock',
   max: 'already max level',
+  locked: 'location locked',
+  not_here: 'not at this station',
+  same: 'already here',
+  no_edge: 'no route',
+  capacity_gate: 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur',
+  qty: 'invalid quantity',
+  weight: 'bad weight',
+  no_quote: 'no price quote',
+  waste: 'cargo wasted',
+  stack: 'stack missing',
+  already: 'already unlocked',
+  prereq: 'prerequisite locked',
+  nothing: 'nothing to hand in',
+  locked_here: 'station locked',
+  dest_locked: 'destination locked',
+  not_traveling: 'not traveling',
+  no_courier: 'no courier hired',
 };
 
 /** @param {string|undefined|null} reason */
@@ -403,9 +420,7 @@ export function bindEvents(s, opts = {}) {
       const ms = travelMsBetween(fromId, locId, spd);
       const r = tryReroute(state, locId, ms, { distance: dist ?? 0, speed: spd });
       if (r.ok) ui.lastMsg = r.stopped ? 'stopped' : `re-routed → ${locName(locId)}`;
-      else if (r.reason === 'capacity_gate') {
-        ui.lastMsg = r.message || areaBridgeBlockReason(state, state.locationId, locId) || 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur';
-      } else ui.lastMsg = `cannot re-route (${failPhrase(r.reason)})`;
+      else ui.lastMsg = `cannot re-route (${failPhrase(r.reason)})`;
       if (r.ok) { saveGame(state); invalidateQuotes(); }
       render(state, ui);
       return;
@@ -435,8 +450,6 @@ export function bindEvents(s, opts = {}) {
       ui.lastMsg = fg > 0
         ? `departing → ${locName(locId)} (−${fg}g freight)`
         : `departing → ${locName(locId)}`;
-    } else if (r.reason === 'capacity_gate') {
-      ui.lastMsg = r.message || areaBridgeBlockReason(state, state.locationId, locId) || 'Need Capacity Lv1 to cross Exit Ash ↔ Mist Spur';
     } else ui.lastMsg = `cannot travel (${failPhrase(r.reason)})`;
     if (r.ok) { saveGame(state); invalidateQuotes(); }
     render(state, ui);
