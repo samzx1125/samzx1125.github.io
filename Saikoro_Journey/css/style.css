@@ -182,6 +182,32 @@ main {
   min-height: 0;
 }
 
+/* Slice CL — map corner “?” help (viewport-fixed over pan/zoom) */
+.map-help-chip {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+}
+.map-help-chip > .help-q,
+.map-help-chip > .help-pop {
+  pointer-events: auto;
+}
+.map-help-chip > .help-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.35rem);
+  width: min(280px, 70vw);
+  margin: 0;
+  z-index: 13;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 #map-wrap {
   position: relative;
   overflow: auto;

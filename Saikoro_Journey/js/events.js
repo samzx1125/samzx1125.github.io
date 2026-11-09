@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028cy';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028cy';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028cz';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028cz';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,11 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028cy';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028cy';
-import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028cy';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028cy';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028cy';
+} from './engine.js?v=z1-20261028cz';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028cz';
+import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028cz';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028cz';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028cz';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -195,7 +195,10 @@ export function bindEvents(s, opts = {}) {
       el.closest('input') ||
       el.closest('select') ||
       el.closest('textarea') ||
-      el.closest('[data-act]')
+      el.closest('[data-act]') ||
+      el.closest('.help-q') ||
+      el.closest('.help-pop') ||
+      el.closest('.map-help-chip')
     );
   }
 
@@ -326,6 +329,8 @@ export function bindEvents(s, opts = {}) {
     }
     if (ev.target.closest('.node')) return;
     if (ev.target.closest('button[data-act="travel-to"]')) return;
+    // Slice CL — map corner help stays open; don't treat as blank-map dismiss
+    if (ev.target.closest('.help-q') || ev.target.closest('.help-pop') || ev.target.closest('.map-help-chip')) return;
     if (ui.characterOpen) setCharacterOpen(false);
     if (ui.optionsOpen) setOptionsOpen(false);
     if (ui.upgradesOpen) setUpgradesOpen(false);

@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028cy" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028cy" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028cz" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028cz" />
 </head>
 <body>
   <header class="top-row">
@@ -80,6 +80,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>CL</strong> — Map “?” help (drag to pan · wheel to zoom · Area labels · locked/future zones hidden until unlocked · pin = you · travel rect = on train)</li>
               <li><strong>CK</strong> — Star Ash Scrap key on Star Ash unlock (click no-op)</li>
               <li><strong>CJ</strong> — Deep Dune Scrap key on Deep Dune unlock (click no-op)</li>
               <li><strong>CI</strong> — Salt Glass Scrap key on Salt Glass unlock (click no-op)</li>
@@ -288,6 +289,19 @@
       </section>
     </aside>
     <div id="map-wrap">
+      <div class="map-help-chip">
+        <button type="button" class="help-q" data-help="map" aria-label="Map help" aria-expanded="false" aria-controls="help-map">?</button>
+        <div id="help-map" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Drag to pan</li>
+            <li>Wheel to zoom</li>
+            <li>Area labels</li>
+            <li>Locked / future zones hidden until unlocked</li>
+            <li>Pin = you</li>
+            <li>Travel rect = on train</li>
+          </ul>
+        </div>
+      </div>
       <div id="map-zoom-sizer">
         <div id="map-plane">
           <svg id="rails" viewBox="0 0 3800 400" width="3800" height="400" preserveAspectRatio="xMinYMin meet"></svg>
@@ -480,6 +494,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028cy"></script>
+  <script type="module" src="js/main.js?v=z1-20261028cz"></script>
 </body>
 </html>
