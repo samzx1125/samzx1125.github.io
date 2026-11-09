@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028cu';
+} from './state.js?v=z1-20261028cv';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -60,9 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028cu';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028cu';
-import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP, KEY_GLASS_FEN_SCRAP, KEY_IRON_MARSH_SCRAP, KEY_DRIFT_YARD_SCRAP, KEY_HIGH_LOOM_SCRAP, KEY_SILK_CUT_SCRAP, KEY_FAR_BEACON_SCRAP, KEY_SCRAP_GATE_SCRAP, KEY_DUNE_CROWN_SCRAP, KEY_STAR_GATE_SCRAP, KEY_ASH_PUMP_SCRAP, KEY_RUST_SPUR_SCRAP } from './personal-data.js?v=z1-20261028cu';
+} from './economy-data.js?v=z1-20261028cv';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028cv';
+import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP, KEY_GLASS_FEN_SCRAP, KEY_IRON_MARSH_SCRAP, KEY_DRIFT_YARD_SCRAP, KEY_HIGH_LOOM_SCRAP, KEY_SILK_CUT_SCRAP, KEY_FAR_BEACON_SCRAP, KEY_SCRAP_GATE_SCRAP, KEY_DUNE_CROWN_SCRAP, KEY_STAR_GATE_SCRAP, KEY_ASH_PUMP_SCRAP, KEY_RUST_SPUR_SCRAP, KEY_NIGHT_WELL_SCRAP } from './personal-data.js?v=z1-20261028cv';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -700,6 +700,13 @@ export function tryDepositUnlock(s, unlock) {
       if (!s.personal || typeof s.personal !== 'object') s.personal = {};
       if (!(s.personal[KEY_RUST_SPUR_SCRAP] > 0)) {
         s.personal[KEY_RUST_SPUR_SCRAP] = 1;
+      }
+    }
+    // Slice CH: Night Well Scrap once on Night Well unlock (idempotent)
+    if (unlock.target === 'loc_a01z02l003_night_well') {
+      if (!s.personal || typeof s.personal !== 'object') s.personal = {};
+      if (!(s.personal[KEY_NIGHT_WELL_SCRAP] > 0)) {
+        s.personal[KEY_NIGHT_WELL_SCRAP] = 1;
       }
     }
     return { ok: true, unlocked: true, universalCourier };
