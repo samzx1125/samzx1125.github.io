@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028dc';
-import { courierLocAllowed } from './engine.js?v=z1-20261028dc';
-import { GOODS, availableUnlocks, stopRerouteUnlocked, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028dc';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dc';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028dc';
-import { getLastSavedAt } from './saving.js?v=z1-20261028dc';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028dc';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028dd';
+import { courierLocAllowed } from './engine.js?v=z1-20261028dd';
+import { GOODS, availableUnlocks, stopRerouteUnlocked, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028dd';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dd';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028dd';
+import { getLastSavedAt } from './saving.js?v=z1-20261028dd';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028dd';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -943,13 +943,13 @@ export function render(s, ui = {}) {
       const stopBtn = document.getElementById('btn-stop-travel');
       if (stopBtn) {
         stopBtn.disabled = !stopRerouteUnlocked(s.unlocked);
-        stopBtn.title = stopRerouteUnlocked(s.unlocked) ? 'Stop mid-travel' : 'Locked until unlock';
+        stopBtn.title = stopRerouteUnlocked(s.unlocked) ? 'Stop mid-travel' : 'Locked until Star Ash';
       }
       setText(
         'stop-reroute-hint',
         stopRerouteUnlocked(s.unlocked)
           ? 'Stop → origin · Destinations / Travel / map chip re-route'
-          : 'Stop / re-route locked until unlock.',
+          : 'Stop / re-route locked until Star Ash.',
       );
     } else {
       travelPanel.hidden = true;

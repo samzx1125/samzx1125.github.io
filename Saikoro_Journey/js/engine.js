@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028dc';
+} from './state.js?v=z1-20261028dd';
 import {
   goodWeightG,
   stopRerouteUnlocked,
@@ -60,9 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028dc';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028dc';
-import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP, KEY_GLASS_FEN_SCRAP, KEY_IRON_MARSH_SCRAP, KEY_DRIFT_YARD_SCRAP, KEY_HIGH_LOOM_SCRAP, KEY_SILK_CUT_SCRAP, KEY_FAR_BEACON_SCRAP, KEY_SCRAP_GATE_SCRAP, KEY_DUNE_CROWN_SCRAP, KEY_STAR_GATE_SCRAP, KEY_ASH_PUMP_SCRAP, KEY_RUST_SPUR_SCRAP, KEY_NIGHT_WELL_SCRAP, KEY_SALT_GLASS_SCRAP, KEY_DEEP_DUNE_SCRAP, KEY_STAR_ASH_SCRAP } from './personal-data.js?v=z1-20261028dc';
+} from './economy-data.js?v=z1-20261028dd';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028dd';
+import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP, KEY_GLASS_FEN_SCRAP, KEY_IRON_MARSH_SCRAP, KEY_DRIFT_YARD_SCRAP, KEY_HIGH_LOOM_SCRAP, KEY_SILK_CUT_SCRAP, KEY_FAR_BEACON_SCRAP, KEY_SCRAP_GATE_SCRAP, KEY_DUNE_CROWN_SCRAP, KEY_STAR_GATE_SCRAP, KEY_ASH_PUMP_SCRAP, KEY_RUST_SPUR_SCRAP, KEY_NIGHT_WELL_SCRAP, KEY_SALT_GLASS_SCRAP, KEY_DEEP_DUNE_SCRAP, KEY_STAR_ASH_SCRAP } from './personal-data.js?v=z1-20261028dd';
 
 /**
  * @param {import('./state.js').GameState} s

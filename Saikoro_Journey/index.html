@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028dc" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028dc" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028dd" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028dd" />
 </head>
 <body>
   <header class="top-row">
@@ -92,6 +92,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>CP</strong> — Stop / re-route lock copy names Star Ash; unlock toast · stop/re-route unlocked</li>
               <li><strong>CO</strong> — Stop / re-route live when Star Ash unlocked (same hub as courier hire; ?rr=1 force)</li>
               <li><strong>CN</strong> — HUD “?” help (name · gold · cargo used/cap + fill bar · loc · area chip (tax / freight / drift when shown))</li>
               <li><strong>CM</strong> — Station “?” help (location quotes + unlocks · Travel under location · Esc / blank map closes panel · area tax/freight/drift on chip)</li>
@@ -157,7 +158,7 @@
           <ul class="controls-list">
             <li>Map opens location · Travel to / Destinations — travel</li>
             <li>Esc / blank map close panel / toast</li>
-            <li>Pan / zoom on map · Stop / re-route when unlocked</li>
+            <li>Pan / zoom on map · Stop / re-route when Star Ash unlocked</li>
           </ul>
         </div>
         <p class="hint">Route status and adjacent destinations.</p>
@@ -168,7 +169,7 @@
           <p id="travel-pct" class="muted">0%</p>
           <div class="travel-controls">
             <button type="button" id="btn-stop-travel" data-act="stop-travel" disabled>Stop</button>
-            <p id="stop-reroute-hint" class="hint">Stop / re-route locked until unlock.</p>
+            <p id="stop-reroute-hint" class="hint">Stop / re-route locked until Star Ash.</p>
           </div>
         </section>
         <section id="dest-panel">
@@ -519,6 +520,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028dc"></script>
+  <script type="module" src="js/main.js?v=z1-20261028dd"></script>
 </body>
 </html>

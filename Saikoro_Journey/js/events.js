@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dc';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028dc';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dd';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028dd';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,11 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028dc';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dc';
-import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028dc';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dc';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dc';
+} from './engine.js?v=z1-20261028dd';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dd';
+import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028dd';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dd';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dd';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -546,9 +546,13 @@ export function bindEvents(s, opts = {}) {
     }
     const r = tryDepositUnlock(state, unlock);
     if (r.ok && r.unlocked) {
-      ui.lastMsg = r.universalCourier
-        ? `unlocked ${locName(unlock.target)} · universal courier routes unlocked`
-        : `unlocked ${locName(unlock.target)}`;
+      if (r.universalCourier) {
+        ui.lastMsg = `unlocked ${locName(unlock.target)} · universal courier routes unlocked`;
+      } else if (unlock.target === COURIER_UNLOCK_LOC) {
+        ui.lastMsg = `unlocked ${locName(unlock.target)} · stop/re-route unlocked`;
+      } else {
+        ui.lastMsg = `unlocked ${locName(unlock.target)}`;
+      }
       saveGame(state);
       invalidateQuotes();
       flashUnlockedNode(unlock.target);
