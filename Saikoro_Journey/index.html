@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028da" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028da" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028db" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028db" />
 </head>
 <body>
   <header class="top-row">
@@ -18,6 +18,18 @@
       </span>
       <span>loc <strong id="hud-loc">—</strong></span>
       <span class="hud-area-prop" id="hud-area-prop" hidden></span>
+      <div class="hud-help-chip">
+        <button type="button" class="help-q" data-help="hud" aria-label="HUD help" aria-expanded="false" aria-controls="help-hud">?</button>
+        <div id="help-hud" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Name</li>
+            <li>Gold</li>
+            <li>Cargo used/cap + fill bar</li>
+            <li>Loc</li>
+            <li>Area chip (tax / freight / drift when shown)</li>
+          </ul>
+        </div>
+      </div>
     </div>
     <div class="header-actions">
       <div class="options-wrap">
@@ -80,6 +92,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>CN</strong> — HUD “?” help (name · gold · cargo used/cap + fill bar · loc · area chip (tax / freight / drift when shown))</li>
               <li><strong>CM</strong> — Station “?” help (location quotes + unlocks · Travel under location · Esc / blank map closes panel · area tax/freight/drift on chip)</li>
               <li><strong>CL</strong> — Map “?” help (drag to pan · wheel to zoom · Area labels · locked/future zones hidden until unlocked · pin = you · travel rect = on train)</li>
               <li><strong>CK</strong> — Star Ash Scrap key on Star Ash unlock (click no-op)</li>
@@ -505,6 +518,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028da"></script>
+  <script type="module" src="js/main.js?v=z1-20261028db"></script>
 </body>
 </html>

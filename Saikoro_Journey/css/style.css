@@ -65,6 +65,23 @@ header h1 {
   white-space: nowrap;
 }
 
+/* Slice CN — HUD “?” help in top-row */
+.hud-help-chip {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  align-self: center;
+}
+.hud-help-chip > .help-pop {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.35rem);
+  width: min(280px, 90vw);
+  margin: 0;
+  z-index: 32;
+}
+
 .header-actions {
   margin-left: auto;
   flex: 0 0 auto;
