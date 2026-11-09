@@ -1170,6 +1170,13 @@ body.opening-active > main {
 #courier-panel .bar {
   margin: 0.35rem 0 0.25rem;
 }
+/* Slice BH — inventory cargo fill bar (same .bar / .bar-fill chrome as travel/warehouse/courier) */
+#cargo-panel .bar {
+  margin: 0.35rem 0 0.25rem;
+}
+#cargo-panel #cargo-cap {
+  margin-top: 0.15rem;
+}
 .warehouse-tabs {
   display: flex;
   flex-wrap: wrap;
