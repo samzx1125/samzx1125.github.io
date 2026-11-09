@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028bl" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028bl" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028bm" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028bm" />
 </head>
 <body>
   <header class="top-row">
@@ -21,7 +21,18 @@
     </div>
     <div class="header-actions">
       <div class="options-wrap">
-        <button type="button" id="btn-upgrades" aria-expanded="false" aria-controls="upgrades-menu">Upgrade</button>
+        <div class="options-btn-row">
+          <button type="button" id="btn-upgrades" aria-expanded="false" aria-controls="upgrades-menu">Upgrade</button>
+          <button type="button" class="help-q" data-help="upgrades" aria-label="Upgrade help" aria-expanded="false" aria-controls="help-upgrades">?</button>
+        </div>
+        <div id="help-upgrades" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Cargo — raise carry weight (+20% base / level · max 5)</li>
+            <li>Preserve — slow liquid/volatile drain (−12% / level · max 5)</li>
+            <li>Speed — faster travel (+20% base / level · max 5)</li>
+            <li>Mid-travel OK · costs scale by level (cargo 500×, preserve 600×, speed 550× (level+1))</li>
+          </ul>
+        </div>
         <div id="upgrades-menu" class="options-menu" hidden role="menu" aria-label="Upgrades">
           <section id="cargo-upgrade-panel">
             <h2>Cargo</h2>
@@ -69,6 +80,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>AY</strong> — Upgrade “?” help (cargo / preserve / speed · mid-travel OK · costs by level)</li>
               <li><strong>AX</strong> — area chip shows sell tax % + freight/dist from AREA_PROPERTIES</li>
               <li><strong>AW</strong> — Options Save family grouped (Save/Load/Export/New game/Clear save)</li>
               <li><strong>AV</strong> — Options slim (Save/Load/Export/Update log); Upgrade tab; Inventory Mirror; Controls → ?</li>
@@ -316,6 +328,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028bl"></script>
+  <script type="module" src="js/main.js?v=z1-20261028bm"></script>
 </body>
 </html>
