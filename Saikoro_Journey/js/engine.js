@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028br';
+} from './state.js?v=z1-20261028bs';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -60,8 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028br';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028br';
+} from './economy-data.js?v=z1-20261028bs';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028bs';
+import { KEY_FOG_WELL_SCRAP } from './personal-data.js?v=z1-20261028bs';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -574,6 +575,13 @@ export function tryDepositUnlock(s, unlock) {
     if (unlock.target === UNIVERSAL_COURIER_UNLOCK_LOC && !s.universalCourierUnlocked) {
       s.universalCourierUnlocked = true;
       universalCourier = true;
+    }
+    // Slice BE: Fog Well Scrap once on Fog Well unlock (idempotent)
+    if (unlock.target === 'loc_a02z01l002_fog_well') {
+      if (!s.personal || typeof s.personal !== 'object') s.personal = {};
+      if (!(s.personal[KEY_FOG_WELL_SCRAP] > 0)) {
+        s.personal[KEY_FOG_WELL_SCRAP] = 1;
+      }
     }
     return { ok: true, unlocked: true, universalCourier };
   }

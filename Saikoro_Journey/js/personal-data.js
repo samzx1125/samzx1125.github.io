@@ -15,9 +15,18 @@ export const PERSONAL_DEFS = [
     description: 'A flake of glass that won’t forget the wrong face.',
     icon: '◈',
   },
+  {
+    id: 'key_a01k002_fog_well_scrap',
+    name: 'Fog Well Scrap',
+    kind: 'key',
+    desc: 'A dry scrap from the well rim. Warm in the pocket.',
+    description: 'A dry scrap from the well rim. Warm in the pocket.',
+    icon: '▣',
+  },
 ];
 
 export const KEY_MIRROR_RESIDUE = 'key_a01k001_mirror_residue';
+export const KEY_FOG_WELL_SCRAP = 'key_a01k002_fog_well_scrap';
 
 /** @param {string} id */
 export function personalName(id) {
