@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bi';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bi';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028bj';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028bj';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,15 +7,15 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028bi';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bi';
-import { saveGame, clearSave } from './saving.js?v=z1-20261028bi';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bi';
+} from './engine.js?v=z1-20261028bj';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028bj';
+import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028bj';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028bj';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
-/** @type {{ lastMsg: string, panelOpen: boolean, optionsOpen: boolean, characterOpen: boolean }} */
-const ui = { lastMsg: '', panelOpen: true, optionsOpen: false, characterOpen: false, warehouseWho: 'player', warehouseSel: null };
+/** @type {{ lastMsg: string, panelOpen: boolean, optionsOpen: boolean, upgradesOpen: boolean, characterOpen: boolean }} */
+const ui = { lastMsg: '', panelOpen: true, optionsOpen: false, upgradesOpen: false, characterOpen: false, warehouseWho: 'player', warehouseSel: null };
 
 /** @param {import('./state.js').GameState} s */
 export function bindEvents(s, opts = {}) {
@@ -24,6 +24,8 @@ export function bindEvents(s, opts = {}) {
 
   const optionsBtn = document.getElementById('btn-options');
   const optionsMenu = document.getElementById('options-menu');
+  const upgradesBtn = document.getElementById('btn-upgrades');
+  const upgradesMenu = document.getElementById('upgrades-menu');
 
   const characterPanel = document.getElementById('character-panel');
 
@@ -31,6 +33,14 @@ export function bindEvents(s, opts = {}) {
     ui.optionsOpen = !!open;
     if (optionsMenu) optionsMenu.hidden = !ui.optionsOpen;
     if (optionsBtn) optionsBtn.setAttribute('aria-expanded', ui.optionsOpen ? 'true' : 'false');
+    if (ui.optionsOpen) setUpgradesOpen(false);
+  }
+
+  function setUpgradesOpen(open) {
+    ui.upgradesOpen = !!open;
+    if (upgradesMenu) upgradesMenu.hidden = !ui.upgradesOpen;
+    if (upgradesBtn) upgradesBtn.setAttribute('aria-expanded', ui.upgradesOpen ? 'true' : 'false');
+    if (ui.upgradesOpen) setOptionsOpen(false);
   }
 
   function setCharacterOpen(open) {
@@ -38,8 +48,20 @@ export function bindEvents(s, opts = {}) {
     if (characterPanel) characterPanel.hidden = !ui.characterOpen;
     if (ui.characterOpen) {
       setOptionsOpen(false);
+      setUpgradesOpen(false);
       if (state) render(state, ui);
     }
+  }
+
+  function closeHelpPops(exceptId) {
+    document.querySelectorAll('.help-pop').forEach((el) => {
+      if (exceptId && el.id === exceptId) return;
+      el.hidden = true;
+    });
+    document.querySelectorAll('.help-q').forEach((btn) => {
+      if (exceptId && btn.getAttribute('aria-controls') === exceptId) return;
+      btn.setAttribute('aria-expanded', 'false');
+    });
   }
 
   /** Close location/unlock panels + clear toast (Esc / blank map). */
@@ -61,6 +83,7 @@ export function bindEvents(s, opts = {}) {
 
   optionsBtn?.addEventListener('click', (ev) => {
     ev.stopPropagation();
+    closeHelpPops();
     if (ui.characterOpen) {
       setCharacterOpen(false);
       return;
@@ -68,11 +91,34 @@ export function bindEvents(s, opts = {}) {
     setOptionsOpen(!ui.optionsOpen);
   });
 
-  document.getElementById('character-entry')?.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('button[data-act="character"]');
-    if (!btn) return;
+  upgradesBtn?.addEventListener('click', (ev) => {
     ev.stopPropagation();
+    closeHelpPops();
+    if (ui.characterOpen) {
+      setCharacterOpen(false);
+      return;
+    }
+    setUpgradesOpen(!ui.upgradesOpen);
+  });
+
+  document.getElementById('btn-mirror')?.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    closeHelpPops();
     setCharacterOpen(true);
+  });
+
+  document.querySelectorAll('.help-q').forEach((btn) => {
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const id = btn.getAttribute('aria-controls');
+      if (!id) return;
+      const pop = document.getElementById(id);
+      if (!pop) return;
+      const willOpen = pop.hidden;
+      closeHelpPops(willOpen ? id : null);
+      pop.hidden = !willOpen;
+      btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
   });
 
   document.getElementById('btn-character-close')?.addEventListener('click', (ev) => {
@@ -86,10 +132,17 @@ export function bindEvents(s, opts = {}) {
   });
 
   document.addEventListener('click', (ev) => {
-    if (!ui.optionsOpen) return;
-    if (ev.target.closest('.options-wrap')) return;
-    if (ev.target.closest('#character-panel')) return;
-    setOptionsOpen(false);
+    if (ev.target.closest('.help-q') || ev.target.closest('.help-pop')) {
+      /* keep open help until outside */
+    } else {
+      closeHelpPops();
+    }
+    if (ui.optionsOpen || ui.upgradesOpen) {
+      if (!ev.target.closest('.options-wrap') && !ev.target.closest('#character-panel')) {
+        setOptionsOpen(false);
+        setUpgradesOpen(false);
+      }
+    }
   });
 
   document.addEventListener('keydown', (ev) => {
@@ -100,6 +153,15 @@ export function bindEvents(s, opts = {}) {
     }
     if (ui.optionsOpen) {
       setOptionsOpen(false);
+      return;
+    }
+    if (ui.upgradesOpen) {
+      setUpgradesOpen(false);
+      return;
+    }
+    const openHelp = document.querySelector('.help-pop:not([hidden])');
+    if (openHelp) {
+      closeHelpPops();
       return;
     }
     closePanelsAndToast();
@@ -254,6 +316,8 @@ export function bindEvents(s, opts = {}) {
     if (ev.target.closest('button[data-act="travel-to"]')) return;
     if (ui.characterOpen) setCharacterOpen(false);
     if (ui.optionsOpen) setOptionsOpen(false);
+    if (ui.upgradesOpen) setUpgradesOpen(false);
+    closeHelpPops();
     closePanelsAndToast();
   });
 
@@ -797,6 +861,33 @@ export function bindEvents(s, opts = {}) {
     } else if (btn.dataset.act === 'reset-save') {
       clearSave();
       ui.lastMsg = 'save cleared — reload page for fresh start';
+    }
+    render(state, ui);
+  });
+
+  document.getElementById('load-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="load"]');
+    if (!btn || !state) return;
+    // Soft reload — main.js re-reads localStorage via loadGame
+    if (!confirm('Load last save? Unsaved progress in this session will be discarded.')) return;
+    location.reload();
+  });
+
+  document.getElementById('export-panel')?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-act="export-save"]');
+    if (!btn || !state) return;
+    try {
+      const payload = serialize(state);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'saikoro-save.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      ui.lastMsg = 'save exported';
+    } catch {
+      ui.lastMsg = 'export failed';
     }
     render(state, ui);
   });

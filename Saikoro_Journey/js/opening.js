@@ -2,10 +2,10 @@
  * Slice S — opening: name + body + mirror
  * Steps: name → body → mirror → enter game.
  */
-import { saveGame } from './saving.js?v=z1-20261028bi';
-import { createInitialState } from './state.js?v=z1-20261028bi';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028bi';
-import { render } from './view.js?v=z1-20261028bi';
+import { saveGame } from './saving.js?v=z1-20261028bj';
+import { createInitialState } from './state.js?v=z1-20261028bj';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028bj';
+import { render } from './view.js?v=z1-20261028bj';
 
 export const BODY_IDS = ['body_a', 'body_b', 'body_c', 'body_d'];
 
@@ -39,7 +39,7 @@ export function resetStateInPlace(s) {
 
 /**
  * @param {import('./state.js').GameState} state
- * @param {{ lastMsg?: string, panelOpen?: boolean, optionsOpen?: boolean, characterOpen?: boolean }} ui
+ * @param {{ lastMsg?: string, panelOpen?: boolean, optionsOpen?: boolean, upgradesOpen?: boolean, characterOpen?: boolean }} ui
  * @param {{ onDone?: () => void }} [opts]
  */
 export function mountOpening(state, ui, opts = {}) {

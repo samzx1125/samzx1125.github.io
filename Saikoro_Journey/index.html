@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028bi" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028bi" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028bj" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028bj" />
 </head>
 <body>
   <header class="top-row">
@@ -19,62 +19,88 @@
       <span>loc <strong id="hud-loc">—</strong></span>
       <span class="hud-area-prop" id="hud-area-prop" hidden></span>
     </div>
-    <div class="options-wrap">
-      <button type="button" id="btn-options" aria-expanded="false" aria-controls="options-menu">Options</button>
-      <div id="options-menu" class="options-menu" hidden role="menu" aria-label="Options">
-        <section id="controls-panel">
-          <h2>Controls</h2>
+    <div class="header-actions">
+      <div class="options-wrap">
+        <button type="button" id="btn-upgrades" aria-expanded="false" aria-controls="upgrades-menu">Upgrade</button>
+        <div id="upgrades-menu" class="options-menu" hidden role="menu" aria-label="Upgrades">
+          <section id="cargo-upgrade-panel">
+            <h2>Cargo</h2>
+            <p class="hint">Starter 5000g · 5 upgrades × +20% base → max 10000g. Stub price 500×(level+1)G.</p>
+            <p id="cargo-level-label" class="muted">Cargo level 0 / 5 · 5000g</p>
+            <button type="button" class="primary" data-act="upgrade-cargo" id="btn-upgrade-cargo">Upgrade cargo (+20%) — 500G</button>
+          </section>
+          <section id="preserve-upgrade-panel">
+            <h2>Preserve</h2>
+            <p class="hint">Slows liquid/volatile drain. −12% of base per level · max 5 → ×0.40. Stub 600×(level+1)G.</p>
+            <p id="preserve-level-label" class="muted">Preserve level 0 / 5 · drain ×100%</p>
+            <button type="button" class="primary" data-act="upgrade-preserve" id="btn-upgrade-preserve">Upgrade preserve (−12% drain) — 600G</button>
+          </section>
+          <section id="speed-upgrade-panel">
+            <h2>Speed</h2>
+            <p class="hint">Faster travel. +20% of base per level · max 5 → ×2 (speed 20). Stub 550×(level+1)G.</p>
+            <p id="speed-level-label" class="muted">Speed level 0 / 5 · speed 10</p>
+            <button type="button" class="primary" data-act="upgrade-speed" id="btn-upgrade-speed">Upgrade speed (+20%) — 550G</button>
+          </section>
+        </div>
+      </div>
+      <div class="options-wrap">
+        <div class="options-btn-row">
+          <button type="button" id="btn-options" aria-expanded="false" aria-controls="options-menu">Options</button>
+          <button type="button" class="help-q" data-help="options" aria-label="Options help" aria-expanded="false" aria-controls="help-options">?</button>
+        </div>
+        <div id="help-options" class="help-pop" hidden role="tooltip">
           <ul class="controls-list">
-            <li>Map opens location · Travel to / Destinations — travel</li>
-            <li>Enter buy · Shift+Enter sell</li>
-            <li>Alt+Enter Buy max · Shift+Alt+Enter Sell all</li>
-            <li>Esc / blank map close panel / toast</li>
-            <li>Options — save, courier hire &amp; controls</li>
+            <li>Options — Save / Load / Export save / Update log</li>
+            <li>Upgrade — cargo / preserve / speed (mid-travel OK)</li>
+            <li>Inventory Mirror — character sheet</li>
           </ul>
-        </section>
-        <section id="courier-hire-panel" hidden>
-          <h2>Courier</h2>
-          <p class="hint">Zone1-only after Star Ash. Free hire · seed 300G · 3000g hold.</p>
-          <button type="button" class="primary" data-act="hire-courier" id="btn-hire-courier">Hire Courier</button>
-        </section>
-        <section id="cargo-upgrade-panel">
-          <h2>Cargo</h2>
-          <p class="hint">Starter 5000g · 5 upgrades × +20% base → max 10000g. Stub price 500×(level+1)G.</p>
-          <p id="cargo-level-label" class="muted">Cargo level 0 / 5 · 5000g</p>
-          <button type="button" class="primary" data-act="upgrade-cargo" id="btn-upgrade-cargo">Upgrade cargo (+20%) — 500G</button>
-        </section>
-        <section id="preserve-upgrade-panel">
-          <h2>Preserve</h2>
-          <p class="hint">Slows liquid/volatile drain. −12% of base per level · max 5 → ×0.40. Stub 600×(level+1)G.</p>
-          <p id="preserve-level-label" class="muted">Preserve level 0 / 5 · drain ×100%</p>
-          <button type="button" class="primary" data-act="upgrade-preserve" id="btn-upgrade-preserve">Upgrade preserve (−12% drain) — 600G</button>
-        </section>
-        <section id="speed-upgrade-panel">
-          <h2>Speed</h2>
-          <p class="hint">Faster travel. +20% of base per level · max 5 → ×2 (speed 20). Stub 550×(level+1)G.</p>
-          <p id="speed-level-label" class="muted">Speed level 0 / 5 · speed 10</p>
-          <button type="button" class="primary" data-act="upgrade-speed" id="btn-upgrade-speed">Upgrade speed (+20%) — 550G</button>
-        </section>
-        <section id="character-entry">
-          <h2>Character</h2>
-          <p class="hint">Name, body silhouette, capacity, personal keys — read-only.</p>
-          <button type="button" class="primary" data-act="character" id="btn-character">Character</button>
-        </section>
-        <section id="save-panel">
-          <h2>Save</h2>
-          <p class="hint">localStorage only (this browser).</p>
-          <p id="save-stamp" class="muted">never saved</p>
-          <button type="button" class="primary" data-act="save">Save</button>
-          <button type="button" data-act="new-game">New game</button>
-          <button type="button" data-act="reset-save">Clear save</button>
-        </section>
+        </div>
+        <div id="options-menu" class="options-menu" hidden role="menu" aria-label="Options">
+          <section id="save-panel">
+            <h2>Save</h2>
+            <p class="hint">localStorage only (this browser).</p>
+            <p id="save-stamp" class="muted">never saved</p>
+            <button type="button" class="primary" data-act="save">Save</button>
+            <button type="button" data-act="new-game">New game</button>
+            <button type="button" data-act="reset-save">Clear save</button>
+          </section>
+          <section id="load-panel">
+            <h2>Load</h2>
+            <p class="hint">Reload the last localStorage save (soft page reload).</p>
+            <button type="button" class="primary" data-act="load">Load</button>
+          </section>
+          <section id="export-panel">
+            <h2>Export save</h2>
+            <p class="hint">Download current save JSON.</p>
+            <button type="button" class="primary" data-act="export-save">Export save</button>
+          </section>
+          <section id="update-log-panel">
+            <h2>Update log</h2>
+            <ul class="update-log-list">
+              <li><strong>AV</strong> — Options slim (Save/Load/Export/Update log); Upgrade tab; Inventory Mirror; Controls → ?</li>
+              <li><strong>AU</strong> — map hides future zones until unlock; clean Fog Well reveal</li>
+              <li><strong>AT</strong> — body-train travel freight from AREA_PROPERTIES</li>
+              <li><strong>AS</strong> — map Area climate labels</li>
+            </ul>
+          </section>
+        </div>
       </div>
     </div>
   </header>
   <main>
     <aside id="left-menu" class="side-menu side-left" aria-label="Train and inventory">
       <section id="train-panel">
-        <h2>Train</h2>
+        <div class="panel-head-row">
+          <h2>Train</h2>
+          <button type="button" class="help-q" data-help="travel" aria-label="Travel help" aria-expanded="false" aria-controls="help-travel">?</button>
+        </div>
+        <div id="help-travel" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Map opens location · Travel to / Destinations — travel</li>
+            <li>Esc / blank map close panel / toast</li>
+            <li>Pan / zoom on map · Stop / re-route when unlocked</li>
+          </ul>
+        </div>
         <p class="hint">Route status and adjacent destinations.</p>
         <section id="travel-panel" hidden>
           <h3 class="subhead">Travel</h3>
@@ -98,6 +124,11 @@
         <p id="quest-active-detail" class="muted"></p>
         <button type="button" id="btn-quest-deliver" data-act="quest-deliver" disabled>Deliver</button>
         <button type="button" id="btn-quest-abandon" data-act="quest-abandon">Abandon</button>
+      </section>
+      <section id="courier-hire-panel" hidden>
+        <h2>Courier</h2>
+        <p class="hint">Zone1-only after Star Ash. Free hire · seed 300G · 3000g hold.</p>
+        <button type="button" class="primary" data-act="hire-courier" id="btn-hire-courier">Hire Courier</button>
       </section>
       <section id="courier-panel" hidden>
         <h2>Courier</h2>
@@ -127,8 +158,11 @@
         <ul id="transfer-goods" class="transfer-goods"></ul>
       </section>
       <section id="cargo-panel">
-        <h2>Inventory</h2>
-        <p class="hint">Icon stacks by buy price. Hover for name + description. Oil/water condition % on travel. Quest lot separate.</p>
+        <div class="panel-head-row">
+          <h2>Inventory</h2>
+          <button type="button" id="btn-mirror" data-act="character" title="Open character sheet (mirror)">Mirror</button>
+        </div>
+        <p class="hint">Icon stacks by buy price. Hover for name + description. Oil/water condition % on travel. Quest lot separate. Mirror opens character.</p>
         <ul id="cargo-list" class="cargo-list"></ul>
         <p id="cargo-empty" class="hint" hidden>empty</p>
       </section>
@@ -186,13 +220,23 @@
         <p id="warehouse-empty" class="hint" hidden>empty · nothing in cargo either</p>
       </section>
       <section id="quote-panel">
-        <h2 id="quote-title">quotes</h2>
+        <div class="panel-head-row">
+          <h2 id="quote-title">quotes</h2>
+          <button type="button" class="help-q" data-help="trade" aria-label="Trade help" aria-expanded="false" aria-controls="help-trade">?</button>
+        </div>
+        <div id="help-trade" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Enter buy · Shift+Enter sell</li>
+            <li>Alt+Enter Buy max · Shift+Alt+Enter Sell all</li>
+            <li>Trade only when docked · remote shows mem MP</li>
+          </ul>
+        </div>
         <div class="loc-travel-bar">
           <button type="button" class="primary" id="btn-travel-to" data-act="travel-to" disabled>Travel to</button>
           <p id="loc-travel-hint" class="hint"></p>
         </div>
         <p id="quote-mem-hint" class="hint">Live MP at this station.</p>
-        <p class="hint">Trade only when docked. Remote stations show <strong>mem</strong> last-seen MP (stale until revisit). vs buy = MP − buy avg. See Options → Controls.</p>
+        <p class="hint">Trade only when docked. Remote stations show <strong>mem</strong> last-seen MP (stale until revisit). vs buy = MP − buy avg.</p>
         <table>
           <thead>
             <tr><th>goods</th><th>price</th><th title="location MP vs buy avg MP">vs buy</th><th>cargo</th><th></th></tr>
@@ -278,6 +322,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028bi"></script>
+  <script type="module" src="js/main.js?v=z1-20261028bj"></script>
 </body>
 </html>

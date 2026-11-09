@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bi';
-import { courierLocAllowed } from './engine.js?v=z1-20261028bi';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bi';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bi';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028bi';
-import { getLastSavedAt } from './saving.js?v=z1-20261028bi';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bi';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028bj';
+import { courierLocAllowed } from './engine.js?v=z1-20261028bj';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028bj';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription } from './personal-data.js?v=z1-20261028bj';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028bj';
+import { getLastSavedAt } from './saving.js?v=z1-20261028bj';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028bj';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -1044,7 +1044,7 @@ export function render(s, ui = {}) {
     }
   }
 
-  // Capacity upgrade stub (Options)
+  // Capacity upgrade stub (Upgrade menu)
   {
     const level = Math.max(0, Math.min(CAPACITY_MAX_LEVEL, s.capacityLevel | 0));
     // keep s.capacity synced
@@ -1065,7 +1065,7 @@ export function render(s, ui = {}) {
     }
   }
 
-  // Slice Z — Preserve rate upgrade (Options)
+  // Slice Z — Preserve rate upgrade (Upgrade menu)
   {
     const level = Math.max(0, Math.min(PRESERVE_MAX_LEVEL, s.preserveLevel | 0));
     const factor = preserveDrainFactor(level);
@@ -1085,7 +1085,7 @@ export function render(s, ui = {}) {
     }
   }
 
-  // Slice AA — Speed upgrade (Options)
+  // Slice AA — Speed upgrade (Upgrade menu)
   {
     const level = Math.max(0, Math.min(SPEED_MAX_LEVEL, s.speedLevel | 0));
     const spd = effectiveSpeed(level);
@@ -1173,7 +1173,7 @@ export function render(s, ui = {}) {
     }
   }
 
-  // Slice Q — hire button in Options + left courier / transfer panels
+  // Slice Q/AV — hire button (left menu) + courier / transfer panels
   {
     const hirePanel = document.getElementById('courier-hire-panel');
     if (hirePanel) {
