@@ -88,6 +88,14 @@ export const PERSONAL_DEFS = [
     icon: '●',
   },
   {
+    id: 'key_a01k010_salt_glass_scrap',
+    name: 'Salt Glass Scrap',
+    kind: 'key',
+    desc: 'A dry scrap from the salt glass. Briny in the pocket.',
+    description: 'A dry scrap from the salt glass. Briny in the pocket.',
+    icon: '○',
+  },
+  {
     id: 'key_a02k002_cobalt_gate_scrap',
     name: 'Cobalt Gate Scrap',
     kind: 'key',
@@ -179,6 +187,7 @@ export const KEY_STAR_GATE_SCRAP = 'key_a01k006_star_gate_scrap';
 export const KEY_ASH_PUMP_SCRAP = 'key_a01k007_ash_pump_scrap';
 export const KEY_RUST_SPUR_SCRAP = 'key_a01k008_rust_spur_scrap';
 export const KEY_NIGHT_WELL_SCRAP = 'key_a01k009_night_well_scrap';
+export const KEY_SALT_GLASS_SCRAP = 'key_a01k010_salt_glass_scrap';
 export const KEY_COBALT_GATE_SCRAP = 'key_a02k002_cobalt_gate_scrap';
 export const KEY_QUIET_PIER_SCRAP = 'key_a02k003_quiet_pier_scrap';
 export const KEY_PALE_LAMP_SCRAP = 'key_a02k004_pale_lamp_scrap';
