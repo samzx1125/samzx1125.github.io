@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028de';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028de';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028df';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028df';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,11 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028de';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028de';
-import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028de';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028de';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028de';
+} from './engine.js?v=z1-20261028df';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028df';
+import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028df';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028df';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028df';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -882,7 +882,28 @@ export function bindEvents(s, opts = {}) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'saikoro-save.json';
+        const rawName = typeof state.playerName === 'string' ? state.playerName : '';
+        let safeName = rawName
+          .normalize('NFKC')
+          .trim()
+          .replace(/[\\/:*?"<>|\x00-\x1f\x7f]+/g, '')
+          .replace(/\s+/g, '_')
+          .replace(/^\.+/, '')
+          .slice(0, 48)
+          .replace(/[. ]+$/g, '');
+        if (!safeName) safeName = 'player';
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Hong_Kong',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hourCycle: 'h23',
+        }).formatToParts(new Date());
+        const get = (t) => parts.find((p) => p.type === t)?.value || '';
+        const stamp = `${get('year')}${get('month')}${get('day')}-${get('hour')}${get('minute')}`;
+        a.download = `saikoro-${safeName}-${stamp}.json`;
         a.click();
         URL.revokeObjectURL(url);
         ui.lastMsg = 'save exported';
