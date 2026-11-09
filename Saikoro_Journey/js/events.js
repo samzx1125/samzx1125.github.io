@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028cd';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028cd';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028ce';
+import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028ce';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,11 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028cd';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028cd';
-import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028cd';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028cd';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028cd';
+} from './engine.js?v=z1-20261028ce';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028ce';
+import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028ce';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028ce';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028ce';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
