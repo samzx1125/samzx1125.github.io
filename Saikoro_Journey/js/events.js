@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dl';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028dl';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dm';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028dm';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,14 +7,14 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028dl';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dl';
-import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dl';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dl';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dl';
+} from './engine.js?v=z1-20261028dm';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dm';
+import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dm';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dm';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dm';
 
 
-/** Slice CS/CU/CX — humanize fail-toast reasons. Unknown stays raw. */
+/** Slice CS/CU/CX/CY — humanize fail-toast reasons. Unknown stays raw. */
 const FAIL_REASON_PHRASE = {
   capacity: 'cargo full',
   warehouse_cap: 'warehouse full (20000g)',
@@ -695,7 +695,7 @@ export function bindEvents(s, opts = {}) {
       const i = Number(rm.dataset.idx);
       route.splice(i, 1);
       const r = trySetCourierRoute(state, route);
-      ui.lastMsg = r.ok ? (route.length < 2 ? 'courier docked (need ≥2 stops)' : 'route updated') : `route failed (${r.reason})`;
+      ui.lastMsg = r.ok ? (route.length < 2 ? 'courier docked (need ≥2 stops)' : 'route updated') : `route failed (${failPhrase(r.reason)})`;
       if (r.ok) saveGame(state);
       render(state, ui);
       return;
@@ -703,13 +703,13 @@ export function bindEvents(s, opts = {}) {
     if (add) {
       const loc = add.dataset.loc;
       if (!courierLocAllowed(state, loc)) {
-        ui.lastMsg = 'add failed (locked)';
+        ui.lastMsg = `add failed (${failPhrase('locked')})`;
         render(state, ui);
         return;
       }
       route.push(loc);
       const r = trySetCourierRoute(state, route);
-      ui.lastMsg = r.ok ? 'stop added' : `add failed (${r.reason})`;
+      ui.lastMsg = r.ok ? 'stop added' : `add failed (${failPhrase(r.reason)})`;
       if (r.ok) saveGame(state);
       render(state, ui);
     }
@@ -722,7 +722,7 @@ export function bindEvents(s, opts = {}) {
     const r = trySetCourierTradeFlag(state, el.dataset.loc, el.dataset.good, el.dataset.side, want);
     if (!r.ok) {
       el.checked = !want;
-      ui.lastMsg = `trade toggle failed (${r.reason})`;
+      ui.lastMsg = `trade toggle failed (${failPhrase(r.reason)})`;
       render(state, ui);
       return;
     }
