@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028cf';
+} from './state.js?v=z1-20261028cg';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -60,9 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028cf';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028cf';
-import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP } from './personal-data.js?v=z1-20261028cf';
+} from './economy-data.js?v=z1-20261028cg';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028cg';
+import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP } from './personal-data.js?v=z1-20261028cg';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -609,6 +609,13 @@ export function tryDepositUnlock(s, unlock) {
       if (!s.personal || typeof s.personal !== 'object') s.personal = {};
       if (!(s.personal[KEY_QUIET_PIER_SCRAP] > 0)) {
         s.personal[KEY_QUIET_PIER_SCRAP] = 1;
+      }
+    }
+    // Slice BS: Pale Lamp Scrap once on Pale Lamp unlock (idempotent)
+    if (unlock.target === 'loc_a02z01l003_pale_lamp') {
+      if (!s.personal || typeof s.personal !== 'object') s.personal = {};
+      if (!(s.personal[KEY_PALE_LAMP_SCRAP] > 0)) {
+        s.personal[KEY_PALE_LAMP_SCRAP] = 1;
       }
     }
     return { ok: true, unlocked: true, universalCourier };
