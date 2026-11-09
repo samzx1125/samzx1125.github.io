@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028ck';
-import { courierLocAllowed } from './engine.js?v=z1-20261028ck';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028ck';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028ck';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028ck';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ck';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028ck';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028cl';
+import { courierLocAllowed } from './engine.js?v=z1-20261028cl';
+import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028cl';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028cl';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028cl';
+import { getLastSavedAt } from './saving.js?v=z1-20261028cl';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028cl';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;

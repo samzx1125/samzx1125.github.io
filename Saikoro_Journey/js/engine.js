@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028ck';
+} from './state.js?v=z1-20261028cl';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -60,9 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028ck';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028ck';
-import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP, KEY_GLASS_FEN_SCRAP, KEY_IRON_MARSH_SCRAP, KEY_DRIFT_YARD_SCRAP } from './personal-data.js?v=z1-20261028ck';
+} from './economy-data.js?v=z1-20261028cl';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028cl';
+import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP, KEY_GLASS_FEN_SCRAP, KEY_IRON_MARSH_SCRAP, KEY_DRIFT_YARD_SCRAP, KEY_HIGH_LOOM_SCRAP } from './personal-data.js?v=z1-20261028cl';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -644,6 +644,13 @@ export function tryDepositUnlock(s, unlock) {
       if (!s.personal || typeof s.personal !== 'object') s.personal = {};
       if (!(s.personal[KEY_DRIFT_YARD_SCRAP] > 0)) {
         s.personal[KEY_DRIFT_YARD_SCRAP] = 1;
+      }
+    }
+    // Slice BX: High Loom Scrap once on High Loom unlock (idempotent)
+    if (unlock.target === 'loc_a02z04l001_high_loom') {
+      if (!s.personal || typeof s.personal !== 'object') s.personal = {};
+      if (!(s.personal[KEY_HIGH_LOOM_SCRAP] > 0)) {
+        s.personal[KEY_HIGH_LOOM_SCRAP] = 1;
       }
     }
     return { ok: true, unlocked: true, universalCourier };
