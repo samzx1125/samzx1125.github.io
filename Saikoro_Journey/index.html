@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028bx" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028bx" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028by" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028by" />
 </head>
 <body>
   <header class="top-row">
@@ -80,6 +80,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>BK</strong> — Warehouse “?” help (soft cap · goods only · per-area stock · player/courier tabs)</li>
               <li><strong>BI</strong> — Personal “?” help (keys/consumables · Mirror → Character · scrap no-op)</li>
               <li><strong>BH</strong> — inventory cargo fill bar</li>
               <li><strong>BG</strong> — Update log catch-up (BC/BD/BF)</li>
@@ -229,7 +230,18 @@
         <p id="station-travel-hint" class="hint"></p>
       </section>
       <section id="warehouse-panel" hidden>
-        <h2>Area 1 Safe House / Warehouse</h2>
+        <div class="panel-head-row">
+          <h2>Area 1 Safe House / Warehouse</h2>
+          <button type="button" class="help-q" data-help="warehouse" aria-label="Warehouse help" aria-expanded="false" aria-controls="help-warehouse">?</button>
+        </div>
+        <div id="help-warehouse" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Soft cap 20000g</li>
+            <li>Goods only — no quest lots</li>
+            <li>Separate stock per area</li>
+            <li>Player / courier tabs</li>
+          </ul>
+        </div>
         <div class="bar" aria-label="warehouse soft-cap fill"><div id="warehouse-bar-fill" class="bar-fill"></div></div>
         <p id="warehouse-cap" class="hint">0 / 20000 g</p>
         <p class="hint">Hub warehouse · goods only · no quest lots. Soft cap 20000g. Separate stock per area.</p>
@@ -352,6 +364,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028bx"></script>
+  <script type="module" src="js/main.js?v=z1-20261028by"></script>
 </body>
 </html>
