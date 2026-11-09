@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028ch';
+} from './state.js?v=z1-20261028ci';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -60,9 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028ch';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028ch';
-import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP } from './personal-data.js?v=z1-20261028ch';
+} from './economy-data.js?v=z1-20261028ci';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028ci';
+import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP, KEY_GLASS_FEN_SCRAP } from './personal-data.js?v=z1-20261028ci';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -623,6 +623,13 @@ export function tryDepositUnlock(s, unlock) {
       if (!s.personal || typeof s.personal !== 'object') s.personal = {};
       if (!(s.personal[KEY_REED_BANK_SCRAP] > 0)) {
         s.personal[KEY_REED_BANK_SCRAP] = 1;
+      }
+    }
+    // Slice BU: Glass Fen Scrap once on Glass Fen unlock (idempotent)
+    if (unlock.target === 'loc_a02z02l002_glass_fen') {
+      if (!s.personal || typeof s.personal !== 'object') s.personal = {};
+      if (!(s.personal[KEY_GLASS_FEN_SCRAP] > 0)) {
+        s.personal[KEY_GLASS_FEN_SCRAP] = 1;
       }
     }
     return { ok: true, unlocked: true, universalCourier };

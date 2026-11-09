@@ -71,6 +71,14 @@ export const PERSONAL_DEFS = [
     description: 'A dry scrap from the reed edge. Thin in the pocket.',
     icon: '▩',
   },
+  {
+    id: 'key_a02k006_glass_fen_scrap',
+    name: 'Glass Fen Scrap',
+    kind: 'key',
+    desc: 'A dry scrap from the fen glass. Clear in the pocket.',
+    description: 'A dry scrap from the fen glass. Clear in the pocket.',
+    icon: '▢',
+  },
 ];
 
 export const KEY_MIRROR_RESIDUE = 'key_a01k001_mirror_residue';
@@ -81,6 +89,7 @@ export const KEY_COBALT_GATE_SCRAP = 'key_a02k002_cobalt_gate_scrap';
 export const KEY_QUIET_PIER_SCRAP = 'key_a02k003_quiet_pier_scrap';
 export const KEY_PALE_LAMP_SCRAP = 'key_a02k004_pale_lamp_scrap';
 export const KEY_REED_BANK_SCRAP = 'key_a02k005_reed_bank_scrap';
+export const KEY_GLASS_FEN_SCRAP = 'key_a02k006_glass_fen_scrap';
 
 /** @param {string} id */
 export function personalName(id) {
