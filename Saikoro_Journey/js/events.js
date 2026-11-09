@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dk';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028dk';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dl';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028dl';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,14 +7,14 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028dk';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dk';
-import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dk';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dk';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dk';
+} from './engine.js?v=z1-20261028dl';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dl';
+import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dl';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dl';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dl';
 
 
-/** Slice CS/CU — humanize fail-toast reasons. Unknown stays raw. */
+/** Slice CS/CU/CX — humanize fail-toast reasons. Unknown stays raw. */
 const FAIL_REASON_PHRASE = {
   capacity: 'cargo full',
   warehouse_cap: 'warehouse full (20000g)',
@@ -41,6 +41,12 @@ const FAIL_REASON_PHRASE = {
   dest_locked: 'destination locked',
   not_traveling: 'not traveling',
   no_courier: 'no courier hired',
+  same_dest: 'already that destination',
+  quest_active: 'quest already active',
+  no_offer: 'no quest offer',
+  no_quest: 'no active quest',
+  wrong_station: 'wrong station',
+  empty: 'need ≥1 stop',
 };
 
 /** @param {string|undefined|null} reason */
@@ -590,7 +596,7 @@ export function bindEvents(s, opts = {}) {
       ui.lastMsg = `handed in toward ${locName(unlock.target)}`;
       saveGame(state);
     } else {
-      ui.lastMsg = `unlock failed (${r.reason})`;
+      ui.lastMsg = `unlock failed (${failPhrase(r.reason)})`;
     }
     render(state, ui);
   });
