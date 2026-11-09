@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC, areaOfLoc, distanceBetween } from './map-data.js?v=z1-20261028bp';
+import { TRAIN_SPEED, START_LOC, areaOfLoc, distanceBetween } from './map-data.js?v=z1-20261028bq';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
