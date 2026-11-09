@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028ca" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028ca" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028cb" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028cb" />
 </head>
 <body>
   <header class="top-row">
@@ -80,6 +80,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>BN</strong> — Transport quest “?” help (accept locks lot · deliver at dest · abandon dumps · body only · both ends unlocked)</li>
               <li><strong>BM</strong> — Exit Ash Scrap key on Exit Ash unlock (click no-op)</li>
               <li><strong>BL</strong> — Unlock “?” help (multi-trip deposit · progress sticks · any unlocked loc · ~2–3 max-cap trips)</li>
               <li><strong>BK</strong> — Warehouse “?” help (soft cap · goods only · per-area stock · player/courier tabs)</li>
@@ -138,7 +139,19 @@
         </section>
       </section>
       <section id="quest-active-panel" hidden>
-        <h2>Quest</h2>
+        <div class="panel-head-row">
+          <h2>Quest</h2>
+          <button type="button" class="help-q" data-help="quest-active" aria-label="Quest help" aria-expanded="false" aria-controls="help-quest-active">?</button>
+        </div>
+        <div id="help-quest-active" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Accept locks a quest lot</li>
+            <li>Deliver at destination</li>
+            <li>Abandon dumps the lot</li>
+            <li>Body only</li>
+            <li>Both ends unlocked</li>
+          </ul>
+        </div>
         <p id="quest-active-summary" class="hint">—</p>
         <p id="quest-active-detail" class="muted"></p>
         <button type="button" id="btn-quest-deliver" data-act="quest-deliver" disabled>Deliver</button>
@@ -289,7 +302,19 @@
         </table>
       </section>
       <section id="quest-offer-panel" hidden>
-        <h2>Transport quest</h2>
+        <div class="panel-head-row">
+          <h2>Transport quest</h2>
+          <button type="button" class="help-q" data-help="quest-offer" aria-label="Transport quest help" aria-expanded="false" aria-controls="help-quest-offer">?</button>
+        </div>
+        <div id="help-quest-offer" class="help-pop" hidden role="tooltip">
+          <ul class="controls-list">
+            <li>Accept locks a quest lot</li>
+            <li>Deliver at destination</li>
+            <li>Abandon dumps the lot</li>
+            <li>Body only</li>
+            <li>Both ends unlocked</li>
+          </ul>
+        </div>
         <p id="quest-offer-text" class="hint">—</p>
         <p id="quest-offer-reward" class="muted"></p>
         <button type="button" class="primary" id="btn-quest-accept" data-act="quest-accept">Accept</button>
@@ -377,6 +402,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028ca"></script>
+  <script type="module" src="js/main.js?v=z1-20261028cb"></script>
 </body>
 </html>
