@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028db';
-import { courierLocAllowed } from './engine.js?v=z1-20261028db';
-import { GOODS, availableUnlocks, STOP_REROUTE_UNLOCKED, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028db';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028db';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028db';
-import { getLastSavedAt } from './saving.js?v=z1-20261028db';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028db';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028dc';
+import { courierLocAllowed } from './engine.js?v=z1-20261028dc';
+import { GOODS, availableUnlocks, stopRerouteUnlocked, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028dc';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dc';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028dc';
+import { getLastSavedAt } from './saving.js?v=z1-20261028dc';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028dc';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -209,8 +209,8 @@ function destSignature(s) {
   // Include capacityLevel so AO bridge gate re-enables dest rows after upgrade (Slice AP).
   const capPart = `cap${s.capacityLevel | 0}`;
   if (s.travel) {
-    const parts = ['traveling', s.travel.from + '>' + s.travel.to, STOP_REROUTE_UNLOCKED ? 'rr1' : 'rr0', `spd${s.speedLevel|0}`, capPart];
-    if (STOP_REROUTE_UNLOCKED) {
+    const parts = ['traveling', s.travel.from + '>' + s.travel.to, stopRerouteUnlocked(s.unlocked) ? 'rr1' : 'rr0', `spd${s.speedLevel|0}`, capPart];
+    if (stopRerouteUnlocked(s.unlocked)) {
       const fromId = s.locationId;
       const neigh = neighborsOf(fromId).filter((id) => s.unlocked.includes(id) && id !== s.travel.to);
       for (const id of neigh) {
@@ -727,14 +727,14 @@ export function render(s, ui = {}) {
   const destPanel = document.getElementById('dest-panel');
   if (destList && destPanel) {
     const dsig = destSignature(s);
-    if (s.travel && !STOP_REROUTE_UNLOCKED) {
+    if (s.travel && !stopRerouteUnlocked(s.unlocked)) {
       destPanel.hidden = true;
       if (dsig !== lastDestSig) {
         lastDestSig = dsig;
         destList.innerHTML = '';
         if (destEmpty) destEmpty.hidden = true;
       }
-    } else if (s.travel && STOP_REROUTE_UNLOCKED) {
+    } else if (s.travel && stopRerouteUnlocked(s.unlocked)) {
       destPanel.hidden = false;
       if (dsig !== lastDestSig) {
         lastDestSig = dsig;
@@ -942,12 +942,12 @@ export function render(s, ui = {}) {
       setText('travel-pct', `${pct}% · ETA ${formatEta(leftMs)} · ${tr.toFixed(0)}/${td}`);
       const stopBtn = document.getElementById('btn-stop-travel');
       if (stopBtn) {
-        stopBtn.disabled = !STOP_REROUTE_UNLOCKED;
-        stopBtn.title = STOP_REROUTE_UNLOCKED ? 'Stop mid-travel' : 'Locked until unlock';
+        stopBtn.disabled = !stopRerouteUnlocked(s.unlocked);
+        stopBtn.title = stopRerouteUnlocked(s.unlocked) ? 'Stop mid-travel' : 'Locked until unlock';
       }
       setText(
         'stop-reroute-hint',
-        STOP_REROUTE_UNLOCKED
+        stopRerouteUnlocked(s.unlocked)
           ? 'Stop → origin · Destinations / Travel / map chip re-route'
           : 'Stop / re-route locked until unlock.',
       );
@@ -958,7 +958,7 @@ export function render(s, ui = {}) {
     }
   }
 
-  // Travel to / Travel (panel + map under chip) — Slice D; mid-route when STOP_REROUTE_UNLOCKED (Slice J)
+  // Travel to / Travel (panel + map under chip) — Slice D; mid-route when stopRerouteUnlocked (Slice J/CO)
   {
     const panelOpen = ui.panelOpen !== false;
     const target = s.selectedLocId || s.locationId;
@@ -969,10 +969,10 @@ export function render(s, ui = {}) {
     const sameDest = !!(s.travel && target === s.travel.to);
     let can = false;
     let hint = '';
-    if (s.travel && !STOP_REROUTE_UNLOCKED) {
+    if (s.travel && !stopRerouteUnlocked(s.unlocked)) {
       can = false;
       hint = 'traveling…';
-    } else if (s.travel && STOP_REROUTE_UNLOCKED) {
+    } else if (s.travel && stopRerouteUnlocked(s.unlocked)) {
       can = unlocked && adjacent && !sameDest;
       if (sameDest) hint = 'current destination';
       else if (here) hint = 'you are here (use Stop)';
@@ -1013,10 +1013,10 @@ export function render(s, ui = {}) {
       btn.disabled = !can;
       btn.title = hint;
       if (id === 'btn-travel-to') {
-        if (s.travel && STOP_REROUTE_UNLOCKED && can) btn.textContent = `Re-route ${name}`;
+        if (s.travel && stopRerouteUnlocked(s.unlocked) && can) btn.textContent = `Re-route ${name}`;
         else btn.textContent = here ? 'Travel to' : `Travel to ${name}`;
       } else {
-        btn.textContent = s.travel && STOP_REROUTE_UNLOCKED && can ? 'Re-route' : 'Travel';
+        btn.textContent = s.travel && stopRerouteUnlocked(s.unlocked) && can ? 'Re-route' : 'Travel';
       }
     }
     setText('loc-travel-hint', hint);
@@ -1024,7 +1024,7 @@ export function render(s, ui = {}) {
 
     document.querySelectorAll('.map-travel').forEach((btn) => {
       const locId = btn.dataset.loc;
-      const allowMid = !s.travel || STOP_REROUTE_UNLOCKED;
+      const allowMid = !s.travel || stopRerouteUnlocked(s.unlocked);
       const show = panelOpen && !!s.selectedLocId && locId === s.selectedLocId && allowMid;
       btn.hidden = !show;
       if (!show) {
@@ -1057,7 +1057,7 @@ export function render(s, ui = {}) {
         }
       }
       btn.disabled = !thisCan;
-      btn.textContent = s.travel && STOP_REROUTE_UNLOCKED ? 'Re-route' : 'Travel';
+      btn.textContent = s.travel && stopRerouteUnlocked(s.unlocked) ? 'Re-route' : 'Travel';
       btn.title = thisCan
         ? (s.travel
             ? `Re-route → ${locName(locId)}`

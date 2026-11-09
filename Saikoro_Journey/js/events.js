@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028db';
-import { unlockByTarget, goodName, goodWeightG, STOP_REROUTE_UNLOCKED, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028db';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dc';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, effectiveSpeed, WAREHOUSE_CAP, areaBridgeBlockReason } from './economy-data.js?v=z1-20261028dc';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,11 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028db';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028db';
-import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028db';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028db';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028db';
+} from './engine.js?v=z1-20261028dc';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dc';
+import { saveGame, clearSave, serialize } from './saving.js?v=z1-20261028dc';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dc';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dc';
 
 /** @type {import('./state.js').GameState | null} */
 let state = null;
@@ -363,7 +363,7 @@ export function bindEvents(s, opts = {}) {
   function travelTo(locId) {
     if (!state || !locId) return;
     if (state.travel) {
-      if (!STOP_REROUTE_UNLOCKED) {
+      if (!stopRerouteUnlocked(state.unlocked)) {
         ui.lastMsg = 'already traveling (stop/re-route locked)';
         render(state, ui);
         return;
@@ -435,7 +435,7 @@ export function bindEvents(s, opts = {}) {
       return;
     }
 
-    if (state.travel && !STOP_REROUTE_UNLOCKED) {
+    if (state.travel && !stopRerouteUnlocked(state.unlocked)) {
       ui.lastMsg = 'already traveling';
       render(state, ui);
       return;
@@ -443,7 +443,7 @@ export function bindEvents(s, opts = {}) {
     // Slice D/J: open location panel — travel / re-route via Travel to / Destinations / map chip
     state.selectedLocId = locId;
     ui.panelOpen = true;
-    if (state.travel && STOP_REROUTE_UNLOCKED) {
+    if (state.travel && stopRerouteUnlocked(state.unlocked)) {
       if (locId === state.locationId) ui.lastMsg = locName(locId) + ' (origin · Stop)';
       else if (locId === state.travel.to) ui.lastMsg = locName(locId) + ' (current dest)';
       else if (!neighborsOf(state.locationId).includes(locId)) ui.lastMsg = 'only adjacent locations';

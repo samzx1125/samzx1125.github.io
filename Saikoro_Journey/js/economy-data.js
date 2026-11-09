@@ -1,4 +1,4 @@
-import { TRAIN_SPEED, START_LOC, areaOfLoc, distanceBetween } from './map-data.js?v=z1-20261028db';
+import { TRAIN_SPEED, START_LOC, areaOfLoc, distanceBetween } from './map-data.js?v=z1-20261028dc';
 
 /** @typedef {{ id: string, name: string, tags: string[], weightG: number, description: string, icon: string }} GoodDef */
 
@@ -622,12 +622,10 @@ export function sellMulFromCondition(conditionPct) {
 }
 
 /**
- * Slice H/J/K — mid-travel stop / re-route.
- * When true: Stop + Destinations + panel Travel + map Travel chip all re-route.
- * Live default false. Playtest: hard-reload with ?rr=1 (or &rr=1) forces unlock.
+ * Slice H/J/K/CO — mid-travel stop / re-route.
+ * Goes live when Star Ash is unlocked (same hub as courier hire).
+ * Playtest: hard-reload with ?rr=1 (or &rr=1) forces unlock.
  */
-const STOP_REROUTE_DEFAULT = false;
-
 function rrQueryForcesUnlock() {
   try {
     const v = new URLSearchParams(globalThis.location?.search || '').get('rr');
@@ -637,14 +635,17 @@ function rrQueryForcesUnlock() {
   }
 }
 
-export const STOP_REROUTE_UNLOCKED = STOP_REROUTE_DEFAULT || rrQueryForcesUnlock();
-
-
 /**
  * Slice Q — Zone1 courier MVP (systems.md §4 / economy.md §8 thin).
  * Hire is FREE (teaching unlock after Star Ash); seed gold modest; capacity < player.
  */
 export const COURIER_UNLOCK_LOC = 'loc_a01z01l003_star_ash';
+
+/** Slice CO — true when Star Ash is in unlockedIds, or ?rr=1 forces on. */
+export function stopRerouteUnlocked(unlockedIds) {
+  if (rrQueryForcesUnlock()) return true;
+  return (unlockedIds || []).includes(COURIER_UNLOCK_LOC);
+}
 /** Slice AD — universal courier unlock when Scrap Gate first unlocks. */
 export const UNIVERSAL_COURIER_UNLOCK_LOC = 'loc_a01z03l003_scrap_gate';
 /** Slice Q: free hire for teaching MVP (not a gold sink). */

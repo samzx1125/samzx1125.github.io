@@ -18,10 +18,10 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028db';
+} from './state.js?v=z1-20261028dc';
 import {
   goodWeightG,
-  STOP_REROUTE_UNLOCKED,
+  stopRerouteUnlocked,
   BASE_PRICES,
   GOODS,
   PRICE_DRIFT_INTERVAL_MS,
@@ -60,9 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028db';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028db';
-import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP, KEY_GLASS_FEN_SCRAP, KEY_IRON_MARSH_SCRAP, KEY_DRIFT_YARD_SCRAP, KEY_HIGH_LOOM_SCRAP, KEY_SILK_CUT_SCRAP, KEY_FAR_BEACON_SCRAP, KEY_SCRAP_GATE_SCRAP, KEY_DUNE_CROWN_SCRAP, KEY_STAR_GATE_SCRAP, KEY_ASH_PUMP_SCRAP, KEY_RUST_SPUR_SCRAP, KEY_NIGHT_WELL_SCRAP, KEY_SALT_GLASS_SCRAP, KEY_DEEP_DUNE_SCRAP, KEY_STAR_ASH_SCRAP } from './personal-data.js?v=z1-20261028db';
+} from './economy-data.js?v=z1-20261028dc';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028dc';
+import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP, KEY_COBALT_GATE_SCRAP, KEY_QUIET_PIER_SCRAP, KEY_PALE_LAMP_SCRAP, KEY_REED_BANK_SCRAP, KEY_GLASS_FEN_SCRAP, KEY_IRON_MARSH_SCRAP, KEY_DRIFT_YARD_SCRAP, KEY_HIGH_LOOM_SCRAP, KEY_SILK_CUT_SCRAP, KEY_FAR_BEACON_SCRAP, KEY_SCRAP_GATE_SCRAP, KEY_DUNE_CROWN_SCRAP, KEY_STAR_GATE_SCRAP, KEY_ASH_PUMP_SCRAP, KEY_RUST_SPUR_SCRAP, KEY_NIGHT_WELL_SCRAP, KEY_SALT_GLASS_SCRAP, KEY_DEEP_DUNE_SCRAP, KEY_STAR_ASH_SCRAP } from './personal-data.js?v=z1-20261028dc';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -803,23 +803,23 @@ export function tryUpgradeSpeed(s) {
   return { ok: true, level: s.speedLevel, speed, cost, midTravelApplied: !!s.travel };
 }
 
-/** Mid-travel stop — gated by STOP_REROUTE_UNLOCKED. Stays at travel.from. */
+/** Mid-travel stop — gated by stopRerouteUnlocked (Star Ash / ?rr=1). Stays at travel.from. */
 export function tryStopTravel(s) {
   if (!s.travel) return { ok: false, reason: 'not_traveling' };
-  if (!STOP_REROUTE_UNLOCKED) return { ok: false, reason: 'locked_feature' };
+  if (!stopRerouteUnlocked(s.unlocked)) return { ok: false, reason: 'locked_feature' };
   s.travel = null;
   return { ok: true };
 }
 
 /**
  * Mid-travel re-route to toId (from current locationId / travel.from).
- * Gated by STOP_REROUTE_UNLOCKED.
+ * Gated by stopRerouteUnlocked (Star Ash / ?rr=1).
  * @param {number} durationMs
  * @param {{ distance?: number, speed?: number }} [meta]
  */
 export function tryReroute(s, toId, durationMs, meta = {}) {
   if (!s.travel) return { ok: false, reason: 'not_traveling' };
-  if (!STOP_REROUTE_UNLOCKED) return { ok: false, reason: 'locked_feature' };
+  if (!stopRerouteUnlocked(s.unlocked)) return { ok: false, reason: 'locked_feature' };
   if (!s.unlocked.includes(toId)) return { ok: false, reason: 'locked' };
   const fromId = s.locationId; // still at origin until arrive
   if (toId === fromId) {
