@@ -18,7 +18,7 @@ import {
   stacksQtyOf,
   findStack,
   normalizeUnitPrice,
-} from './state.js?v=z1-20261028bz';
+} from './state.js?v=z1-20261028ca';
 import {
   goodWeightG,
   STOP_REROUTE_UNLOCKED,
@@ -60,9 +60,9 @@ import {
   areaPropertyForLoc,
   areaBridgeBlockReason,
   travelFreightCost,
-} from './economy-data.js?v=z1-20261028bz';
-import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028bz';
-import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP } from './personal-data.js?v=z1-20261028bz';
+} from './economy-data.js?v=z1-20261028ca';
+import { LOCATIONS, distanceBetween, travelMsBetween, shortestPath, isZone1Loc, areaOfLoc } from './map-data.js?v=z1-20261028ca';
+import { KEY_FOG_WELL_SCRAP, KEY_MIST_SPUR_SCRAP, KEY_EXIT_ASH_SCRAP } from './personal-data.js?v=z1-20261028ca';
 
 /**
  * @param {import('./state.js').GameState} s
@@ -588,6 +588,13 @@ export function tryDepositUnlock(s, unlock) {
       if (!s.personal || typeof s.personal !== 'object') s.personal = {};
       if (!(s.personal[KEY_MIST_SPUR_SCRAP] > 0)) {
         s.personal[KEY_MIST_SPUR_SCRAP] = 1;
+      }
+    }
+    // Slice BM: Exit Ash Scrap once on Exit Ash unlock (idempotent)
+    if (unlock.target === 'loc_a01z04l003_exit_ash') {
+      if (!s.personal || typeof s.personal !== 'object') s.personal = {};
+      if (!(s.personal[KEY_EXIT_ASH_SCRAP] > 0)) {
+        s.personal[KEY_EXIT_ASH_SCRAP] = 1;
       }
     }
     return { ok: true, unlocked: true, universalCourier };

@@ -31,11 +31,20 @@ export const PERSONAL_DEFS = [
     description: 'A dry scrap from the spur rail. Cool in the pocket.',
     icon: '▤',
   },
+  {
+    id: 'key_a01k003_exit_ash_scrap',
+    name: 'Exit Ash Scrap',
+    kind: 'key',
+    desc: 'A dry scrap from the ash threshold. Quiet in the pocket.',
+    description: 'A dry scrap from the ash threshold. Quiet in the pocket.',
+    icon: '▥',
+  },
 ];
 
 export const KEY_MIRROR_RESIDUE = 'key_a01k001_mirror_residue';
 export const KEY_FOG_WELL_SCRAP = 'key_a01k002_fog_well_scrap';
 export const KEY_MIST_SPUR_SCRAP = 'key_a02k001_mist_spur_scrap';
+export const KEY_EXIT_ASH_SCRAP = 'key_a01k003_exit_ash_scrap';
 
 /** @param {string} id */
 export function personalName(id) {
