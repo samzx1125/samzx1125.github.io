@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dn';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028dn';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028do';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028do';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,11 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028dn';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dn';
-import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dn';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dn';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dn';
+} from './engine.js?v=z1-20261028do';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028do';
+import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028do';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028do';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028do';
 
 
 /** Slice CS/CU/CX/CY — humanize fail-toast reasons. Unknown stays raw. */
@@ -144,13 +144,7 @@ export function bindEvents(s, opts = {}) {
     setUpgradesOpen(!ui.upgradesOpen);
   });
 
-  document.getElementById('btn-mirror')?.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    closeHelpPops();
-    setCharacterOpen(true);
-  });
-
-  // Slice BA — Mirror Residue in personal inventory opens Character (same as Mirror button)
+  // Slice BA — Mirror Residue in personal inventory opens Character
   document.getElementById('personal-list')?.addEventListener('click', (ev) => {
     const tile = ev.target.closest('#personal-list .inv-stack[data-personal]');
     if (!tile) return;

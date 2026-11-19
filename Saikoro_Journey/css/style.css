@@ -185,12 +185,6 @@ header h1 {
   line-height: 1.35;
 }
 .update-log-list li { margin: 0.3rem 0; }
-#btn-mirror {
-  flex: 0 0 auto;
-  font-size: 0.75rem;
-  padding: 0.2rem 0.55rem;
-  font-weight: 600;
-}
 
 main {
   display: grid;
