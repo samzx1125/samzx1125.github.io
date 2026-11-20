@@ -598,6 +598,12 @@ button.primary[data-act="unlock"]:active:not(:disabled) {
 #toast.fade {
   opacity: 0;
 }
+#toast:not(:empty):not(.fade) {
+  position: sticky;
+  bottom: 0;
+  background: var(--panel);
+  z-index: 5;
+}
 
 .hint {
   font-size: 0.75rem;
@@ -1008,7 +1014,8 @@ body.opening-active > main {
 body.opening-active {
   overflow: hidden;
 }
-body.opening-active #toast {
+body.opening-active #toast,
+body.opening-active #toast:not(:empty):not(.fade) {
   visibility: visible;
   position: fixed;
   z-index: 110;

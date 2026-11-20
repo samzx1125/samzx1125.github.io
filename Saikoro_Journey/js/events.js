@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028du';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028du';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dv';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028dv';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,11 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028du';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028du';
-import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028du';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028du';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028du';
+} from './engine.js?v=z1-20261028dv';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dv';
+import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dv';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dv';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dv';
 
 
 /** Slice CS/CU/CX/CY — humanize fail-toast reasons. Unknown stays raw. */
