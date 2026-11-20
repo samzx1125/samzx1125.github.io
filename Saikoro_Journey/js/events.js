@@ -1,5 +1,5 @@
-import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dp';
-import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028dp';
+import { neighborsOf, travelMsBetween, distanceBetween, locName } from './map-data.js?v=z1-20261028dq';
+import { unlockByTarget, goodName, goodWeightG, stopRerouteUnlocked, COURIER_UNLOCK_LOC, effectiveSpeed, WAREHOUSE_CAP } from './economy-data.js?v=z1-20261028dq';
 import {
   tryBuy, trySell, tryTravel, tryUnlock, tryDepositUnlock, tryUpgradeCapacity, tryUpgradePreserve, tryUpgradeSpeed, tryStopTravel, tryReroute,
   tryAcceptQuest, tryDeliverQuest, tryAbandonQuest,
@@ -7,11 +7,11 @@ import {
   tryTransferGold, tryTransferGood,
   tryWarehouseDeposit, tryWarehouseWithdraw,
   courierLocAllowed,
-} from './engine.js?v=z1-20261028dp';
-import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dp';
-import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dp';
-import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dp';
-import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dp';
+} from './engine.js?v=z1-20261028dq';
+import { cargoUsed, courierCargoUsed, warehouseUsed, warehouseKeyAtPlayer, ensureWarehouse, stacksQtyOf, findStack } from './state.js?v=z1-20261028dq';
+import { saveGame, clearSave, serialize, applySave, SAVE_VERSION } from './saving.js?v=z1-20261028dq';
+import { render, invalidateQuotes, focusQtyAfterTrade, flashTradedRow, flashUnlockedNode } from './view.js?v=z1-20261028dq';
+import { KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dq';
 
 
 /** Slice CS/CU/CX/CY — humanize fail-toast reasons. Unknown stays raw. */
@@ -959,7 +959,12 @@ export function bindEvents(s, opts = {}) {
     } else if (btn.dataset.act === 'reset-save') {
       if (!confirm('Clear save? This deletes the current save in this browser.')) return;
       clearSave();
-      ui.lastMsg = 'save cleared — reload page for fresh start';
+      if (opening && typeof opening.restart === 'function') {
+        opening.restart();
+        ui.lastMsg = 'save cleared';
+      } else {
+        ui.lastMsg = 'save cleared — reload page for fresh start';
+      }
     }
     render(state, ui);
   });
