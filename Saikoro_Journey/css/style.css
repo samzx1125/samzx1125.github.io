@@ -1005,6 +1005,18 @@ body.opening-active > main {
   visibility: hidden;
   pointer-events: none;
 }
+body.opening-active {
+  overflow: hidden;
+}
+body.opening-active #toast {
+  visibility: visible;
+  position: fixed;
+  z-index: 110;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  margin: 0;
+}
 #opening-overlay {
   position: fixed;
   inset: 0;
