@@ -1,10 +1,10 @@
-import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028ds';
-import { courierLocAllowed } from './engine.js?v=z1-20261028ds';
-import { GOODS, availableUnlocks, stopRerouteUnlocked, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028ds';
-import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028ds';
-import { BODY_GLYPH } from './opening.js?v=z1-20261028ds';
-import { getLastSavedAt } from './saving.js?v=z1-20261028ds';
-import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028ds';
+import { LOCATIONS, EDGES, locName, neighborsOf, travelMsBetween, formatEta, areaOfLoc, zoneOfLoc } from './map-data.js?v=z1-20261028dt';
+import { courierLocAllowed } from './engine.js?v=z1-20261028dt';
+import { GOODS, availableUnlocks, stopRerouteUnlocked, depleteRateForGood, sellMulFromCondition, TRANSPORT_QUESTS, goodName, goodWeightG, goodIcon, goodDescription, COURIER_UNLOCK_LOC, CAPACITY_MAX_LEVEL, capacityUpgradeCost, effectiveCapacity, PRESERVE_MAX_LEVEL, preserveUpgradeCost, preserveDrainFactor, SPEED_MAX_LEVEL, speedUpgradeCost, effectiveSpeed, AREA1_WAREHOUSE_CAP, AREA1_WAREHOUSE_LOC, AREA2_WAREHOUSE_LOC, WAREHOUSE_CAP, areaPropertyForLoc, areaBridgeBlockReason, AREA_BRIDGE_A, AREA_BRIDGE_B, AREA_PROPERTIES, travelFreightCost } from './economy-data.js?v=z1-20261028dt';
+import { PERSONAL_DEFS, personalName, personalIcon, personalDescription, KEY_MIRROR_RESIDUE } from './personal-data.js?v=z1-20261028dt';
+import { BODY_GLYPH } from './opening.js?v=z1-20261028dt';
+import { getLastSavedAt } from './saving.js?v=z1-20261028dt';
+import { cargoUsed, isTraveling, effectiveBuyAvg, goodCondition, courierCargoUsed, courierGoodCondition, courierCoLocated, warehouseUsed, warehouseGoodCondition, playerAtWarehouse, courierAtWarehouse, ensureWarehouse, warehouseKeyAtPlayer, stacksQtyOf, findStack } from './state.js?v=z1-20261028dt';
 
 /** @type {HTMLElement | null} */
 let trainEl = null;
@@ -1097,7 +1097,7 @@ export function render(s, ui = {}) {
         : `Upgrade cargo (+20%) — ${cost}G`;
       btn.title = atMax
         ? 'Max capacity level'
-        : `Stub pricing: 500×(level+1). Next: ${cap} → ${effectiveCapacity(level + 1)}g`;
+        : `500×(level+1). Next: ${cap} → ${effectiveCapacity(level + 1)}g`;
     }
   }
 
@@ -1117,7 +1117,7 @@ export function render(s, ui = {}) {
         : `Upgrade preserve (−12% drain) — ${cost}G`;
       btn.title = atMax
         ? 'Max preserve level'
-        : `Stub pricing: 600×(level+1). Drain factor ${pct}% → ${Math.round(preserveDrainFactor(level + 1) * 100)}%`;
+        : `600×(level+1). Drain factor ${pct}% → ${Math.round(preserveDrainFactor(level + 1) * 100)}%`;
     }
   }
 
@@ -1136,7 +1136,7 @@ export function render(s, ui = {}) {
         : `Upgrade speed (+20%) — ${cost}G`;
       btn.title = atMax
         ? 'Max speed level'
-        : `Stub pricing: 550×(level+1). Speed ${spd} → ${effectiveSpeed(level + 1)}`;
+        : `550×(level+1). Speed ${spd} → ${effectiveSpeed(level + 1)}`;
     }
   }
 

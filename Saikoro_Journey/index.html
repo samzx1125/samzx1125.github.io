@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saikoro Journey — Area 1–2 · Z1–Z4</title>
-  <link rel="icon" href="favicon.svg?v=z1-20261028ds" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=z1-20261028ds" />
+  <link rel="icon" href="favicon.svg?v=z1-20261028dt" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css?v=z1-20261028dt" />
 </head>
 <body>
   <header class="top-row">
@@ -48,19 +48,19 @@
         <div id="upgrades-menu" class="options-menu" hidden role="menu" aria-label="Upgrades">
           <section id="cargo-upgrade-panel">
             <h2>Cargo</h2>
-            <p class="hint">Starter 5000g · 5 upgrades × +20% base → max 10000g. Stub price 500×(level+1)G.</p>
+            <p class="hint">Starter 5000g · 5 upgrades × +20% base → max 10000g. 500×(level+1)G.</p>
             <p id="cargo-level-label" class="muted">Cargo level 0 / 5 · 5000g</p>
             <button type="button" class="primary" data-act="upgrade-cargo" id="btn-upgrade-cargo">Upgrade cargo (+20%) — 500G</button>
           </section>
           <section id="preserve-upgrade-panel">
             <h2>Preserve</h2>
-            <p class="hint">Slows liquid/volatile drain. −12% of base per level · max 5 → ×0.40. Stub 600×(level+1)G.</p>
+            <p class="hint">Slows liquid/volatile drain. −12% of base per level · max 5 → ×0.40. 600×(level+1)G.</p>
             <p id="preserve-level-label" class="muted">Preserve level 0 / 5 · drain ×100%</p>
             <button type="button" class="primary" data-act="upgrade-preserve" id="btn-upgrade-preserve">Upgrade preserve (−12% drain) — 600G</button>
           </section>
           <section id="speed-upgrade-panel">
             <h2>Speed</h2>
-            <p class="hint">Faster travel. +20% of base per level · max 5 → ×2 (speed 20). Stub 550×(level+1)G.</p>
+            <p class="hint">Faster travel. +20% of base per level · max 5 → ×2 (speed 20). 550×(level+1)G.</p>
             <p id="speed-level-label" class="muted">Speed level 0 / 5 · speed 10</p>
             <button type="button" class="primary" data-act="upgrade-speed" id="btn-upgrade-speed">Upgrade speed (+20%) — 550G</button>
           </section>
@@ -93,6 +93,7 @@
           <section id="update-log-panel">
             <h2>Update log</h2>
             <ul class="update-log-list">
+              <li><strong>DE</strong> — Drop “Stub” / “Stub price” / “Stub pricing” from Upgrade hints and level labels (numbers unchanged)</li>
               <li><strong>DD</strong> — Options ? and Save hint include New game and Clear save (Save family since AW)</li>
               <li><strong>DC</strong> — Clear save confirm OK restarts the opening (toast: save cleared, visible on the opening overlay); keep “save cleared — reload page for fresh start” only if restart is unavailable</li>
               <li><strong>DB</strong> — Clear save confirms before wipe (Clear save? This deletes the current save in this browser.)</li>
@@ -534,6 +535,6 @@
       </section>
     </div>
   </div>
-  <script type="module" src="js/main.js?v=z1-20261028ds"></script>
+  <script type="module" src="js/main.js?v=z1-20261028dt"></script>
 </body>
 </html>
